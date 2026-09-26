@@ -41,6 +41,8 @@ everything tele adds lives in settings → tele, right below the language row.
 | [13](patches/tdesktop/0013-feat-update-linux-and-macos-builds-from-the-tele-rel.patch) | the self-updater works on linux and macos too | tele → updates, on |
 | [14](patches/tdesktop/0014-feat-give-linux-and-macos-builds-their-own-identity.patch) | linux and macos builds are their own app, so they don't clash with an installed telegram | always on |
 | [15](patches/tdesktop/0015-feat-refresh-the-server-data-on-demand.patch) | fetch the tele server's data right away instead of waiting for the next check | tele → server → refresh now |
+| [16](patches/tdesktop/0016-fix-repaint-member-lists-when-server-verification-ar.patch) | member lists show checkmarks and custom verification from the tele server as soon as they arrive | always on |
+| [17](patches/tdesktop/0017-feat-show-checkmarks-and-custom-verification-in-the-.patch) | checkmarks and custom verification next to your name in the main menu | always on |
 
 ### title bar template
 

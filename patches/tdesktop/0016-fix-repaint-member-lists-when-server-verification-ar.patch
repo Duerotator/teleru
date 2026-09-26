@@ -1,0 +1,49 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 00:44:44 +0300
+Subject: [PATCH] fix: repaint member lists when server verification arrives
+
+---
+ Telegram/SourceFiles/boxes/peer_list_box.cpp | 7 ++++++-
+ Telegram/SourceFiles/tele/tele_badges.cpp    | 3 ++-
+ 2 files changed, 8 insertions(+), 2 deletions(-)
+
+diff --git a/Telegram/SourceFiles/boxes/peer_list_box.cpp b/Telegram/SourceFiles/boxes/peer_list_box.cpp
+index d3c1df50d87802d96d5b2a78abc1f3ddd8b04777..c040923da3bd7c98b9649cab76312a7e5b6c02a6 100644
+--- a/Telegram/SourceFiles/boxes/peer_list_box.cpp
++++ b/Telegram/SourceFiles/boxes/peer_list_box.cpp
+@@ -1201,7 +1201,10 @@ PeerListContent::PeerListContent(
+ 
+ 	using UpdateFlag = Data::PeerUpdate::Flag;
+ 	_controller->session().changes().peerUpdates(
+-		UpdateFlag::Name | UpdateFlag::Photo | UpdateFlag::EmojiStatus
++		UpdateFlag::Name
++			| UpdateFlag::Photo
++			| UpdateFlag::EmojiStatus
++			| UpdateFlag::VerifyInfo
+ 	) | rpl::on_next([=](const Data::PeerUpdate &update) {
+ 		if (update.flags & UpdateFlag::Name) {
+ 			handleNameChanged(update.peer);
+@@ -1209,6 +1212,8 @@ PeerListContent::PeerListContent(
+ 		if (update.flags & UpdateFlag::Photo) {
+ 			invalidateLoadedUserpics();
+ 			this->update();
++		} else if (update.flags & UpdateFlag::VerifyInfo) {
++			this->update();
+ 		}
+ 	}, lifetime());
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
+index 53c84885c2ba0c7b1baad626edc12a73ab80966a..e5a2630a8471c7f290a5e540cec6e4eb9dd05b50 100644
+--- a/Telegram/SourceFiles/tele/tele_badges.cpp
++++ b/Telegram/SourceFiles/tele/tele_badges.cpp
+@@ -730,7 +730,8 @@ void Badges::push(PeerKey key, const Entry &was, const Entry &now) const {
+ 		}
+ 		session->changes().peerUpdated(
+ 			peer,
+-			Data::PeerUpdate::Flag::EmojiStatus);
++			Data::PeerUpdate::Flag::EmojiStatus
++				| Data::PeerUpdate::Flag::VerifyInfo);
+ 	});
+ }
+ 
