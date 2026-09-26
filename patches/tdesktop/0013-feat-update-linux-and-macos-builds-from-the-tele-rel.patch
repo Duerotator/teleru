@@ -1,0 +1,464 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sat, 26 Sep 2026 23:33:37 +0300
+Subject: [PATCH] feat: update linux and macos builds from the tele releases
+
+---
+ .../SourceFiles/platform/mac/launcher_mac.mm  |   2 +-
+ .../SourceFiles/settings/settings_tele.cpp    |   4 +-
+ Telegram/SourceFiles/tele/tele_updater.cpp    | 295 ++++++++++++++++--
+ 3 files changed, 278 insertions(+), 23 deletions(-)
+
+diff --git a/Telegram/SourceFiles/platform/mac/launcher_mac.mm b/Telegram/SourceFiles/platform/mac/launcher_mac.mm
+index 8fecc6bfc5d4b850faa8c3b14dab486b11e5a714..4a8059c3a71db6ade0f27589f4f9069f4e226aa5 100644
+--- a/Telegram/SourceFiles/platform/mac/launcher_mac.mm
++++ b/Telegram/SourceFiles/platform/mac/launcher_mac.mm
+@@ -33,7 +33,7 @@ bool Launcher::launchUpdater(UpdaterLaunch action) {
+ 	}
+ 	@autoreleasepool {
+ 
+-#ifdef OS_MAC_STORE
++#if defined OS_MAC_STORE || defined TDESKTOP_DISABLE_AUTOUPDATE
+ 	// In AppStore version we don't have Updater.
+ 	// We just relaunch our app.
+ 	if (action == UpdaterLaunch::JustRelaunch) {
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index ef4033d6d69047068f8b29a825391108ea52d423..12aa438260fb4686b606ab8debfd83c198d3bcef 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -123,7 +123,9 @@ void AddOptionToggle(
+ 	using State = ::Tele::UpdateState;
+ 	switch (status.state) {
+ 	case State::Disabled:
+-		return u"Local builds don't update themselves."_q;
++		return status.error.isEmpty()
++			? u"Local builds don't update themselves."_q
++			: status.error;
+ 	case State::Idle:
+ 		return u"Not checked yet."_q;
+ 	case State::Checking:
+diff --git a/Telegram/SourceFiles/tele/tele_updater.cpp b/Telegram/SourceFiles/tele/tele_updater.cpp
+index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17debb5ca0754 100644
+--- a/Telegram/SourceFiles/tele/tele_updater.cpp
++++ b/Telegram/SourceFiles/tele/tele_updater.cpp
+@@ -1,5 +1,6 @@
+ #include "tele/tele_updater.h"
+ 
++#include "base/platform/base_platform_file_utilities.h"
+ #include "base/timer.h"
+ #include "base/zlib_help.h"
+ #include "core/application.h"
+@@ -11,7 +12,10 @@
+ 
+ #include <QtCore/QCoreApplication>
+ #include <QtCore/QCryptographicHash>
++#include <QtCore/QDir>
++#include <QtCore/QDirIterator>
+ #include <QtCore/QFile>
++#include <QtCore/QFileInfo>
+ #include <QtCore/QJsonDocument>
+ #include <QtCore/QJsonObject>
+ #include <QtCore/QPointer>
+@@ -20,6 +24,17 @@
+ #include <QtNetwork/QNetworkReply>
+ #include <QtNetwork/QNetworkRequest>
+ 
++#if defined Q_OS_MAC
++#include <cerrno>
++#include <cstdio>
++#include <cstring>
++#include <sys/stat.h>
++#include <sys/xattr.h>
++#include <unistd.h>
++#elif !defined Q_OS_WIN
++#include <ksandbox.h>
++#endif
++
+ namespace Tele {
+ namespace {
+ 
+@@ -29,15 +44,32 @@ constexpr auto kTransferTimeout = 60 * 1000;
+ constexpr auto kMaxFeedSize = qint64(64 * 1024);
+ constexpr auto kMaxZipSize = qint64(512 * 1024 * 1024);
+ constexpr auto kMaxExeSize = 1024 * 1024 * 1024;
+-constexpr auto kRenameAttempts = 10;
+-constexpr auto kRenameRetryDelay = 100;
+ constexpr auto kPublicKeyHex = "b824f455f8a50732a1f062b7e29029a7"
+ 	"7691cab1e88bc23f84187bba26d82ea7";
+-constexpr auto kFeedUrl = "https://github.com/nitreojs/tele/releases/"
+-	"latest/download/tele-update-win64.json";
++constexpr auto kFeedUrlPrefix = "https://github.com/nitreojs/tele/releases/"
++	"latest/download/tele-update-";
+ constexpr auto kDownloadPrefix = "https://github.com/nitreojs/tele/"
+ 	"releases/download/";
++
++#if defined Q_OS_MAC
++constexpr auto kPlatform = "macos";
++constexpr auto kBundleInZip = "tele.app/";
++constexpr auto kExeInBundle = "Contents/MacOS/tele";
++#elif defined Q_OS_WIN && defined Q_PROCESSOR_X86_64
++constexpr auto kPlatform = "win64";
++#elif defined Q_OS_LINUX && defined Q_PROCESSOR_X86_64
++constexpr auto kPlatform = "linux64";
++#else
++constexpr auto kPlatform = "";
++#endif
++
++#if defined Q_OS_WIN
+ constexpr auto kExeInZip = "tele.exe";
++constexpr auto kRenameAttempts = 10;
++constexpr auto kRenameRetryDelay = 100;
++#elif !defined Q_OS_MAC
++constexpr auto kExeInZip = "tele";
++#endif
+ 
+ struct Release {
+ 	QString tag;
+@@ -70,12 +102,40 @@ struct Release {
+ 	return hash.result().toHex();
+ }
+ 
+-[[nodiscard]] QString ExePath() {
+-	return QCoreApplication::applicationFilePath();
++[[nodiscard]] QString InstallPath() {
++	return cExeDir() + cExeName();
++}
++
++[[nodiscard]] QString MainExePath() {
++#ifdef Q_OS_MAC
++	return InstallPath() + '/' + QString::fromLatin1(kExeInBundle);
++#else
++	return InstallPath();
++#endif
+ }
+ 
+-[[nodiscard]] bool CanWriteNextToExe() {
+-	const auto probe = ExePath() + u".probe"_q;
++[[nodiscard]] QString FeedUrl() {
++	return QString::fromLatin1(kFeedUrlPrefix)
++		+ QString::fromLatin1(kPlatform)
++		+ u".json"_q;
++}
++
++[[nodiscard]] std::optional<QString> DisabledReason() {
++	if (BuildNumber() <= 0) {
++		return QString();
++	} else if (!*kPlatform) {
++		return u"There are no tele builds for this platform."_q;
++	}
++#if !defined Q_OS_WIN && !defined Q_OS_MAC
++	if (KSandbox::isInside()) {
++		return u"Sandboxed installs don't update themselves."_q;
++	}
++#endif
++	return std::nullopt;
++}
++
++[[nodiscard]] bool CanWriteNextToInstall() {
++	const auto probe = InstallPath() + u".probe"_q;
+ 	auto file = QFile(probe);
+ 	if (!file.open(QIODevice::WriteOnly)) {
+ 		return false;
+@@ -84,6 +144,7 @@ struct Release {
+ 	return QFile::remove(probe);
+ }
+ 
++#ifdef Q_OS_WIN
+ [[nodiscard]] bool RenameWithRetries(const QString &from, const QString &to) {
+ 	for (auto attempt = 0; attempt != kRenameAttempts; ++attempt) {
+ 		if (QFile::rename(from, to)) {
+@@ -93,7 +154,152 @@ struct Release {
+ 	}
+ 	return false;
+ }
++#endif
++
++#ifdef Q_OS_MAC
++[[nodiscard]] QString ErrnoText() {
++	return QString::fromLocal8Bit(std::strerror(errno));
++}
++
++void RemoveQuarantine(const QString &root) {
++	const auto strip = [](const QString &path) {
++		removexattr(
++			QFile::encodeName(path).constData(),
++			"com.apple.quarantine",
++			XATTR_NOFOLLOW);
++	};
++	strip(root);
++	auto i = QDirIterator(
++		root,
++		QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot,
++		QDirIterator::Subdirectories);
++	while (i.hasNext()) {
++		strip(i.next());
++	}
++}
++
++[[nodiscard]] bool SafeRelativePath(const QString &path) {
++	if (path.contains('\\')) {
++		return false;
++	}
++	for (const auto &part : path.split('/')) {
++		if (part.isEmpty() || part == u"."_q || part == u".."_q) {
++			return false;
++		}
++	}
++	return true;
++}
+ 
++[[nodiscard]] QString Unpack(const Release &release, const QByteArray &zip) {
++	if (Sha256Hex(zip) != release.zipSha256) {
++		return u"downloaded archive doesn't match the feed"_q;
++	}
++	const auto target = InstallPath() + u".new"_q;
++	base::Platform::DeleteDirectory(target);
++	const auto fail = [&](const QString &error) {
++		base::Platform::DeleteDirectory(target);
++		return error;
++	};
++	if (!QDir().mkpath(target)) {
++		return fail(u"can't create %1"_q.arg(target));
++	}
++	auto archive = zlib::FileToRead(zip);
++	auto global = unz_global_info();
++	if (archive.getGlobalInfo(&global) != UNZ_OK) {
++		return fail(u"can't read the archive"_q);
++	}
++	const auto prefix = QString::fromLatin1(kBundleInZip);
++	const auto exeInBundle = QString::fromLatin1(kExeInBundle);
++	auto sawExe = false;
++	for (auto i = uLong(0); i != global.number_entry; ++i) {
++		const auto moved = (i == 0)
++			? archive.goToFirstFile()
++			: archive.goToNextFile();
++		auto info = unz_file_info();
++		char name[1024] = { 0 };
++		if (moved != UNZ_OK
++			|| archive.getCurrentFileInfo(
++				&info,
++				name,
++				sizeof(name) - 1,
++				nullptr,
++				0,
++				nullptr,
++				0) != UNZ_OK
++			|| info.size_filename >= sizeof(name)) {
++			return fail(u"can't read the archive"_q);
++		}
++		const auto entry = QString::fromUtf8(name, int(info.size_filename));
++		if (!entry.startsWith(prefix)) {
++			return fail(u"unexpected %1 in the archive"_q.arg(entry));
++		}
++		auto relative = entry.mid(prefix.size());
++		const auto madeOnUnix = ((info.version >> 8) == 3);
++		const auto mode = madeOnUnix
++			? mode_t(info.external_fa >> 16)
++			: mode_t(0);
++		const auto directory = relative.isEmpty()
++			|| relative.endsWith('/')
++			|| S_ISDIR(mode);
++		if (relative.endsWith('/')) {
++			relative.chop(1);
++		}
++		if (!relative.isEmpty() && !SafeRelativePath(relative)) {
++			return fail(u"unsafe path %1 in the archive"_q.arg(entry));
++		}
++		const auto path = relative.isEmpty()
++			? target
++			: (target + '/' + relative);
++		const auto encoded = QFile::encodeName(path);
++		const auto permissions = mode & 0777;
++		if (directory) {
++			if (!QDir().mkpath(path)) {
++				return fail(u"can't create %1"_q.arg(path));
++			}
++			::chmod(encoded.constData(), permissions ? permissions : 0755);
++			continue;
++		}
++		QDir().mkpath(QFileInfo(path).path());
++		if (S_ISLNK(mode)) {
++			const auto link = archive.readCurrentFileContent(4096);
++			const auto resolved = QDir::cleanPath(
++				QFileInfo(path).path() + '/' + QString::fromUtf8(link));
++			if (archive.error() != UNZ_OK
++				|| link.isEmpty()
++				|| link.startsWith('/')
++				|| !resolved.startsWith(target + '/')) {
++				return fail(u"unsafe link %1 in the archive"_q.arg(entry));
++			} else if (::symlink(link.constData(), encoded.constData())) {
++				return fail(u"can't create %1: %2"_q.arg(path, ErrnoText()));
++			}
++			continue;
++		}
++		const auto content = archive.readCurrentFileContent(kMaxExeSize);
++		if (archive.error() != UNZ_OK
++			|| (content.isEmpty() && info.uncompressed_size > 0)) {
++			return fail(u"can't unpack %1 from the archive"_q.arg(entry));
++		} else if (relative == exeInBundle) {
++			if (Sha256Hex(content) != release.exeSha256) {
++				return fail(u"unpacked app doesn't match the feed"_q);
++			}
++			sawExe = true;
++		}
++		auto file = QFile(path);
++		if (!file.open(QIODevice::WriteOnly)
++			|| file.write(content) != content.size()
++			|| !file.flush()) {
++			return fail(u"can't write %1"_q.arg(path));
++		}
++		file.close();
++		::chmod(encoded.constData(), permissions ? permissions : 0644);
++	}
++	if (!sawExe) {
++		return fail(u"the archive has no %1"_q.arg(prefix + exeInBundle));
++	}
++	RemoveQuarantine(target);
++	return QString();
++}
++#else
+ [[nodiscard]] QString Unpack(const Release &release, const QByteArray &zip) {
+ 	if (Sha256Hex(zip) != release.zipSha256) {
+ 		return u"downloaded archive doesn't match the feed"_q;
+@@ -105,7 +311,7 @@ struct Release {
+ 	} else if (Sha256Hex(exe) != release.exeSha256) {
+ 		return u"unpacked exe doesn't match the feed"_q;
+ 	}
+-	const auto newPath = ExePath() + u".new"_q;
++	const auto newPath = InstallPath() + u".new"_q;
+ 	QFile::remove(newPath);
+ 	auto file = QFile(newPath);
+ 	if (!file.open(QIODevice::WriteOnly)
+@@ -115,8 +321,16 @@ struct Release {
+ 		QFile::remove(newPath);
+ 		return u"can't write %1"_q.arg(newPath);
+ 	}
++#ifndef Q_OS_WIN
++	file.setPermissions(QFile::permissions(InstallPath())
++		| QFileDevice::ReadOwner
++		| QFileDevice::WriteOwner
++		| QFileDevice::ExeOwner);
++	base::Platform::FlushFileData(file);
++#endif
+ 	return QString();
+ }
++#endif
+ 
+ class Updater final : public QObject, public base::has_weak_ptr {
+ public:
+@@ -151,16 +365,23 @@ QPointer<Updater> Instance;
+ Updater::Updater()
+ : QObject(QCoreApplication::instance())
+ , _timer([=] { check(); }) {
+-	_status = UpdateStatus{
+-		.state = BuildNumber() > 0
+-			? UpdateState::Idle
+-			: UpdateState::Disabled,
+-	};
+-	if (BuildNumber() <= 0) {
++	if (const auto reason = DisabledReason()) {
++		_status = UpdateStatus{
++			.state = UpdateState::Disabled,
++			.error = *reason,
++		};
+ 		return;
+ 	}
+-	QFile::remove(ExePath() + u".old"_q);
+-	QFile::remove(ExePath() + u".new"_q);
++	_status = UpdateStatus{ .state = UpdateState::Idle };
++#ifdef Q_OS_MAC
++	crl::async([path = InstallPath()] {
++		base::Platform::DeleteDirectory(path + u".old"_q);
++		base::Platform::DeleteDirectory(path + u".new"_q);
++	});
++#else
++	QFile::remove(InstallPath() + u".old"_q);
++	QFile::remove(InstallPath() + u".new"_q);
++#endif
+ 	AutoUpdateValue() | rpl::on_next([=](bool enabled) {
+ 		if (!enabled) {
+ 			_timer.cancel();
+@@ -195,7 +416,7 @@ void Updater::check() {
+ 	_busy = true;
+ 	_timer.cancel();
+ 	_status = UpdateStatus{ .state = UpdateState::Checking };
+-	get(QString::fromLatin1(kFeedUrl), kMaxFeedSize, false, [=](
++	get(FeedUrl(), kMaxFeedSize, false, [=](
+ 			QByteArray envelope) {
+ 		verifyFeed(envelope);
+ 	});
+@@ -273,6 +494,8 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+ 		|| counter > 0xFFFFFFFFULL
+ 		|| release.tag.isEmpty()
+ 		|| !release.url.startsWith(QString::fromLatin1(kDownloadPrefix))
++		|| !release.url.endsWith(
++			u"-"_q + QString::fromLatin1(kPlatform) + u".zip"_q)
+ 		|| release.zipSha256.size() != 64
+ 		|| release.exeSha256.size() != 64) {
+ 		fail(u"malformed feed"_q);
+@@ -284,7 +507,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+ 	if (version <= RunningVersion()) {
+ 		finish({ .state = UpdateState::Latest });
+ 		return;
+-	} else if (!CanWriteNextToExe()) {
++	} else if (!CanWriteNextToInstall()) {
+ 		fail(u"can't write to the tele folder, "
+ 			"download %1 from GitHub by hand"_q.arg(release.tag));
+ 		return;
+@@ -293,7 +516,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+ 		.state = UpdateState::Downloading,
+ 		.tag = release.tag,
+ 	};
+-	crl::async([=, weak = base::make_weak(this), path = ExePath()] {
++	crl::async([=, weak = base::make_weak(this), path = MainExePath()] {
+ 		const auto installed = (FileSha256Hex(path) == release.exeSha256);
+ 		crl::on_main(weak, [=] {
+ 			if (installed) {
+@@ -321,9 +544,32 @@ void Updater::download(const Release &release) {
+ }
+ 
+ void Updater::install(const Release &release) {
+-	const auto path = ExePath();
++	const auto path = InstallPath();
+ 	const auto newPath = path + u".new"_q;
+ 	const auto oldPath = path + u".old"_q;
++#if defined Q_OS_MAC
++	const auto from = QFile::encodeName(newPath);
++	const auto to = QFile::encodeName(path);
++	const auto old = QFile::encodeName(oldPath);
++	base::Platform::DeleteDirectory(oldPath);
++	if (!renamex_np(from.constData(), to.constData(), RENAME_SWAP)) {
++		::rename(from.constData(), old.constData());
++	} else if (::rename(to.constData(), old.constData())) {
++		const auto error = ErrnoText();
++		base::Platform::DeleteDirectory(newPath);
++		fail(u"can't move the running app aside: %1"_q.arg(error));
++		return;
++	} else if (::rename(from.constData(), to.constData())) {
++		const auto error = ErrnoText();
++		if (::rename(old.constData(), to.constData())) {
++			fail(u"%1 is missing, rename %2 back to it"_q.arg(path, oldPath));
++			return;
++		}
++		base::Platform::DeleteDirectory(newPath);
++		fail(u"can't put the new app in place: %1"_q.arg(error));
++		return;
++	}
++#elif defined Q_OS_WIN
+ 	QFile::remove(oldPath);
+ 	if (!RenameWithRetries(path, oldPath)) {
+ 		QFile::remove(newPath);
+@@ -338,6 +584,13 @@ void Updater::install(const Release &release) {
+ 		fail(u"can't put the new exe in place"_q);
+ 		return;
+ 	}
++#else
++	if (!base::Platform::RenameWithOverwrite(newPath, path)) {
++		QFile::remove(newPath);
++		fail(u"can't put the new binary in place"_q);
++		return;
++	}
++#endif
+ 	finish({ .state = UpdateState::Ready, .tag = release.tag });
+ }
+ 
