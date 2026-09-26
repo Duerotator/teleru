@@ -46,6 +46,12 @@ everything tele adds lives in settings → tele, right below the language row.
 | [18](patches/tdesktop/0018-feat-apply-scam-and-fake-marks-from-the-tele-server.patch) | scam and fake marks from the tele server, shown like telegram's own | always on |
 | [19](patches/tdesktop/0019-feat-animate-custom-verification-icons.patch) | custom verification icons animate like any other custom emoji | always on |
 | [20](patches/tdesktop/0020-feat-show-checkmarks-and-custom-verification-next-to.patch) | checkmarks and custom verification next to sender names in messages | tele → chats, off |
+| [21](patches/tdesktop/0021-feat-show-a-copyable-gift-id-in-the-unique-gift-card.patch) | a copyable gift id at the top of the collectible gift card | tele → gifts, off |
+| [22](patches/tdesktop/0022-fix-only-say-a-gift-is-on-the-blockchain-when-it-is.patch) | the gift card only says a gift is on the ton blockchain while it really is there | always on |
+| [23](patches/tdesktop/0023-feat-show-the-peer-id-as-its-own-profile-row.patch) | the peer id gets its own profile row instead of trailing the bio | experimental → show peer ids |
+| [24](patches/tdesktop/0024-feat-format-peer-ids-without-spaces-or-bot-api-style.patch) | peer ids without spaces, or in bot api style (-100… for channels) | tele → ids, off |
+| [25](patches/tdesktop/0025-feat-copy-links-to-tele-settings.patch) | right-click any tele setting to copy a link that opens it | always on |
+| [26](patches/tdesktop/0026-feat-ignore-users-by-hiding-or-fading-their-messages.patch) | ignore users from their userpic menu: their messages fade or disappear, the list lives in settings | tele → ignoring |
 
 ### title bar template
 

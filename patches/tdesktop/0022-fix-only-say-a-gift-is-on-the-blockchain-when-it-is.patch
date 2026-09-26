@@ -1,0 +1,30 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 02:05:43 +0300
+Subject: [PATCH] fix: only say a gift is on the blockchain when it is
+
+---
+ Telegram/SourceFiles/settings/settings_credits_graphics.cpp | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/Telegram/SourceFiles/settings/settings_credits_graphics.cpp b/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
+index bffdc9f5071348486fc52bd3b2a6c9793c71c9bb..a5b4917b0a7dd5548b5050b4a5d4d390f2d6cee1 100644
+--- a/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
++++ b/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
+@@ -2047,15 +2047,12 @@ void GenericCreditsEntryBody(
+ 	Ui::AddSkip(content);
+ 
+ 	const auto addGiftLinkTON = [&] {
+-		if (!uniqueGift) {
++		if (!uniqueGift || uniqueGift->ownerAddress.isEmpty()) {
+ 			return;
+ 		}
+ 		const auto address = !uniqueGift->giftAddress.isEmpty()
+ 			? uniqueGift->giftAddress
+ 			: uniqueGift->ownerAddress;
+-		if (address.isEmpty()) {
+-			return;
+-		}
+ 		const auto label = box->addRow(
+ 			object_ptr<Ui::FlatLabel>(
+ 				box,
