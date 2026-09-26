@@ -40,6 +40,7 @@ everything tele adds lives in settings → tele, right below the language row.
 | [12](patches/tdesktop/0012-feat-show-checkmarks-and-custom-verification-in-the-.patch) | checkmarks and custom verification in the account list | always on |
 | [13](patches/tdesktop/0013-feat-update-linux-and-macos-builds-from-the-tele-rel.patch) | the self-updater works on linux and macos too | tele → updates, on |
 | [14](patches/tdesktop/0014-feat-give-linux-and-macos-builds-their-own-identity.patch) | linux and macos builds are their own app, so they don't clash with an installed telegram | always on |
+| [15](patches/tdesktop/0015-feat-refresh-the-server-data-on-demand.patch) | fetch the tele server's data right away instead of waiting for the next check | tele → server → refresh now |
 
 ### title bar template
 
@@ -54,7 +55,7 @@ the default is `TELE {build}`. empty hides the label.
 
 ### tele server
 
-tele can pull extra account data, like checkmarks and custom verification, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. leave the field empty to turn it off.
+tele can pull extra account data, like checkmarks and custom verification, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
 
 ## how it works
 
