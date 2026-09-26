@@ -268,12 +268,20 @@ jobs:
     permissions:
       contents: read
       packages: write
+      issues: write
     outputs:
       image: ${{ steps.image.outputs.image }}
     env:
       UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
       GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
     steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: tele
+          persist-credentials: false
+
       - name: Clone tdesktop
         run: |
           git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$UPSTREAM_TAG" \
@@ -323,6 +331,12 @@ jobs:
           tags: ${{ env.IMAGE }}
           cache-from: type=registry,ref=${{ env.IMAGE_CACHE }}
           cache-to: type=registry,ref=${{ env.IMAGE_CACHE }},mode=max
+
+      - name: Report failure
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main'
+        run: |
+          echo "Building the Linux libraries for ${UPSTREAM_TAG:-UPSTREAM} failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
+          bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
 
   linux:
     name: Linux x64
@@ -391,14 +405,14 @@ jobs:
             -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
             -D TDESKTOP_API_ID="$API_ID" -D TDESKTOP_API_HASH="$API_HASH" -D TELE_BUILD="$TELE_BUILD"
 
+      # the image's ccache is epel's 3.7: no --print-stats or --evict-older-than, CCACHE_MAXSIZE bounds it instead
       - name: Save ccache
         if: always() && github.ref == 'refs/heads/main'
         run: |
-          misses=$(docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache --print-stats \
-            | sed -n 's/^cache_miss\t//p' | head -n1)
+          misses=$(docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache -s \
+            | awk '/^cache miss/ { print $NF; exit }')
           echo "ccache misses: ${misses:-0}"
           if [ "${misses:-0}" -gt 100 ]; then
-            docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache --evict-older-than 1d > /dev/null
             echo "SAVE_CCACHE=true" >> "$GITHUB_ENV"
           fi
 
@@ -448,6 +462,7 @@ jobs:
     permissions:
       contents: read
       packages: write
+      issues: write
     outputs:
       key: ${{ steps.key.outputs.key }}
     env:
@@ -506,6 +521,14 @@ jobs:
           if [ "$state" != "$LIBS_STATE" ]; then
             bash tele/ci/macos-libs.sh push "$LIBS_KEY"
           fi
+
+      - name: Report failure
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main'
+        env:
+          GH_REPO: ${{ github.repository }}
+        run: |
+          echo "Building the macOS libraries for ${UPSTREAM_TAG:-UPSTREAM} failed, a re-run continues where it stopped: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
+          bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
 
   macos:
     name: macOS universal

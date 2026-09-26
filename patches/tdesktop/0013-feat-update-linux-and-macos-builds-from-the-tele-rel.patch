@@ -6,8 +6,8 @@ Subject: [PATCH] feat: update linux and macos builds from the tele releases
 ---
  .../SourceFiles/platform/mac/launcher_mac.mm  |   2 +-
  .../SourceFiles/settings/settings_tele.cpp    |   4 +-
- Telegram/SourceFiles/tele/tele_updater.cpp    | 295 ++++++++++++++++--
- 3 files changed, 278 insertions(+), 23 deletions(-)
+ Telegram/SourceFiles/tele/tele_updater.cpp    | 297 ++++++++++++++++--
+ 3 files changed, 280 insertions(+), 23 deletions(-)
 
 diff --git a/Telegram/SourceFiles/platform/mac/launcher_mac.mm b/Telegram/SourceFiles/platform/mac/launcher_mac.mm
 index 8fecc6bfc5d4b850faa8c3b14dab486b11e5a714..4a8059c3a71db6ade0f27589f4f9069f4e226aa5 100644
@@ -38,7 +38,7 @@ index ef4033d6d69047068f8b29a825391108ea52d423..12aa438260fb4686b606ab8debfd83c1
  		return u"Not checked yet."_q;
  	case State::Checking:
 diff --git a/Telegram/SourceFiles/tele/tele_updater.cpp b/Telegram/SourceFiles/tele/tele_updater.cpp
-index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17debb5ca0754 100644
+index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..eb1899e52a7200b07e45d46568572de7742038e9 100644
 --- a/Telegram/SourceFiles/tele/tele_updater.cpp
 +++ b/Telegram/SourceFiles/tele/tele_updater.cpp
 @@ -1,5 +1,6 @@
@@ -167,7 +167,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  [[nodiscard]] bool RenameWithRetries(const QString &from, const QString &to) {
  	for (auto attempt = 0; attempt != kRenameAttempts; ++attempt) {
  		if (QFile::rename(from, to)) {
-@@ -93,7 +154,152 @@ struct Release {
+@@ -93,7 +154,154 @@ struct Release {
  	}
  	return false;
  }
@@ -284,6 +284,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
 +			if (archive.error() != UNZ_OK
 +				|| link.isEmpty()
 +				|| link.startsWith('/')
++				|| link.split('/').contains(QByteArray(".."))
 +				|| !resolved.startsWith(target + '/')) {
 +				return fail(u"unsafe link %1 in the archive"_q.arg(entry));
 +			} else if (::symlink(link.constData(), encoded.constData())) {
@@ -307,6 +308,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
 +			|| !file.flush()) {
 +			return fail(u"can't write %1"_q.arg(path));
 +		}
++		base::Platform::FlushFileData(file);
 +		file.close();
 +		::chmod(encoded.constData(), permissions ? permissions : 0644);
 +	}
@@ -320,7 +322,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  [[nodiscard]] QString Unpack(const Release &release, const QByteArray &zip) {
  	if (Sha256Hex(zip) != release.zipSha256) {
  		return u"downloaded archive doesn't match the feed"_q;
-@@ -105,7 +311,7 @@ struct Release {
+@@ -105,7 +313,7 @@ struct Release {
  	} else if (Sha256Hex(exe) != release.exeSha256) {
  		return u"unpacked exe doesn't match the feed"_q;
  	}
@@ -329,7 +331,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  	QFile::remove(newPath);
  	auto file = QFile(newPath);
  	if (!file.open(QIODevice::WriteOnly)
-@@ -115,8 +321,16 @@ struct Release {
+@@ -115,8 +323,16 @@ struct Release {
  		QFile::remove(newPath);
  		return u"can't write %1"_q.arg(newPath);
  	}
@@ -346,7 +348,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  
  class Updater final : public QObject, public base::has_weak_ptr {
  public:
-@@ -151,16 +365,23 @@ QPointer<Updater> Instance;
+@@ -151,16 +367,23 @@ QPointer<Updater> Instance;
  Updater::Updater()
  : QObject(QCoreApplication::instance())
  , _timer([=] { check(); }) {
@@ -378,7 +380,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  	AutoUpdateValue() | rpl::on_next([=](bool enabled) {
  		if (!enabled) {
  			_timer.cancel();
-@@ -195,7 +416,7 @@ void Updater::check() {
+@@ -195,7 +418,7 @@ void Updater::check() {
  	_busy = true;
  	_timer.cancel();
  	_status = UpdateStatus{ .state = UpdateState::Checking };
@@ -387,7 +389,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  			QByteArray envelope) {
  		verifyFeed(envelope);
  	});
-@@ -273,6 +494,8 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+@@ -273,6 +496,8 @@ void Updater::verifyFeed(const QByteArray &envelope) {
  		|| counter > 0xFFFFFFFFULL
  		|| release.tag.isEmpty()
  		|| !release.url.startsWith(QString::fromLatin1(kDownloadPrefix))
@@ -396,7 +398,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  		|| release.zipSha256.size() != 64
  		|| release.exeSha256.size() != 64) {
  		fail(u"malformed feed"_q);
-@@ -284,7 +507,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+@@ -284,7 +509,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
  	if (version <= RunningVersion()) {
  		finish({ .state = UpdateState::Latest });
  		return;
@@ -405,7 +407,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  		fail(u"can't write to the tele folder, "
  			"download %1 from GitHub by hand"_q.arg(release.tag));
  		return;
-@@ -293,7 +516,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+@@ -293,7 +518,7 @@ void Updater::verifyFeed(const QByteArray &envelope) {
  		.state = UpdateState::Downloading,
  		.tag = release.tag,
  	};
@@ -414,7 +416,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  		const auto installed = (FileSha256Hex(path) == release.exeSha256);
  		crl::on_main(weak, [=] {
  			if (installed) {
-@@ -321,9 +544,32 @@ void Updater::download(const Release &release) {
+@@ -321,9 +546,32 @@ void Updater::download(const Release &release) {
  }
  
  void Updater::install(const Release &release) {
@@ -448,7 +450,7 @@ index 9e9ee7166725a32c34b3481ca697c9e2c843a30c..53bf2935c9480904fbdc6b6a52a17deb
  	QFile::remove(oldPath);
  	if (!RenameWithRetries(path, oldPath)) {
  		QFile::remove(newPath);
-@@ -338,6 +584,13 @@ void Updater::install(const Release &release) {
+@@ -338,6 +586,13 @@ void Updater::install(const Release &release) {
  		fail(u"can't put the new exe in place"_q);
  		return;
  	}

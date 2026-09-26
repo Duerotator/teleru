@@ -6,9 +6,17 @@ a telegram desktop fork. it isn't a real fork of the code: this repo only holds 
 
 grab the latest build from [releases](https://github.com/nitreojs/tele/releases/latest).
 
-- **windows x64**: `tele-<version>-win64.zip`, unpack it anywhere and run `tele.exe`. it keeps its data next to the exe and doesn't touch an installed telegram.
+- **windows x64**: `tele-<version>-win64.zip`. unpack it anywhere and run `tele.exe`. it keeps its data next to the exe.
+- **linux x64**: `tele-<version>-linux64.zip`. unpack it somewhere you can write to (like `~/.local/opt/tele`) and run `./tele`. it keeps its data in `~/.local/share/tele` and adds itself to the app menu.
+- **macos** (apple silicon and intel): `tele-<version>-macos.zip`. unpack it, move `tele.app` to applications, then run this once in the terminal, since the build isn't notarized by apple:
 
-linux and macos builds are on the way.
+  ```
+  xattr -dr com.apple.quarantine /Applications/tele.app
+  ```
+
+  it keeps its data in `~/Library/Application Support/tele`.
+
+none of them touch an installed telegram or its data.
 
 tele updates itself: it checks these releases every 3 hours, downloads new builds in the background and asks you to restart. the update feed is signed, so a build that isn't from here won't be installed. you can turn it off in settings → tele → updates.
 
@@ -30,6 +38,8 @@ everything tele adds lives in settings → tele, right below the language row.
 | [10](patches/tdesktop/0010-feat-make-the-title-bar-label-a-live-template.patch) | the title bar label is a template with live variables, see below | tele → title bar |
 | [11](patches/tdesktop/0011-feat-remove-the-account-limit.patch) | no account limit (well, 1536) | always on |
 | [12](patches/tdesktop/0012-feat-show-checkmarks-and-custom-verification-in-the-.patch) | checkmarks and custom verification in the account list | always on |
+| [13](patches/tdesktop/0013-feat-update-linux-and-macos-builds-from-the-tele-rel.patch) | the self-updater works on linux and macos too | tele → updates, on |
+| [14](patches/tdesktop/0014-feat-give-linux-and-macos-builds-their-own-identity.patch) | linux and macos builds are their own app, so they don't clash with an installed telegram | always on |
 
 ### title bar template
 
