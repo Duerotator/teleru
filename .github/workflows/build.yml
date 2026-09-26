@@ -10,39 +10,37 @@ on:
       - 'ci/**'
       - .github/workflows/build.yml
   workflow_dispatch:
+    inputs:
+      platforms:
+        description: platforms to build
+        default: windows linux macos
+      publish:
+        description: publish a release (only from main, and only when every platform built)
+        type: boolean
+        default: true
 
 permissions:
   contents: read
 
 concurrency:
-  group: build
+  group: build-${{ github.ref }}
 
 jobs:
-  windows:
-    name: Windows x64
-    runs-on: windows-latest
-    timeout-minutes: 360
-    permissions:
-      contents: read
-      issues: write
+  number:
+    name: Release number
+    runs-on: ubuntu-latest
     outputs:
       tag: ${{ steps.number.outputs.tag }}
       base: ${{ steps.number.outputs.base }}
       counter: ${{ steps.number.outputs.counter }}
       upstream: ${{ steps.number.outputs.upstream }}
-    defaults:
-      run:
-        shell: cmd
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7
         with:
-          path: tele
           persist-credentials: false
 
       - name: Check secrets
-        shell: bash
         env:
           API_ID: ${{ secrets.TDESKTOP_API_ID }}
           API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
@@ -56,6 +54,58 @@ jobs:
             exit 1
           fi
 
+      - name: Pick the release number
+        id: number
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          upstream=$(tr -d '[:space:]' < UPSTREAM)
+          base="$upstream-tele"
+          pattern="^${base//./\\.}\.\([0-9][0-9]*\)$"
+          last=$( {
+            gh release list --limit 1000 --json tagName --jq '.[].tagName'
+            git ls-remote --tags "$GITHUB_SERVER_URL/$GH_REPO.git" | sed -n 's|^[0-9a-f]*\trefs/tags/||p'
+          } | sed -n "s/$pattern/\1/p" | sort -n | tail -n1)
+          number=$(( ${last:-0} + 1 ))
+          version=$(curl -fsSL "https://raw.githubusercontent.com/telegramdesktop/tdesktop/$upstream/Telegram/build/version" \
+            | tr -d '\r' | sed -n 's/^AppVersion *\([0-9][0-9]*\)$/\1/p')
+          if [ -z "$version" ]; then
+            echo "::error::no AppVersion in Telegram/build/version of $upstream"
+            exit 1
+          fi
+          {
+            echo "tag=$base.$number"
+            echo "base=$version"
+            echo "counter=$number"
+            echo "upstream=$upstream"
+          } >> "$GITHUB_OUTPUT"
+          echo "building $base.$number"
+
+  windows:
+    name: Windows x64
+    needs: number
+    if: contains(inputs.platforms || 'windows linux macos', 'windows')
+    runs-on: windows-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      issues: write
+    env:
+      TELE_BUILD: ${{ needs.number.outputs.counter }}
+      RELEASE_TAG: ${{ needs.number.outputs.tag }}
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+    defaults:
+      run:
+        shell: cmd
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: tele
+          persist-credentials: false
+
       - name: Prepare directories
         run: |
           mkdir %USERPROFILE%\TBuild\Libraries
@@ -65,38 +115,8 @@ jobs:
       - name: Clone tdesktop
         shell: bash
         run: |
-          tag=$(tr -d '[:space:]' < tele/UPSTREAM)
-          echo "UPSTREAM_TAG=$tag" >> "$GITHUB_ENV"
-          git -c advice.detachedHead=false clone --quiet --recurse-submodules --branch "$tag" \
+          git -c advice.detachedHead=false clone --quiet --recurse-submodules --branch "$UPSTREAM_TAG" \
             https://github.com/telegramdesktop/tdesktop.git "$TBUILD/tdesktop"
-
-      - name: Pick the release number
-        id: number
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-          GH_REPO: ${{ github.repository }}
-        run: |
-          base="$UPSTREAM_TAG-tele"
-          pattern="^${base//./\\.}\.\([0-9][0-9]*\)$"
-          last=$( {
-            gh release list --limit 1000 --json tagName --jq '.[].tagName'
-            git ls-remote --tags "$GITHUB_SERVER_URL/$GH_REPO.git" | sed -n 's|^[0-9a-f]*\trefs/tags/||p'
-          } | sed -n "s/$pattern/\1/p" | sort -n | tail -n1)
-          number=$(( ${last:-0} + 1 ))
-          version=$(tr -d '\r' < "$TBUILD/tdesktop/Telegram/build/version" | sed -n 's/^AppVersion *\([0-9][0-9]*\)$/\1/p')
-          if [ -z "$version" ]; then
-            echo "::error::no AppVersion in Telegram/build/version"
-            exit 1
-          fi
-          echo "TELE_BUILD=$number" >> "$GITHUB_ENV"
-          echo "RELEASE_TAG=$base.$number" >> "$GITHUB_ENV"
-          {
-            echo "tag=$base.$number"
-            echo "base=$version"
-            echo "counter=$number"
-            echo "upstream=$UPSTREAM_TAG"
-          } >> "$GITHUB_OUTPUT"
 
       - name: Apply patches
         run: |
@@ -214,7 +234,7 @@ jobs:
         run: |
           call tele\ci\msvc.cmd || exit /b 1
           cd /d %TBUILD%\tdesktop\Telegram
-          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
+          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
           cmake --build ..\out --config Release --parallel --target Telegram
 
       - name: Package
@@ -224,35 +244,103 @@ jobs:
       - name: Upload the build
         uses: actions/upload-artifact@v7
         with:
-          name: release
+          name: release-win64
           path: tele-${{ env.RELEASE_TAG }}-win64.zip
           if-no-files-found: error
           retention-days: 1
 
       - name: Report failure
-        if: failure() || cancelled()
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main'
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
-          echo "Building ${UPSTREAM_TAG:-UPSTREAM} failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
+          echo "Building ${UPSTREAM_TAG:-UPSTREAM} for Windows failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
 
-  publish:
-    name: Publish
-    needs: windows
+  linux-env:
+    name: Linux libraries
+    needs: number
+    if: contains(inputs.platforms || 'windows linux macos', 'linux')
     runs-on: ubuntu-latest
+    timeout-minutes: 360
     permissions:
-      contents: write
+      contents: read
+      packages: write
+    outputs:
+      image: ${{ steps.image.outputs.image }}
+    env:
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Clone tdesktop
+        run: |
+          git -c advice.detachedHead=false clone --quiet --depth 1 --branch "$UPSTREAM_TAG" \
+            https://github.com/telegramdesktop/tdesktop.git tdesktop
+
+      # the image holds every library built from upstream's recipe, keyed by the recipe itself
+      - name: Pick the image
+        id: image
+        run: |
+          cd tdesktop/Telegram/build/docker/centos_env
+          hash=$( { find . -type f -print0 | sort -z | xargs -0 sha256sum; echo 'DEBUG= LTO='; } | sha256sum | cut -c1-16)
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/tele-linux-env"
+          echo "IMAGE=$image:$hash" >> "$GITHUB_ENV"
+          echo "IMAGE_CACHE=$image:buildcache" >> "$GITHUB_ENV"
+          echo "image=$image:$hash" >> "$GITHUB_OUTPUT"
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          if docker manifest inspect "$image:$hash" > /dev/null 2>&1; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+            echo "$image:$hash is already built"
+          fi
+
+      - name: Free disk space
+        if: steps.image.outputs.exists != 'true'
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: true
+
+      - name: Render the Dockerfile
+        if: steps.image.outputs.exists != 'true'
+        run: |
+          sudo apt-get install -y -qq python3-jinja2 > /dev/null
+          cd tdesktop/Telegram/build/docker/centos_env
+          # read the template fully before overwriting it
+          DOCKERFILE=$(DEBUG= LTO= python3 gen_dockerfile.py)
+          echo "$DOCKERFILE" > Dockerfile
+
+      - name: Set up buildx
+        if: steps.image.outputs.exists != 'true'
+        uses: docker/setup-buildx-action@v4
+
+      - name: Build and push the image
+        if: steps.image.outputs.exists != 'true'
+        uses: docker/build-push-action@v7
+        with:
+          context: tdesktop/Telegram/build/docker/centos_env
+          push: true
+          tags: ${{ env.IMAGE }}
+          cache-from: type=registry,ref=${{ env.IMAGE_CACHE }}
+          cache-to: type=registry,ref=${{ env.IMAGE_CACHE }},mode=max
+
+  linux:
+    name: Linux x64
+    needs: [number, linux-env]
+    runs-on: ubuntu-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+      actions: write
       issues: write
     env:
+      TELE_BUILD: ${{ needs.number.outputs.counter }}
+      RELEASE_TAG: ${{ needs.number.outputs.tag }}
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+      IMAGE: ${{ needs.linux-env.outputs.image }}
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
-      TAG: ${{ needs.windows.outputs.tag }}
-      BASE: ${{ needs.windows.outputs.base }}
-      COUNTER: ${{ needs.windows.outputs.counter }}
-      UPSTREAM_TAG: ${{ needs.windows.outputs.upstream }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -260,28 +348,301 @@ jobs:
           path: tele
           persist-credentials: false
 
-      - name: Download the build
+      - name: Clone tdesktop and apply patches
+        run: |
+          git -c advice.detachedHead=false clone --quiet --depth 1 --recurse-submodules --shallow-submodules \
+            --branch "$UPSTREAM_TAG" https://github.com/telegramdesktop/tdesktop.git tdesktop
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
+        with:
+          tool-cache: true
+
+      - name: Pull the image
+        run: |
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker pull --quiet "$IMAGE"
+          echo "CCACHE_DIR=$RUNNER_TEMP/ccache" >> "$GITHUB_ENV"
+
+      - name: Restore ccache
+        uses: actions/cache/restore@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: linux-ccache-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: linux-ccache-
+
+      - name: Build
+        env:
+          API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+        run: |
+          mkdir -p "$CCACHE_DIR"
+          docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache -z > /dev/null
+          docker run --rm -u "$(id -u)" \
+            -v "$GITHUB_WORKSPACE/tdesktop:/usr/src/tdesktop" -v "$CCACHE_DIR:/var/cache/ccache" \
+            -e CONFIG=Release -e KEEP_GOING=1 -e CCACHE_MAXSIZE=3G -e CCACHE_SLOPPINESS=pch_defines,time_macros \
+            "$IMAGE" env -u CCACHE_DISABLE /usr/src/tdesktop/Telegram/build/docker/centos_env/build.sh \
+            -D CMAKE_CONFIGURATION_TYPES=Release \
+            -D CMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG -fpch-preprocess" \
+            -D CMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG -fpch-preprocess" \
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+            -D TDESKTOP_API_ID="$API_ID" -D TDESKTOP_API_HASH="$API_HASH" -D TELE_BUILD="$TELE_BUILD"
+
+      - name: Save ccache
+        if: always() && github.ref == 'refs/heads/main'
+        run: |
+          misses=$(docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache --print-stats \
+            | sed -n 's/^cache_miss\t//p' | head -n1)
+          echo "ccache misses: ${misses:-0}"
+          if [ "${misses:-0}" -gt 100 ]; then
+            docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache --evict-older-than 1d > /dev/null
+            echo "SAVE_CCACHE=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Upload ccache
+        if: always() && env.SAVE_CCACHE == 'true'
+        uses: actions/cache/save@v6
+        with:
+          path: ${{ env.CCACHE_DIR }}
+          key: linux-ccache-${{ github.run_id }}-${{ github.run_attempt }}
+
+      - name: Drop older ccaches
+        if: always() && env.SAVE_CCACHE == 'true'
+        run: |
+          gh cache list --key linux-ccache- --ref "$GITHUB_REF" --json id,key --jq '.[] | select(.key != "linux-ccache-${{ github.run_id }}-${{ github.run_attempt }}") | .id' \
+            | xargs -r -n1 gh cache delete
+
+      - name: Package
+        run: |
+          binary=tdesktop/out/Release/tele
+          test -x "$binary"
+          strip --strip-all "$binary"
+          (cd tdesktop/out/Release && zip -9 -X -q "$GITHUB_WORKSPACE/tele-$RELEASE_TAG-linux64.zip" tele)
+          [ "$(stat -c%s "tele-$RELEASE_TAG-linux64.zip")" -lt $((512 * 1024 * 1024)) ]
+          [ "$(unzip -Z1 "tele-$RELEASE_TAG-linux64.zip")" = tele ]
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-linux64
+          path: tele-${{ env.RELEASE_TAG }}-linux64.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Report failure
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main'
+        run: |
+          echo "Building ${UPSTREAM_TAG:-UPSTREAM} for Linux failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
+          bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+
+  macos-libs:
+    name: macOS libraries
+    needs: number
+    if: contains(inputs.platforms || 'windows linux macos', 'macos')
+    # prepare.py keys every stage on the cpu count and absolute paths, keep the runner and layout stable
+    runs-on: macos-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: write
+    outputs:
+      key: ${{ steps.key.outputs.key }}
+    env:
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: tele
+          persist-credentials: false
+
+      - name: Set up
+        run: bash tele/ci/macos-setup.sh
+
+      - name: Clone tdesktop
+        run: |
+          git -c advice.detachedHead=false clone --quiet --depth 1 --recurse-submodules --shallow-submodules \
+            --branch "$UPSTREAM_TAG" https://github.com/telegramdesktop/tdesktop.git tdesktop
+
+      - name: Pick the libraries
+        id: key
+        run: |
+          key=macos-$(shasum -a 256 < tdesktop/Telegram/build/prepare/prepare.py | cut -c1-16)
+          echo "LIBS_KEY=$key" >> "$GITHUB_ENV"
+          echo "key=$key" >> "$GITHUB_OUTPUT"
+
+      - name: Restore libraries
+        run: |
+          bash tele/ci/macos-libs.sh pull "$LIBS_KEY" latest || true
+          state=$( { find ThirdParty/cache_keys Libraries/cache_keys -type f -exec shasum -a 256 {} + 2>/dev/null || true; } | sort | shasum -a 256)
+          echo "LIBS_STATE=$state" >> "$GITHUB_ENV"
+          if [ "$(cat Libraries/cache_keys/tele-prepared 2>/dev/null)" = "$LIBS_KEY" ]; then
+            echo "READY=true" >> "$GITHUB_ENV"
+          fi
+
+      - name: Prepare libraries
+        id: prepare
+        if: env.READY != 'true'
+        timeout-minutes: 300
+        run: ./tdesktop/Telegram/build/prepare/mac.sh silent
+
+      - name: Trim and save libraries
+        if: always() && steps.prepare.outcome != 'skipped'
+        env:
+          PREPARE_OUTCOME: ${{ steps.prepare.outcome }}
+        run: |
+          [ -d Libraries ] || exit 0
+          # upstream ci's filter: keep what linking needs, drop sources and intermediates
+          find Libraries '(' '(' ! '(' -name '*.a' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -perm +111 ')' -type f ')' -o -empty ')' -delete
+          if [ "$PREPARE_OUTCOME" = success ]; then
+            echo "$LIBS_KEY" > Libraries/cache_keys/tele-prepared
+          fi
+          du -sh Libraries ThirdParty || true
+          state=$( { find ThirdParty/cache_keys Libraries/cache_keys -type f -exec shasum -a 256 {} + 2>/dev/null || true; } | sort | shasum -a 256)
+          if [ "$state" != "$LIBS_STATE" ]; then
+            bash tele/ci/macos-libs.sh push "$LIBS_KEY"
+          fi
+
+  macos:
+    name: macOS universal
+    needs: [number, macos-libs]
+    runs-on: macos-latest
+    timeout-minutes: 360
+    permissions:
+      contents: read
+      packages: read
+      issues: write
+    env:
+      TELE_BUILD: ${{ needs.number.outputs.counter }}
+      RELEASE_TAG: ${{ needs.number.outputs.tag }}
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+      LIBS_KEY: ${{ needs.macos-libs.outputs.key }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: tele
+          persist-credentials: false
+
+      - name: Set up
+        run: bash tele/ci/macos-setup.sh
+
+      - name: Clone tdesktop and apply patches
+        run: |
+          git -c advice.detachedHead=false clone --quiet --depth 1 --recurse-submodules --shallow-submodules \
+            --branch "$UPSTREAM_TAG" https://github.com/telegramdesktop/tdesktop.git tdesktop
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+
+      - name: Restore libraries
+        run: |
+          bash tele/ci/macos-libs.sh pull "$LIBS_KEY"
+          if [ "$(cat Libraries/cache_keys/tele-prepared 2>/dev/null)" != "$LIBS_KEY" ]; then
+            echo "::error::the macos libraries for $LIBS_KEY aren't fully prepared yet, re-run once 'macOS libraries' finishes"
+            exit 1
+          fi
+
+      - name: Build
+        env:
+          API_ID: ${{ secrets.TDESKTOP_API_ID }}
+          API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+        run: |
+          cd tdesktop/Telegram
+          ./configure.sh -D CMAKE_CONFIGURATION_TYPES=Release \
+            -D CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+            -D TDESKTOP_API_ID="$API_ID" -D TDESKTOP_API_HASH="$API_HASH" -D TELE_BUILD="$TELE_BUILD"
+          cmake --build ../out --config Release --parallel --target Telegram -- -quiet
+
+      - name: Sign and package
+        run: |
+          app=tdesktop/out/Release/tele.app
+          test -x "$app/Contents/MacOS/tele"
+          lipo -archs "$app/Contents/MacOS/tele"
+          strip "$app/Contents/MacOS/tele"
+          codesign --force --sign - --timestamp=none --entitlements tdesktop/Telegram/Telegram/Telegram.entitlements "$app"
+          codesign --verify --strict --deep --verbose=2 "$app"
+          zip="$GITHUB_WORKSPACE/tele-$RELEASE_TAG-macos.zip"
+          (cd tdesktop/out/Release && zip -qry -X "$zip" tele.app)
+          [ "$(stat -f%z "$zip")" -lt $((512 * 1024 * 1024)) ]
+          [ -z "$(unzip -Z1 "$zip" | grep -v '^tele\.app/')" ]
+          rm -rf "$RUNNER_TEMP/unzipped" && mkdir "$RUNNER_TEMP/unzipped"
+          unzip -q "$zip" -d "$RUNNER_TEMP/unzipped"
+          codesign --verify --strict --deep "$RUNNER_TEMP/unzipped/tele.app"
+
+      - name: Upload the build
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-macos
+          path: tele-${{ env.RELEASE_TAG }}-macos.zip
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Report failure
+        if: (failure() || cancelled()) && github.ref == 'refs/heads/main'
+        run: |
+          echo "Building ${UPSTREAM_TAG:-UPSTREAM} for macOS failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
+          bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+
+  publish:
+    name: Publish
+    needs: [number, windows, linux, macos]
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      TAG: ${{ needs.number.outputs.tag }}
+      BASE: ${{ needs.number.outputs.base }}
+      COUNTER: ${{ needs.number.outputs.counter }}
+      UPSTREAM_TAG: ${{ needs.number.outputs.upstream }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          path: tele
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Download the builds
         uses: actions/download-artifact@v8
         with:
-          name: release
+          pattern: release-*
+          merge-multiple: true
 
-      - name: Sign the update feed
+      - name: Sign the update feeds
         env:
           UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY }}
         run: |
-          zip="tele-$TAG-win64.zip"
-          printf '{"tag":"%s","base":%s,"counter":%s,"url":"%s","zip_sha256":"%s","exe_sha256":"%s"}' \
-            "$TAG" "$BASE" "$COUNTER" \
-            "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$TAG/$zip" \
-            "$(sha256sum < "$zip" | cut -c1-64)" \
-            "$(unzip -p "$zip" tele.exe | sha256sum | cut -c1-64)" > feed.json
-          openssl pkeyutl -sign -rawin -inkey <(printf '%s\n' "$UPDATE_KEY") -in feed.json -out feed.sig
-          openssl pkeyutl -verify -rawin -pubin -inkey tele/ci/update-public-key.pem -in feed.json -sigfile feed.sig
-          printf '{"feed":"%s","signature":"%s"}\n' "$(base64 -w0 feed.json)" "$(base64 -w0 feed.sig)" > tele-update-win64.json
+          sign() {
+            local platform=$1 zip="tele-$TAG-$1.zip" entry=$2
+            [ -n "$(unzip -Z1 "$zip" "$entry")" ]
+            printf '{"tag":"%s","base":%s,"counter":%s,"url":"%s","zip_sha256":"%s","exe_sha256":"%s"}' \
+              "$TAG" "$BASE" "$COUNTER" \
+              "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$TAG/$zip" \
+              "$(sha256sum < "$zip" | cut -c1-64)" \
+              "$(unzip -p "$zip" "$entry" | sha256sum | cut -c1-64)" > "feed-$platform.json"
+            openssl pkeyutl -sign -rawin -inkey <(printf '%s\n' "$UPDATE_KEY") -in "feed-$platform.json" -out "feed-$platform.sig"
+            openssl pkeyutl -verify -rawin -pubin -inkey tele/ci/update-public-key.pem -in "feed-$platform.json" -sigfile "feed-$platform.sig"
+            printf '{"feed":"%s","signature":"%s"}\n' "$(base64 -w0 "feed-$platform.json")" "$(base64 -w0 "feed-$platform.sig")" > "tele-update-$platform.json"
+          }
+          sign win64 tele.exe
+          sign linux64 tele
+          sign macos tele.app/Contents/MacOS/tele
 
       - name: Publish release
         run: |
-          zip="tele-$TAG-win64.zip"
+          echo "PREVIOUS_TAG=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')" >> "$GITHUB_ENV"
           patches=$(cd tele && { find patches -name '*.patch' 2>/dev/null || true; } | sort)
           {
             echo "Telegram Desktop [$UPSTREAM_TAG](https://github.com/telegramdesktop/tdesktop/releases/tag/$UPSTREAM_TAG) with these patches:"
@@ -292,9 +653,25 @@ jobs:
             for patch in $patches; do
               echo "- [$patch]($GITHUB_SERVER_URL/$GH_REPO/blob/$GITHUB_SHA/$patch)"
             done
+            echo
+            echo "macos builds are signed ad-hoc: after unpacking, run \`xattr -dr com.apple.quarantine /Applications/tele.app\` once."
           } > notes.md
-          gh release create "$TAG" "$zip" tele-update-win64.json --latest --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md
+          gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-update-{win64,linux64,macos}.json \
+            --latest --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md
           bash tele/ci/issue.sh close build-failure "Built $TAG."
+
+      - name: Announce
+        continue-on-error: true
+        env:
+          BOT_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          CHANNEL: ${{ secrets.TELE_CHANNEL }}
+        run: |
+          if [ -z "$BOT_TOKEN" ] || [ -z "$CHANNEL" ]; then
+            echo "no TELE_BOT_TOKEN / TELE_CHANNEL secrets, not announcing"
+            exit 0
+          fi
+          python3 tele/ci/announce.py --repo tele --tag "$TAG" --previous "$PREVIOUS_TAG" --upstream "$UPSTREAM_TAG" \
+            --url "$GITHUB_SERVER_URL/$GH_REPO"
 
       - name: Report failure
         if: failure() || cancelled()
