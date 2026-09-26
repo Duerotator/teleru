@@ -1,0 +1,225 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sat, 26 Sep 2026 22:09:27 +0300
+Subject: [PATCH] feat: show checkmarks and custom verification in the account
+ list
+
+---
+ Telegram/CMakeLists.txt                       |  2 +
+ .../sections/settings_information.cpp         | 37 ++++++++++++-
+ .../SourceFiles/tele/tele_account_badges.cpp  | 55 +++++++++++++++++++
+ .../SourceFiles/tele/tele_account_badges.h    | 22 ++++++++
+ 4 files changed, 114 insertions(+), 2 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_account_badges.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_account_badges.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 47aed8a1e032aaaaca5809ee9ff65f3cb8861b79..56fe1df41bbfa56b356d4647084e40973a7122a8 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2213,6 +2213,8 @@ nice_target_sources(Telegram ${src_loc}
+ PRIVATE
+     settings/settings_tele.cpp
+     settings/settings_tele.h
++    tele/tele_account_badges.cpp
++    tele/tele_account_badges.h
+     tele/tele_badges.cpp
+     tele/tele_badges.h
+     tele/tele_build.cpp
+diff --git a/Telegram/SourceFiles/settings/sections/settings_information.cpp b/Telegram/SourceFiles/settings/sections/settings_information.cpp
+index 8ae0612a868e775ce245a34048c23fa9beb6f9f5..d6db3b07b1b53f91da14b86a53ad72a2bac3f610 100644
+--- a/Telegram/SourceFiles/settings/sections/settings_information.cpp
++++ b/Telegram/SourceFiles/settings/sections/settings_information.cpp
+@@ -49,6 +49,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "info/profile/info_profile_values.h"
+ #include "info/profile/info_profile_badge.h"
+ #include "info/profile/info_profile_phone_menu.h"
++#include "tele/tele_account_badges.h"
+ #include "lang/lang_keys.h"
+ #include "menu/menu_mark_as_read.h"
+ #include "main/main_account.h"
+@@ -110,9 +111,11 @@ public:
+ private:
+ 	rpl::variable<QString> _text;
+ 	rpl::event_stream<int> _unreadWidth;
++	rpl::event_stream<int> _verifiedWidth;
+ 	rpl::event_stream<int> _premiumWidth;
+ 
+ 	QPointer<Ui::RpWidget> _unread;
++	Info::Profile::Badge _verified;
+ 	Info::Profile::Badge _badge;
+ 
+ };
+@@ -126,6 +129,15 @@ ComposedBadge::ComposedBadge(
+ 	Fn<bool()> animationPaused)
+ : Ui::RpWidget(parent)
+ , _text(std::move(text))
++, _verified(
++		this,
++		st::settingsInfoPeerBadge,
++		session,
++		Info::Profile::VerifiedContentForPeer(session->user()),
++		nullptr,
++		animationPaused,
++		kPlayStatusLimit,
++		Info::Profile::BadgeType::Verified)
+ , _badge(
+ 		this,
+ 		st::settingsInfoPeerBadge,
+@@ -155,6 +167,16 @@ ComposedBadge::ComposedBadge(
+ 		}) | rpl::start_to_stream(_unreadWidth, _unread->lifetime());
+ 	}
+ 
++	_verified.updated(
++	) | rpl::on_next([=] {
++		if (const auto button = _verified.widget()) {
++			button->widthValue(
++			) | rpl::start_to_stream(_verifiedWidth, button->lifetime());
++		} else {
++			_verifiedWidth.fire(0);
++		}
++	}, lifetime());
++
+ 	_badge.updated(
+ 	) | rpl::on_next([=] {
+ 		if (const auto button = _badge.widget()) {
+@@ -170,6 +192,9 @@ ComposedBadge::ComposedBadge(
+ 	});
+ 	rpl::combine(
+ 		_unreadWidth.events_starting_with(_unread ? _unread->width() : 0),
++		_verifiedWidth.events_starting_with(_verified.widget()
++			? _verified.widget()->width()
++			: 0),
+ 		_premiumWidth.events_starting_with(_badge.widget()
+ 			? _badge.widget()->width()
+ 			: 0),
+@@ -177,6 +202,7 @@ ComposedBadge::ComposedBadge(
+ 		button->sizeValue()
+ 	) | rpl::on_next([=](
+ 			int unreadWidth,
++			int verifiedWidth,
+ 			int premiumWidth,
+ 			int textWidth,
+ 			const QSize &buttonSize) {
+@@ -185,7 +211,7 @@ ComposedBadge::ComposedBadge(
+ 		const auto textRightPosition = st.padding.left()
+ 			+ textWidth
+ 			+ skip;
+-		const auto minWidth = unreadWidth + premiumWidth + skip;
++		const auto minWidth = unreadWidth + verifiedWidth + premiumWidth + skip;
+ 		const auto maxTextWidth = buttonSize.width()
+ 			- minWidth
+ 			- st.padding.right();
+@@ -200,6 +226,10 @@ ComposedBadge::ComposedBadge(
+ 			0,
+ 			st.padding.top(),
+ 			buttonSize.height() - st.padding.top());
++		_verified.move(
++			premiumWidth,
++			st.padding.top(),
++			buttonSize.height() - st.padding.top());
+ 		if (_unread) {
+ 			_unread->moveToRight(
+ 				0,
+@@ -844,8 +874,11 @@ void SetupAccountsWrap(
+ 	auto result = object_ptr<Ui::SettingsButton>(
+ 		parent,
+ 		rpl::duplicate(text),
+-		st::mainMenuAddAccountButton);
++		Tele::AccountButtonStyle(user));
+ 	const auto raw = result.data();
++	Tele::AddAccountBotVerify(raw, user, [=] {
++		return window->isGifPausedAtLeastFor(Window::GifPauseReason::Layer);
++	});
+ 
+ 	{
+ 		const auto container = Badge::AddRight(raw, st::mainMenuAccountLine);
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.cpp b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..e39dc9e95dce5dcd173c7e662a44b7980038e609
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+@@ -0,0 +1,55 @@
++#include "tele/tele_account_badges.h"
++
++#include "data/data_user.h"
++#include "data/stickers/data_custom_emoji.h"
++#include "info/profile/info_profile_badge.h"
++#include "main/main_session.h"
++#include "ui/widgets/buttons.h"
++#include "styles/style_settings.h"
++#include "styles/style_window.h"
++
++namespace Tele {
++
++const style::SettingsButton &AccountButtonStyle(not_null<UserData*> user) {
++	if (!user->botVerifyDetails()) {
++		return st::mainMenuAddAccountButton;
++	}
++	static const auto result = [] {
++		auto copy = st::mainMenuAddAccountButton;
++		const auto emoji = Data::FrameSizeFromTag(
++			Data::CustomEmojiSizeTag::Normal) / style::DevicePixelRatio();
++		copy.padding.setLeft(copy.padding.left()
++			+ emoji
++			+ copy.style.font->spacew);
++		return copy;
++	}();
++	return result;
++}
++
++void AddAccountBotVerify(
++		not_null<Ui::SettingsButton*> button,
++		not_null<UserData*> user,
++		Fn<bool()> paused) {
++	if (!user->botVerifyDetails()) {
++		return;
++	}
++	const auto badge = button->lifetime().make_state<Info::Profile::Badge>(
++		button,
++		st::settingsInfoPeerBadge,
++		&user->session(),
++		Info::Profile::BotVerifyBadgeForPeer(user),
++		nullptr,
++		std::move(paused),
++		0,
++		Info::Profile::BadgeType::BotVerified);
++	button->heightValue(
++	) | rpl::on_next([=](int height) {
++		const auto &st = st::mainMenuAddAccountButton;
++		badge->move(
++			st.padding.left(),
++			st.padding.top(),
++			height - st.padding.top());
++	}, button->lifetime());
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.h b/Telegram/SourceFiles/tele/tele_account_badges.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..1afb21066aca1f9af6256518d2fd72985840e2f9
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_account_badges.h
+@@ -0,0 +1,22 @@
++#pragma once
++
++class UserData;
++
++namespace style {
++struct SettingsButton;
++} // namespace style
++
++namespace Ui {
++class SettingsButton;
++} // namespace Ui
++
++namespace Tele {
++
++[[nodiscard]] const style::SettingsButton &AccountButtonStyle(
++	not_null<UserData*> user);
++void AddAccountBotVerify(
++	not_null<Ui::SettingsButton*> button,
++	not_null<UserData*> user,
++	Fn<bool()> paused);
++
++} // namespace Tele

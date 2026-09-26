@@ -226,7 +226,7 @@ index cf34d4591bba16ba3f4bec0b27441fae3a1d80d0..d28c71477fcd1a9235aa8bb29f1c41d6
  	AddUpdates(content);
 diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..278bb111f4eef006272750c9e0257d9acf8d54bc
+index 0000000000000000000000000000000000000000..ad7967cb7f62aad174c95fc9fefc0b288e13d53f
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_badges.cpp
 @@ -0,0 +1,772 @@
@@ -274,7 +274,7 @@ index 0000000000000000000000000000000000000000..278bb111f4eef006272750c9e0257d9a
 +namespace {
 +
 +constexpr auto kFirstFetchDelay = 10 * crl::time(1000);
-+constexpr auto kFetchInterval = 60 * 60 * crl::time(1000);
++constexpr auto kFetchInterval = 10 * 60 * crl::time(1000);
 +constexpr auto kTransferTimeout = 60 * 1000;
 +constexpr auto kMaxFeedSize = qint64(4 * 1024 * 1024);
 +constexpr auto kMaxEntries = 100000;
