@@ -43,6 +43,7 @@ everything tele adds lives in settings → tele, right below the language row.
 | [15](patches/tdesktop/0015-feat-refresh-the-server-data-on-demand.patch) | fetch the tele server's data right away instead of waiting for the next check | tele → server → refresh now |
 | [16](patches/tdesktop/0016-fix-repaint-member-lists-when-server-verification-ar.patch) | member lists show checkmarks and custom verification from the tele server as soon as they arrive | always on |
 | [17](patches/tdesktop/0017-feat-show-checkmarks-and-custom-verification-in-the-.patch) | checkmarks and custom verification next to your name in the main menu | always on |
+| [18](patches/tdesktop/0018-feat-apply-scam-and-fake-marks-from-the-tele-server.patch) | scam and fake marks from the tele server, shown like telegram's own | always on |
 
 ### title bar template
 
@@ -57,7 +58,7 @@ the default is `TELE {build}`. empty hides the label.
 
 ### tele server
 
-tele can pull extra account data, like checkmarks and custom verification, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
+tele can pull extra account data, like checkmarks, custom verification and scam / fake marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
 
 ## how it works
 
