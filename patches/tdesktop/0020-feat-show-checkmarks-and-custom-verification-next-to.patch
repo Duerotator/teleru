@@ -1,0 +1,334 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 01:56:00 +0300
+Subject: [PATCH] feat: show checkmarks and custom verification next to names
+ in messages
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../history/view/history_view_message.cpp     |  24 +++-
+ .../history/view/history_view_message.h       |   1 +
+ .../SourceFiles/settings/settings_tele.cpp    |   1 +
+ .../SourceFiles/tele/tele_bubble_badges.cpp   | 131 ++++++++++++++++++
+ .../SourceFiles/tele/tele_bubble_badges.h     |  18 +++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  12 ++
+ Telegram/SourceFiles/tele/tele_options.h      |   2 +
+ 8 files changed, 186 insertions(+), 5 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_bubble_badges.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 5081915924a6c425534f43f6a46ef2cfa2a5d0f6..64a056c3963670d986afad364fbad1fe6b49c337 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2219,6 +2219,8 @@ PRIVATE
+     tele/tele_badges.h
+     tele/tele_build.cpp
+     tele/tele_build.h
++    tele/tele_bubble_badges.cpp
++    tele/tele_bubble_badges.h
+     tele/tele_button_payload.cpp
+     tele/tele_button_payload.h
+     tele/tele_options.cpp
+diff --git a/Telegram/SourceFiles/history/view/history_view_message.cpp b/Telegram/SourceFiles/history/view/history_view_message.cpp
+index a1d94427aaf9a3bf60ecf7eaa29be99bb08411b5..2ec6aed99e0976065d384867b715651821f98f75 100644
+--- a/Telegram/SourceFiles/history/view/history_view_message.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_message.cpp
+@@ -65,6 +65,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "window/window_session_controller.h"
+ #include "apiwrap.h"
+ #include "api/api_rich_tasks.h"
++#include "tele/tele_bubble_badges.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_chat_style.h"
+@@ -2593,9 +2594,12 @@ void Message::paintFromName(
+ 		nameLinkHandler,
+ 		QRect(availableLeft, trect.top(), nameWidth, st::msgNameFont->height),
+ 		trect.topLeft());
++	prepareCustomEmojiPaint(p, context, *nameText);
+ 	nameText->draw(p, {
+ 		.position = { availableLeft, trect.top() },
+ 		.availableWidth = nameAvailableWidth,
++		.now = context.now,
++		.pausedEmoji = context.paused || On(PowerSaving::kEmojiChat),
+ 		.elisionLines = 1,
+ 	});
+ 	const auto skipWidth = nameWidth
+@@ -3821,6 +3825,7 @@ bool Message::hasHeavyPart() const {
+ void Message::unloadHeavyPart() {
+ 	Element::unloadHeavyPart();
+ 	_comments = nullptr;
++	_fromName.unloadPersistentAnimation();
+ 	if (_fromNameStatus) {
+ 		_fromNameStatus->custom = nullptr;
+ 		_fromNameStatus->id = EmojiStatusId();
+@@ -5485,12 +5490,21 @@ void Message::validateFromNameText(PeerData *from) const {
+ 		return;
+ 	}
+ 	const auto version = from->nameVersion();
+-	if (_fromNameVersion < version) {
++	const auto badges = Tele::BubbleBadgesKey(from);
++	if (_fromNameVersion < version || _fromNameBadges != badges) {
++		const auto that = const_cast<Message*>(this);
++		const auto relayout = _fromNameVersion
++			&& (_fromNameBadges != badges);
+ 		_fromNameVersion = version;
+-		_fromName.setText(
+-			st::msgNameStyle,
+-			from->name(),
+-			Ui::NameTextOptions());
++		_fromNameBadges = badges;
++		Tele::SetBubbleName(_fromName, from, badges, [=] {
++			that->customEmojiRepaint();
++		});
++		if (relayout) {
++			crl::on_main(that, [=] {
++				that->history()->owner().requestViewResize(that);
++			});
++		}
+ 	}
+ 	if (from->isPremium()
+ 		|| (from->isChannel()
+diff --git a/Telegram/SourceFiles/history/view/history_view_message.h b/Telegram/SourceFiles/history/view/history_view_message.h
+index bcffee1190496e5e495aa1434432bdc48ca6c18c..fc22360cdc8aee5d95999e47ec60106d3c62b505 100644
+--- a/Telegram/SourceFiles/history/view/history_view_message.h
++++ b/Telegram/SourceFiles/history/view/history_view_message.h
+@@ -538,6 +538,7 @@ private:
+ 
+ 	mutable Ui::Text::String _fromName;
+ 	mutable std::unique_ptr<FromNameStatus> _fromNameStatus;
++	mutable uint64 _fromNameBadges = 0;
+ 	mutable std::unique_ptr<Ui::RoundCheckbox> _selectionRoundCheckbox;
+ 	mutable uint32 _fromNameVersion : 16 = 0;
+ 	uint32 _nonTextMaxWidth : 16 = 0;
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 32652a620bb4683b031b85dc5ef8a6235e00717a..574166f99cd311622adf41d7d98bca5eaea286dc 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -339,6 +339,7 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
++	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_bubble_badges.cpp b/Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..6a3d88e54b777caad49b40e099f7b2041b4d137f
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+@@ -0,0 +1,131 @@
++#include "tele/tele_bubble_badges.h"
++
++#include "data/data_peer.h"
++#include "data/data_session.h"
++#include "data/stickers/data_custom_emoji.h"
++#include "main/main_session.h"
++#include "tele/tele_options.h"
++#include "ui/text/text.h"
++#include "ui/text/text_custom_emoji.h"
++#include "ui/text/text_options.h"
++#include "ui/text/text_utilities.h"
++#include "ui/unread_badge.h"
++#include "styles/style_chat.h"
++#include "styles/style_info.h"
++
++namespace Tele {
++namespace {
++
++constexpr auto kVerifiedBit = uint64(1);
++
++[[nodiscard]] QString VerifiedData() {
++	return u"tele-verified"_q;
++}
++
++class VerifiedCheck final : public Ui::Text::CustomEmoji {
++public:
++	int width() override;
++	QString entityData() override;
++	void paint(QPainter &p, const Context &context) override;
++	void unload() override;
++	bool ready() override;
++	bool readyInDefaultState() override;
++
++private:
++	QImage _frame;
++	QColor _color;
++
++};
++
++int VerifiedCheck::width() {
++	return st::infoVerifiedStar.width();
++}
++
++QString VerifiedCheck::entityData() {
++	return VerifiedData();
++}
++
++void VerifiedCheck::paint(QPainter &p, const Context &context) {
++	const auto &star = st::infoVerifiedStar;
++	if (_frame.isNull() || _color != context.textColor) {
++		const auto ratio = style::DevicePixelRatio();
++		_frame = QImage(
++			star.size() * ratio,
++			QImage::Format_ARGB32_Premultiplied);
++		_frame.setDevicePixelRatio(ratio);
++		_frame.fill(Qt::transparent);
++		auto q = QPainter(&_frame);
++		star.paint(q, 0, 0, star.width(), context.textColor);
++		q.setCompositionMode(QPainter::CompositionMode_DestinationOut);
++		st::infoVerifiedCheck.paint(q, 0, 0, star.width(), QColor(0, 0, 0));
++		q.end();
++		_color = context.textColor;
++	}
++	const auto size = Ui::Text::AdjustCustomEmojiSize(st::emojiSize);
++	p.drawImage(
++		context.position + QPoint(0, (size - star.height()) / 2),
++		_frame);
++}
++
++void VerifiedCheck::unload() {
++	_frame = QImage();
++}
++
++bool VerifiedCheck::ready() {
++	return true;
++}
++
++bool VerifiedCheck::readyInDefaultState() {
++	return true;
++}
++
++[[nodiscard]] DocumentId VerifyIcon(not_null<PeerData*> peer) {
++	const auto details = peer->botVerifyDetails();
++	return details ? details->iconId : DocumentId();
++}
++
++} // namespace
++
++uint64 BubbleBadgesKey(not_null<PeerData*> peer) {
++	if (!BubbleBadges()) {
++		return 0;
++	}
++	return (uint64(VerifyIcon(peer)) << 1)
++		| (peer->isVerified() ? kVerifiedBit : 0);
++}
++
++void SetBubbleName(
++		Ui::Text::String &name,
++		not_null<PeerData*> peer,
++		uint64 badges,
++		Fn<void()> repaint) {
++	if (!badges) {
++		name.setText(st::msgNameStyle, peer->name(), Ui::NameTextOptions());
++		return;
++	}
++	auto text = TextWithEntities{ peer->name() };
++	if (const auto icon = VerifyIcon(peer)) {
++		text = Data::SingleCustomEmoji(icon).append(' ').append(
++			std::move(text));
++	}
++	if (badges & kVerifiedBit) {
++		text.append(' ').append(Ui::Text::SingleCustomEmoji(VerifiedData()));
++	}
++	const auto session = &peer->session();
++	name.setMarkedText(st::msgNameStyle, text, Ui::NameTextOptions(), {
++		.repaint = std::move(repaint),
++		.customEmojiFactory = [=](
++				QStringView data,
++				const Ui::Text::MarkedContext &context)
++		-> std::unique_ptr<Ui::Text::CustomEmoji> {
++			if (data == VerifiedData()) {
++				return std::make_unique<VerifiedCheck>();
++			}
++			return session->data().customEmojiManager().create(
++				data,
++				context.repaint);
++		},
++	});
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_bubble_badges.h b/Telegram/SourceFiles/tele/tele_bubble_badges.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..30bbb1ddec3b6d4cf167269d43edd34f6f3cc73f
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_bubble_badges.h
+@@ -0,0 +1,18 @@
++#pragma once
++
++class PeerData;
++
++namespace Ui::Text {
++class String;
++} // namespace Ui::Text
++
++namespace Tele {
++
++[[nodiscard]] uint64 BubbleBadgesKey(not_null<PeerData*> peer);
++void SetBubbleName(
++	Ui::Text::String &name,
++	not_null<PeerData*> peer,
++	uint64 badges,
++	Fn<void()> repaint);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index d0370bbca5569ae652b0317fe755d64f087f7def..b62c54c70128dd5483a27d28558ed7a5fceec31e 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -9,6 +9,7 @@ const char kOptionInvisibleStories[] = "tele-invisible-stories";
+ const char kOptionButtonPayloads[] = "tele-button-payloads";
+ const char kOptionAutoUpdate[] = "tele-auto-update";
+ const char kOptionGroupQuickReplies[] = "tele-group-quick-replies";
++const char kOptionBubbleBadges[] = "tele-bubble-badges";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -56,6 +57,13 @@ base::options::toggle GroupQuickRepliesOption({
+ 		"keyboards, via-bot labels and message effects are dropped.",
+ });
+ 
++base::options::toggle BubbleBadgesOption({
++	.id = kOptionBubbleBadges,
++	.name = "Badges next to names in messages",
++	.description = "Show checkmarks and custom verification next to "
++		"sender names in message bubbles, where emoji statuses are.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -105,6 +113,10 @@ bool GroupQuickReplies() {
+ 	return GroupQuickRepliesOption.value();
+ }
+ 
++bool BubbleBadges() {
++	return BubbleBadgesOption.value();
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index e9c02d9d15db82825e0f07d17908db92e7fa0ed6..f331dae73618b0814fed9f6c9cce9f7454a693dd 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -7,6 +7,7 @@ extern const char kOptionInvisibleStories[];
+ extern const char kOptionButtonPayloads[];
+ extern const char kOptionAutoUpdate[];
+ extern const char kOptionGroupQuickReplies[];
++extern const char kOptionBubbleBadges[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -16,6 +17,7 @@ extern const char kOptionTitleTemplate[];
+ [[nodiscard]] bool AutoUpdate();
+ [[nodiscard]] rpl::producer<bool> AutoUpdateValue();
+ [[nodiscard]] bool GroupQuickReplies();
++[[nodiscard]] bool BubbleBadges();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();

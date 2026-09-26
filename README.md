@@ -44,6 +44,8 @@ everything tele adds lives in settings → tele, right below the language row.
 | [16](patches/tdesktop/0016-fix-repaint-member-lists-when-server-verification-ar.patch) | member lists show checkmarks and custom verification from the tele server as soon as they arrive | always on |
 | [17](patches/tdesktop/0017-feat-show-checkmarks-and-custom-verification-in-the-.patch) | checkmarks and custom verification next to your name in the main menu | always on |
 | [18](patches/tdesktop/0018-feat-apply-scam-and-fake-marks-from-the-tele-server.patch) | scam and fake marks from the tele server, shown like telegram's own | always on |
+| [19](patches/tdesktop/0019-feat-animate-custom-verification-icons.patch) | custom verification icons animate like any other custom emoji | always on |
+| [20](patches/tdesktop/0020-feat-show-checkmarks-and-custom-verification-next-to.patch) | checkmarks and custom verification next to sender names in messages | tele → chats, off |
 
 ### title bar template
 
