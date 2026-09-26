@@ -1,0 +1,895 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sat, 26 Sep 2026 21:10:45 +0300
+Subject: [PATCH] feat: send quick replies in groups and channels
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../chat_helpers/field_autocomplete.cpp       |  27 +-
+ .../SourceFiles/history/history_widget.cpp    |   8 +-
+ .../view/history_view_chat_section.cpp        |   8 +-
+ .../SourceFiles/settings/settings_tele.cpp    |   5 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |  14 +
+ Telegram/SourceFiles/tele/tele_options.h      |   2 +
+ Telegram/SourceFiles/tele/tele_shortcuts.cpp  | 625 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_shortcuts.h    |  29 +
+ 9 files changed, 710 insertions(+), 10 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_shortcuts.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_shortcuts.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index e40820ccf65d53c6083366a7dc68d13af1b8cb8e..f03ccbcb6a9bc2bc1fd8eafc39bab4e6900b51d8 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2219,6 +2219,8 @@ PRIVATE
+     tele/tele_button_payload.h
+     tele/tele_options.cpp
+     tele/tele_options.h
++    tele/tele_shortcuts.cpp
++    tele/tele_shortcuts.h
+     tele/tele_updater.cpp
+     tele/tele_updater.h
+ )
+diff --git a/Telegram/SourceFiles/chat_helpers/field_autocomplete.cpp b/Telegram/SourceFiles/chat_helpers/field_autocomplete.cpp
+index d2f8a9f99ebd5ef8186c92f142ccca763b974c65..6fd3698f727ff9d27a8bb99b07873322612f6ae7 100644
+--- a/Telegram/SourceFiles/chat_helpers/field_autocomplete.cpp
++++ b/Telegram/SourceFiles/chat_helpers/field_autocomplete.cpp
+@@ -39,6 +39,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "media/clip/media_clip_reader.h"
+ #include "menu/menu_send.h" // SendMenu::FillSendMenu
+ #include "storage/storage_account.h"
++#include "tele/tele_shortcuts.h"
+ #include "ui/effects/message_sending_animation_common.h"
+ #include "ui/effects/path_shift_gradient.h"
+ #include "ui/image/image.h"
+@@ -771,11 +772,18 @@ void FieldAutocomplete::updateFiltered(bool resetScroll) {
+ 				}
+ 			}
+ 		}
+-		const auto shortcuts = (_user && !_user->isBot())
+-			? _user->owner().shortcutMessages().shortcuts().list
++		const auto groupShortcuts = Tele::ShortcutsInChat(
++			this,
++			_chat,
++			_channel);
++		const auto shortcuts = ((_user && !_user->isBot()) || groupShortcuts)
++			? _session->data().shortcutMessages().shortcuts().list
+ 			: base::flat_map<BusinessShortcutId, Data::Shortcut>();
+-		if (!hasUsername && brows.empty() && !shortcuts.empty()) {
+-			const auto self = _user->session().user();
++		if (!hasUsername
++			&& (brows.empty() || groupShortcuts)
++			&& !shortcuts.empty()) {
++			const auto self = _session->user();
++			const auto from = int(brows.size());
+ 			for (const auto &[id, shortcut] : shortcuts) {
+ 				const auto &name = shortcut.name;
+ 				if (shortcut.count < 1
+@@ -793,8 +801,8 @@ void FieldAutocomplete::updateFiltered(bool resetScroll) {
+ 					.userpic = self->activeUserpicView(),
+ 				});
+ 			}
+-			if (!brows.empty()) {
+-				brows.insert(begin(brows), { .user = self }); // Edit.
++			if (int(brows.size()) > from) {
++				brows.insert(begin(brows) + from, { .user = self }); // Edit.
+ 			}
+ 		}
+ 	}
+@@ -1392,7 +1400,7 @@ void FieldAutocomplete::Inner::paintRows(Painter &p, QRect clip) {
+ 			}
+ 
+ 			auto toHighlight = row.command;
+-			if (withUsername) {
++			if (withUsername && !user->isSelf()) {
+ 				toHighlight += '@' + PrimaryUsername(user);
+ 			}
+ 			user->loadUserpic();
+@@ -1612,7 +1620,7 @@ bool FieldAutocomplete::Inner::chooseAtIndex(
+ 			const auto &command = _brows->at(index).command;
+ 			const auto commandString = u"/%1%2"_q.arg(
+ 				command,
+-				commandsWithUsername()
++				(commandsWithUsername() && !user->isSelf())
+ 					? ('@' + PrimaryUsername(user))
+ 					: QString());
+ 			_botCommandChosen.fire({ user, commandString, method });
+@@ -2030,6 +2038,9 @@ void InitFieldAutocomplete(
+ 	const auto shortcutMessages = (processShortcut != nullptr)
+ 		? &peer->owner().shortcutMessages()
+ 		: nullptr;
++	if (processShortcut) {
++		Tele::MarkShortcutsActionable(raw);
++	}
+ 	raw->botCommandChosen(
+ 	) | rpl::on_next([=](FieldAutocomplete::BotCommandChosen data) {
+ 		if (!features().autocompleteCommands) {
+diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
+index cdddd73d517b0aa8ab6067c323a1b2988cc0099d..70eaa4f022cb2c867531a39cb560b2a6dea4aa40 100644
+--- a/Telegram/SourceFiles/history/history_widget.cpp
++++ b/Telegram/SourceFiles/history/history_widget.cpp
+@@ -167,6 +167,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "storage/file_upload.h"
+ #include "storage/storage_folder_archive.h"
+ #include "storage/storage_media_prepare.h"
++#include "tele/tele_shortcuts.h"
+ #include "media/audio/media_audio.h"
+ #include "media/audio/media_audio_capture.h"
+ #include "media/player/media_player_instance.h"
+@@ -1956,7 +1957,12 @@ void HistoryWidget::initFieldAutocomplete() {
+ 				controller(),
+ 				PremiumFeature::QuickReplies);
+ 		} else if (shortcutId) {
+-			session().api().sendShortcutMessages(_peer, shortcutId);
++			if (Tele::SendShortcut(
++					controller()->uiShow(),
++					prepareSendAction({}),
++					shortcutId)) {
++				cancelReply();
++			}
+ 			session().api().finishForwarding(prepareSendAction({}));
+ 			setFieldText(_field->getTextWithTagsPart(
+ 				_field->textCursor().position()));
+diff --git a/Telegram/SourceFiles/history/view/history_view_chat_section.cpp b/Telegram/SourceFiles/history/view/history_view_chat_section.cpp
+index 7366ba88f7ddc24ffd426665a6e9df4793b62936..c9135a1339659a59ae6de8803eb6d0aaeac697c2 100644
+--- a/Telegram/SourceFiles/history/view/history_view_chat_section.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_chat_section.cpp
+@@ -118,6 +118,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "support/support_autocomplete.h"
+ #include "support/support_common.h"
+ #include "support/support_preload.h"
++#include "tele/tele_shortcuts.h"
+ #include "inline_bots/inline_bot_result.h"
+ #include "info/profile/info_profile_values.h"
+ #include "iv/editor/iv_editor_session.h"
+@@ -445,7 +446,12 @@ ChatWidget::ChatWidget(
+ 					controller,
+ 					PremiumFeature::QuickReplies);
+ 			} else if (shortcutId) {
+-				session().api().sendShortcutMessages(_peer, shortcutId);
++				if (Tele::SendShortcut(
++						controller->uiShow(),
++						prepareSendAction({}),
++						shortcutId)) {
++					_composeControls->cancelReplyMessage();
++				}
+ 				session().api().finishForwarding(prepareSendAction({}));
+ 				if (const auto field = _composeControls->fieldForMention()) {
+ 					_composeControls->setText(field->getTextWithTagsPart(
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 8aa99352d215ced94b1ecab540876349df242159..cf34d4591bba16ba3f4bec0b27441fae3a1d80d0 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -178,6 +178,11 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
++	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
++	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
++	Ui::AddSkip(content);
++	Ui::AddDivider(content);
++	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Updates"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
+ 	AddUpdates(content);
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index e4bc0261910b539f8356ee9abccc74ce8c18b9d3..fb4c3431cf9265c13c9ba7b118144be462466190 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -8,6 +8,7 @@ const char kOptionHideStories[] = "tele-hide-stories";
+ const char kOptionInvisibleStories[] = "tele-invisible-stories";
+ const char kOptionButtonPayloads[] = "tele-button-payloads";
+ const char kOptionAutoUpdate[] = "tele-auto-update";
++const char kOptionGroupQuickReplies[] = "tele-group-quick-replies";
+ 
+ namespace {
+ 
+@@ -44,6 +45,15 @@ base::options::toggle AutoUpdateOption({
+ 	.defaultValue = true,
+ });
+ 
++base::options::toggle GroupQuickRepliesOption({
++	.id = kOptionGroupQuickReplies,
++	.name = "Quick replies in groups and channels",
++	.description = "Offer your Business quick replies in groups and "
++		"channels too. Telegram only sends them in private chats, so "
++		"tele posts the shortcut's messages as ordinary ones: bot "
++		"keyboards, via-bot labels and message effects are dropped.",
++});
++
+ } // namespace
+ 
+ bool HideStories() {
+@@ -72,4 +82,8 @@ rpl::producer<bool> AutoUpdateValue() {
+ 	});
+ }
+ 
++bool GroupQuickReplies() {
++	return GroupQuickRepliesOption.value();
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 8701f56e74f11b4dc252508b38b546083fe982cb..f26f4c43d836e20b3190a6432e52c3209a38e5a9 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -6,11 +6,13 @@ extern const char kOptionHideStories[];
+ extern const char kOptionInvisibleStories[];
+ extern const char kOptionButtonPayloads[];
+ extern const char kOptionAutoUpdate[];
++extern const char kOptionGroupQuickReplies[];
+ 
+ [[nodiscard]] bool HideStories();
+ [[nodiscard]] bool InvisibleStories();
+ [[nodiscard]] bool ButtonPayloads();
+ [[nodiscard]] bool AutoUpdate();
+ [[nodiscard]] rpl::producer<bool> AutoUpdateValue();
++[[nodiscard]] bool GroupQuickReplies();
+ 
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_shortcuts.cpp b/Telegram/SourceFiles/tele/tele_shortcuts.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..1b9dd9d51ce19dc50ad66d0d9fcf9bffc61757a2
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_shortcuts.cpp
+@@ -0,0 +1,625 @@
++#include "tele/tele_shortcuts.h"
++
++#include "api/api_common.h"
++#include "api/api_polls.h"
++#include "api/api_sending.h"
++#include "api/api_text_entities.h"
++#include "api/api_todo_lists.h"
++#include "apiwrap.h"
++#include "base/call_delayed.h"
++#include "base/random.h"
++#include "chat_helpers/compose/compose_show.h"
++#include "data/business/data_shortcut_messages.h"
++#include "data/data_channel.h"
++#include "data/data_chat.h"
++#include "data/data_chat_participant_status.h"
++#include "data/data_cloud_file.h"
++#include "data/data_document.h"
++#include "data/data_file_origin.h"
++#include "data/data_histories.h"
++#include "data/data_media_types.h"
++#include "data/data_messages.h"
++#include "data/data_photo.h"
++#include "data/data_poll.h"
++#include "data/data_session.h"
++#include "data/data_todo_list.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "history/history_item_helpers.h"
++#include "iv/iv_rich_message_serializer.h"
++#include "iv/iv_rich_page.h"
++#include "lang/lang_keys.h"
++#include "main/main_session.h"
++#include "tele/tele_options.h"
++#include "ui/image/image_location.h"
++
++namespace Tele {
++namespace {
++
++constexpr auto kLoadTimeout = 15 * crl::time(1000);
++constexpr auto kActionableProperty = "teleShortcutsActionable";
++
++enum class Kind {
++	Text,
++	Rich,
++	Media,
++	Poll,
++	TodoList,
++	Contact,
++	Location,
++	Dice,
++	Skip,
++};
++
++struct Unit {
++	Kind kind = Kind::Skip;
++	HistoryItemsList items;
++};
++
++struct MediaEntry {
++	PhotoData *photo = nullptr;
++	DocumentData *document = nullptr;
++	PhotoData *cover = nullptr;
++	TimeId timestamp = 0;
++	bool spoiler = false;
++	FullMsgId origin;
++	TextWithEntities caption;
++	FullMsgId localId;
++	uint64 randomId = 0;
++};
++
++struct Waiter {
++	rpl::lifetime lifetime;
++	bool finished = false;
++};
++
++struct Sending {
++	std::shared_ptr<ChatHelpers::Show> show;
++	Api::SendAction action;
++	FullReplyTo rest;
++	std::vector<Unit> units;
++	std::vector<QString> skipped;
++	size_t next = 0;
++};
++
++void AddSkipped(std::vector<QString> &skipped, const QString &label) {
++	if (!ranges::contains(skipped, label)) {
++		skipped.push_back(label);
++	}
++}
++
++[[nodiscard]] Kind Classify(not_null<HistoryItem*> item, QString &skipped) {
++	if (item->richPage()) {
++		return Kind::Rich;
++	}
++	const auto media = item->media();
++	if (!media || media->webpage()) {
++		return Kind::Text;
++	} else if (const auto invoice = media->invoice()) {
++		skipped = invoice->isPaidMedia ? u"paid media"_q : u"invoices"_q;
++	} else if (media->game()) {
++		skipped = u"games"_q;
++	} else if (media->storyId()) {
++		skipped = u"stories"_q;
++	} else if (media->giveawayStart() || media->giveawayResults()) {
++		skipped = u"giveaways"_q;
++	} else if (media->photo() || media->document()) {
++		return Kind::Media;
++	} else if (media->poll()) {
++		return Kind::Poll;
++	} else if (media->todolist()) {
++		return Kind::TodoList;
++	} else if (media->sharedContact()) {
++		return Kind::Contact;
++	} else if (media->location()) {
++		// venue titles and live periods aren't exposed by Data::MediaLocation
++		if (media->notificationText().text == tr::lng_maps_point(tr::now)) {
++			return Kind::Location;
++		}
++		skipped = u"venues"_q;
++	} else if (dynamic_cast<const Data::MediaDice*>(media)) {
++		return Kind::Dice;
++	} else {
++		skipped = u"unsupported messages"_q;
++	}
++	return Kind::Skip;
++}
++
++[[nodiscard]] std::vector<Unit> CollectUnits(
++		const HistoryItemsList &items,
++		std::vector<QString> &skipped) {
++	auto result = std::vector<Unit>();
++	for (const auto &item : items) {
++		auto label = QString();
++		const auto kind = Classify(item, label);
++		if (kind == Kind::Skip) {
++			AddSkipped(skipped, label);
++			continue;
++		}
++		const auto groupId = item->groupId();
++		if (kind == Kind::Media
++			&& groupId
++			&& !result.empty()
++			&& result.back().kind == Kind::Media
++			&& result.back().items.back()->groupId() == groupId) {
++			result.back().items.push_back(item);
++			continue;
++		}
++		result.push_back(Unit{ .kind = kind, .items = { item } });
++	}
++	return result;
++}
++
++[[nodiscard]] std::optional<HistoryItemsList> LoadedItems(
++		not_null<Main::Session*> session,
++		BusinessShortcutId id) {
++	const auto messages = &session->data().shortcutMessages();
++	if (!messages->shortcuts().list.contains(id)) {
++		return HistoryItemsList();
++	}
++	const auto slice = messages->list(id);
++	auto result = HistoryItemsList();
++	for (const auto &fullId : slice.ids) {
++		if (const auto item = session->data().message(fullId)) {
++			if (!item->isSending() && !item->hasFailed()) {
++				result.push_back(item);
++			}
++		}
++	}
++	const auto count = messages->lookupShortcut(id).count;
++	if (count < 1 || int(result.size()) < count) {
++		return std::nullopt;
++	}
++	return result;
++}
++
++[[nodiscard]] MTPInputMedia PrepareInputMedia(const MediaEntry &entry) {
++	if (const auto photo = entry.photo) {
++		using Flag = MTPDinputMediaPhoto::Flag;
++		return MTP_inputMediaPhoto(
++			MTP_flags(entry.spoiler ? Flag::f_spoiler : Flag(0)),
++			photo->mtpInput(),
++			MTPint(),
++			MTPInputDocument());
++	}
++	using Flag = MTPDinputMediaDocument::Flag;
++	return MTP_inputMediaDocument(
++		MTP_flags(Flag(0)
++			| (entry.spoiler ? Flag::f_spoiler : Flag(0))
++			| (entry.cover ? Flag::f_video_cover : Flag(0))
++			| (entry.timestamp ? Flag::f_video_timestamp : Flag(0))),
++		entry.document->mtpInput(),
++		(entry.cover ? entry.cover->mtpInput() : MTPInputPhoto()),
++		MTP_int(entry.timestamp),
++		MTPint(),
++		MTPstring());
++}
++
++[[nodiscard]] QByteArray FileReferences(
++		const std::vector<MediaEntry> &entries) {
++	auto result = QByteArray();
++	for (const auto &entry : entries) {
++		result += entry.photo
++			? entry.photo->fileReference()
++			: entry.document->fileReference();
++		if (entry.cover) {
++			result += entry.cover->fileReference();
++		}
++	}
++	return result;
++}
++
++void SendMedia(
++		Api::SendAction action,
++		const HistoryItemsList &items,
++		Fn<void()> finished) {
++	const auto history = action.history;
++	const auto peer = history->peer;
++	const auto session = &history->session();
++	const auto api = &session->api();
++	const auto multi = (items.size() > 1);
++	const auto groupId = multi ? base::RandomValue<uint64>() : uint64(0);
++	auto invert = false;
++	for (const auto &item : items) {
++		invert = invert || item->invertMedia();
++	}
++
++	api->sendAction(action);
++
++	auto flags = NewMessageFlags(peer);
++	if (action.replyTo) {
++		flags |= MessageFlag::HasReplyInfo;
++	}
++	Api::FillMessagePostFlags(action, peer, flags);
++	if (action.options.scheduled) {
++		flags |= MessageFlag::IsOrWasScheduled;
++	}
++	if (invert) {
++		flags |= MessageFlag::InvertMedia;
++	}
++
++	auto entries = std::vector<MediaEntry>();
++	entries.reserve(items.size());
++	for (const auto &item : items) {
++		const auto media = item->media();
++		auto entry = MediaEntry{
++			.photo = media->photo(),
++			.document = media->document(),
++			.cover = media->videoCover(),
++			.timestamp = media->videoTimestamp(),
++			.spoiler = media->hasSpoiler(),
++			.origin = item->fullId(),
++			.caption = item->originalText(),
++			.localId = FullMsgId(
++				peer->id,
++				session->data().nextLocalMessageId()),
++			.randomId = base::RandomValue<uint64>(),
++		};
++		session->data().registerMessageRandomId(
++			entry.randomId,
++			entry.localId);
++		auto fields = HistoryItemCommonFields{
++			.id = entry.localId.msg,
++			.flags = flags,
++			.from = NewMessageFromId(action),
++			.replyTo = action.replyTo,
++			.date = NewMessageDate(action.options),
++			.postAuthor = NewMessagePostAuthor(action),
++			.groupedId = groupId,
++			.mediaSpoiler = entry.spoiler,
++		};
++		if (const auto photo = entry.photo) {
++			history->addNewLocalMessage(
++				std::move(fields),
++				not_null<PhotoData*>(photo),
++				entry.caption);
++		} else {
++			history->addNewLocalMessage(
++				std::move(fields),
++				not_null<DocumentData*>(entry.document),
++				entry.caption);
++		}
++		entries.push_back(std::move(entry));
++	}
++
++	const auto state = std::make_shared<std::vector<MediaEntry>>(
++		std::move(entries));
++	const auto fail = [=](const MTP::Error &error) {
++		for (const auto &entry : *state) {
++			api->sendMessageFail(error, peer, entry.randomId, entry.localId);
++		}
++		finished();
++	};
++	const auto perform = [=](const auto &self, bool refreshed) -> void {
++		const auto used = FileReferences(*state);
++		const auto retry = [=](
++				const MTP::Error &error,
++				const MTP::Response &response) {
++			if (refreshed
++				|| (error.code() != 400)
++				|| !error.type().startsWith(u"FILE_REFERENCE_"_q)) {
++				fail(error);
++				return;
++			}
++			const auto left = std::make_shared<int>(int(state->size()));
++			for (const auto &entry : *state) {
++				api->refreshFileReference(
++					Data::FileOriginMessage(entry.origin),
++					[=](const auto &) {
++						if (--*left) {
++							return;
++						} else if (FileReferences(*state) != used) {
++							self(self, true);
++						} else {
++							fail(error);
++						}
++					});
++			}
++		};
++		const auto done = [=](
++				const MTPUpdates &result,
++				const MTP::Response &response) {
++			finished();
++		};
++		const auto sendAs = action.options.sendAs;
++		const auto silent = ShouldSendSilent(peer, action.options);
++		auto &histories = history->owner().histories();
++		if (!multi) {
++			const auto &entry = state->front();
++			const auto entities = Api::EntitiesToMTP(
++				session,
++				entry.caption.entities,
++				Api::ConvertOption::SkipLocal);
++			using Flag = MTPmessages_SendMedia::Flag;
++			const auto sendFlags = Flag(0)
++				| (action.replyTo ? Flag::f_reply_to : Flag(0))
++				| (silent ? Flag::f_silent : Flag(0))
++				| (entities.v.isEmpty() ? Flag(0) : Flag::f_entities)
++				| (action.options.scheduled
++					? Flag::f_schedule_date
++					: Flag(0))
++				| (sendAs ? Flag::f_send_as : Flag(0))
++				| (invert ? Flag::f_invert_media : Flag(0));
++			histories.sendPreparedMessage(
++				history,
++				action.replyTo,
++				entry.randomId,
++				Data::Histories::PrepareMessage<MTPmessages_SendMedia>(
++					MTP_flags(sendFlags),
++					peer->input(),
++					Data::Histories::ReplyToPlaceholder(),
++					PrepareInputMedia(entry),
++					MTP_string(entry.caption.text),
++					MTP_long(entry.randomId),
++					MTPReplyMarkup(),
++					entities,
++					MTP_int(action.options.scheduled),
++					MTPint(),
++					(sendAs ? sendAs->input() : MTP_inputPeerEmpty()),
++					MTPInputQuickReplyShortcut(),
++					MTP_long(0),
++					MTP_long(0),
++					MTPSuggestedPost()),
++				done,
++				retry);
++			return;
++		}
++		auto media = QVector<MTPInputSingleMedia>();
++		media.reserve(state->size());
++		for (const auto &entry : *state) {
++			const auto entities = Api::EntitiesToMTP(
++				session,
++				entry.caption.entities,
++				Api::ConvertOption::SkipLocal);
++			using Flag = MTPDinputSingleMedia::Flag;
++			media.push_back(MTP_inputSingleMedia(
++				MTP_flags(entities.v.isEmpty() ? Flag(0) : Flag::f_entities),
++				PrepareInputMedia(entry),
++				MTP_long(entry.randomId),
++				MTP_string(entry.caption.text),
++				entities));
++		}
++		using Flag = MTPmessages_SendMultiMedia::Flag;
++		const auto sendFlags = Flag(0)
++			| (action.replyTo ? Flag::f_reply_to : Flag(0))
++			| (silent ? Flag::f_silent : Flag(0))
++			| (action.options.scheduled ? Flag::f_schedule_date : Flag(0))
++			| (sendAs ? Flag::f_send_as : Flag(0))
++			| (invert ? Flag::f_invert_media : Flag(0));
++		histories.sendPreparedMessage(
++			history,
++			action.replyTo,
++			uint64(0),
++			Data::Histories::PrepareMessage<MTPmessages_SendMultiMedia>(
++				MTP_flags(sendFlags),
++				peer->input(),
++				Data::Histories::ReplyToPlaceholder(),
++				MTP_vector<MTPInputSingleMedia>(std::move(media)),
++				MTP_int(action.options.scheduled),
++				(sendAs ? sendAs->input() : MTP_inputPeerEmpty()),
++				MTPInputQuickReplyShortcut(),
++				MTP_long(0),
++				MTP_long(0)),
++			done,
++			retry);
++	};
++	perform(perform, false);
++}
++
++[[nodiscard]] bool SendUnit(
++		const Api::SendAction &action,
++		const Unit &unit,
++		std::vector<QString> &skipped) {
++	const auto session = &action.history->session();
++	const auto api = &session->api();
++	const auto item = unit.items.front();
++	const auto media = item->media();
++	switch (unit.kind) {
++	case Kind::Text: {
++		const auto &text = item->originalText();
++		if (text.text.isEmpty()) {
++			return false;
++		}
++		auto message = Api::MessageToSend(action);
++		message.textWithTags = TextWithTags{
++			text.text,
++			TextUtilities::ConvertEntitiesToTextTags(text.entities),
++		};
++		message.webPage = Data::WebPageDraft::FromItem(item);
++		api->sendMessage(std::move(message));
++		return true;
++	}
++	case Kind::Rich: {
++		const auto full = item->fullRichPage();
++		const auto page = full ? full : item->richPage();
++		const auto serialized = Iv::SerializeInputRichMessage(
++			session,
++			*page,
++			Iv::SerializeInputRichMessageMode::FinalSubmit);
++		if (serialized.status != Iv::SerializeInputRichMessageStatus::Success
++			|| !serialized.value) {
++			AddSkipped(skipped, u"rich messages"_q);
++			return false;
++		}
++		api->sendRichMessage(page, *serialized.value, action);
++		return true;
++	}
++	case Kind::Media:
++		return false;
++	case Kind::Poll:
++		api->polls().create(
++			*media->poll(),
++			item->originalText(),
++			action,
++			[] {},
++			[](bool) {});
++		return true;
++	case Kind::TodoList:
++		api->todoLists().create(
++			*media->todolist(),
++			action,
++			[] {},
++			[](QString) {});
++		return true;
++	case Kind::Contact: {
++		const auto contact = media->sharedContact();
++		api->shareContact(
++			contact->phoneNumber,
++			contact->firstName,
++			contact->lastName,
++			action);
++		return true;
++	}
++	case Kind::Location: {
++		const auto point = std::get_if<GeoPointLocation>(
++			&media->location()->location().file().data);
++		if (!point) {
++			AddSkipped(skipped, u"locations"_q);
++			return false;
++		}
++		Api::SendLocation(action, point->lat, point->lon);
++		return true;
++	}
++	case Kind::Dice: {
++		const auto dice = static_cast<const Data::MediaDice*>(media);
++		auto message = Api::MessageToSend(action);
++		message.textWithTags.text = dice->emoji();
++		if (!Api::SendDice(message)) {
++			AddSkipped(skipped, u"dice"_q);
++			return false;
++		}
++		return true;
++	}
++	case Kind::Skip:
++		return false;
++	}
++	Unexpected("Kind in Tele::SendUnit.");
++}
++
++void SendNext(std::shared_ptr<Sending> state) {
++	while (state->next != state->units.size()) {
++		const auto &unit = state->units[state->next++];
++		if (unit.kind == Kind::Media) {
++			SendMedia(state->action, unit.items, [=] { SendNext(state); });
++			state->action.replyTo = state->rest;
++			return;
++		} else if (SendUnit(state->action, unit, state->skipped)) {
++			state->action.replyTo = state->rest;
++		}
++	}
++	if (!state->skipped.empty()) {
++		state->show->showToast(u"not sent from this quick reply: "_q
++			+ QStringList(
++				begin(state->skipped),
++				end(state->skipped)).join(u", "_q));
++	}
++}
++
++void SendItems(
++		std::shared_ptr<ChatHelpers::Show> show,
++		Api::SendAction action,
++		const HistoryItemsList &items) {
++	const auto peer = action.history->peer;
++	auto skipped = std::vector<QString>();
++	auto units = CollectUnits(items, skipped);
++	auto sending = HistoryItemsList();
++	for (const auto &unit : units) {
++		sending.insert(end(sending), begin(unit.items), end(unit.items));
++	}
++	if (!sending.empty()) {
++		const auto error = GetErrorForSending(peer, {
++			.topicRootId = action.replyTo.topicRootId,
++			.forward = &sending,
++		});
++		if (error) {
++			Data::ShowSendErrorToast(show, peer, error);
++			return;
++		}
++	}
++	const auto topicRootId = action.replyTo.topicRootId;
++	auto rest = FullReplyTo{
++		.messageId = (topicRootId
++			? FullMsgId(peer->id, topicRootId)
++			: FullMsgId()),
++		.topicRootId = topicRootId,
++		.monoforumPeerId = action.replyTo.monoforumPeerId,
++	};
++	SendNext(std::make_shared<Sending>(Sending{
++		.show = std::move(show),
++		.action = std::move(action),
++		.rest = std::move(rest),
++		.units = std::move(units),
++		.skipped = std::move(skipped),
++	}));
++}
++
++[[nodiscard]] bool GroupShortcutsAllowed(
++		ChatData *chat,
++		ChannelData *channel) {
++	if (!GroupQuickReplies()) {
++		return false;
++	} else if (chat) {
++		return !chat->starsPerMessageChecked();
++	}
++	return channel
++		&& (channel->isMegagroup() || channel->isBroadcast())
++		&& !channel->starsPerMessageChecked();
++}
++
++} // namespace
++
++void MarkShortcutsActionable(not_null<QObject*> autocomplete) {
++	autocomplete->setProperty(kActionableProperty, true);
++}
++
++bool ShortcutsInChat(
++		not_null<const QObject*> autocomplete,
++		ChatData *chat,
++		ChannelData *channel) {
++	return autocomplete->property(kActionableProperty).toBool()
++		&& GroupShortcutsAllowed(chat, channel);
++}
++
++bool SendShortcut(
++		std::shared_ptr<ChatHelpers::Show> show,
++		Api::SendAction action,
++		BusinessShortcutId id) {
++	const auto peer = action.history->peer;
++	const auto session = &action.history->session();
++	if (!GroupShortcutsAllowed(peer->asChat(), peer->asChannel())) {
++		session->api().sendShortcutMessages(peer, id);
++		return false;
++	}
++	action.clearDraft = false;
++	action.options.effectId = 0;
++	if (const auto items = LoadedItems(session, id)) {
++		SendItems(show, action, *items);
++		return true;
++	}
++	const auto waiter = std::make_shared<Waiter>();
++	session->data().shortcutMessages().updates(
++		id
++	) | rpl::map([=] {
++		return LoadedItems(session, id);
++	}) | rpl::filter([](const std::optional<HistoryItemsList> &items) {
++		return items.has_value();
++	}) | rpl::take(
++		1
++	) | rpl::on_next([=, weak = std::weak_ptr<Waiter>(waiter)](
++			const std::optional<HistoryItemsList> &items) {
++		if (const auto strong = weak.lock()) {
++			strong->finished = true;
++		}
++		SendItems(show, action, *items);
++	}, waiter->lifetime);
++	base::call_delayed(kLoadTimeout, session, [=] {
++		if (!waiter->finished) {
++			waiter->finished = true;
++			waiter->lifetime.destroy();
++			show->showToast(u"couldn't load this quick reply"_q);
++		}
++	});
++	return true;
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_shortcuts.h b/Telegram/SourceFiles/tele/tele_shortcuts.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..b9a8b340173be5debf736c739b3ef5dba6e412b0
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_shortcuts.h
+@@ -0,0 +1,29 @@
++#pragma once
++
++#include "data/data_msg_id.h"
++
++class ChatData;
++class ChannelData;
++
++namespace Api {
++struct SendAction;
++} // namespace Api
++
++namespace ChatHelpers {
++class Show;
++} // namespace ChatHelpers
++
++namespace Tele {
++
++void MarkShortcutsActionable(not_null<QObject*> autocomplete);
++[[nodiscard]] bool ShortcutsInChat(
++	not_null<const QObject*> autocomplete,
++	ChatData *chat,
++	ChannelData *channel);
++
++[[nodiscard]] bool SendShortcut(
++	std::shared_ptr<ChatHelpers::Show> show,
++	Api::SendAction action,
++	BusinessShortcutId id);
++
++} // namespace Tele
