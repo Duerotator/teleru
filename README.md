@@ -92,6 +92,49 @@ the default is `TELE {build}`. empty hides the label.
 
 tele can pull extra account data, like checkmarks, custom verification and scam / fake marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
 
+#### running your own server
+
+any server that serves the same format works: point settings → tele → server at it. the list never contains account ids, only keys that can't be turned back into ids without trying them one by one.
+
+tele asks `GET <server>/v1/badges` and expects json like this:
+
+```json
+{
+  "salt": "AAECAwQFBgcICQoLDA0ODw==",
+  "argon2": { "memory": 8192, "passes": 1, "lanes": 1 },
+  "peers": {
+    "iguxbtP_SnLvK69aBff2OQ": { "checkmark": true, "icon": "5368324170671202286", "description": "official" },
+    "w5Zbi-HfwlqkJ6S4wjwqcw": { "scam": true }
+  }
+}
+```
+
+- `salt` is 8 to 64 random bytes in standard base64 with padding.
+- `argon2` are the argon2id costs: `memory` in KiB (1024 to 65536), `passes` (1 to 8), `lanes` (1 to 8), and `memory × passes` at most 65536. the official server uses 8192 / 1 / 1.
+- each key in `peers` is `base64url` without padding of `argon2id(password, salt)` with those costs, a 16-byte output, version `0x13`, no secret and no associated data.
+- the password is the utf-8 string `<scope>:<id>`:
+  - `scope` is `prod`, or `test` for accounts on telegram's test servers;
+  - `id` is the bot api style id: users as is (`777000`), channels and supergroups as `-100` followed by the channel id (`-1001234567890`). basic groups can't have entries.
+- every field of an entry is optional: `checkmark`, `scam` and `fake` are booleans (false by default), `icon` is a custom emoji document id as a decimal string, `description` is plain text shown under the verification in the profile. tele ignores fields it doesn't know.
+
+with the salt above, `prod:777000` gives `iguxbtP_SnLvK69aBff2OQ` and `prod:-1001234567890` gives `w5Zbi-HfwlqkJ6S4wjwqcw`. check your implementation against these two before anything else. in python:
+
+```python
+from argon2.low_level import hash_secret_raw, Type
+import base64
+
+raw = hash_secret_raw(b"prod:777000", bytes(range(16)), time_cost=1, memory_cost=8192,
+                      parallelism=1, hash_len=16, type=Type.ID, version=0x13)
+print(base64.urlsafe_b64encode(raw).rstrip(b"=").decode())  # iguxbtP_SnLvK69aBff2OQ
+```
+
+to keep it that way:
+
+- serve the keys sorted, so their order says nothing about the accounts behind them.
+- change the salt from time to time (the official server derives a new one every month), so lists from different times can't be compared key by key. every key has to be recomputed with the new salt.
+- keep the costs within the limits above: tele computes one key for every account it shows, and rejects a list that asks for more.
+
+tele also rejects a list over 4 MiB or with more than 100000 entries, and then keeps using the last good one. it sends `If-None-Match` with `"<hex sha256 of the body it has>"`, so answering `304` when that matches the current body saves traffic, and a server can't tag clients with its own etags.
 ## how it works
 
 - `UPSTREAM` holds the tdesktop tag the patches target, `patches/` holds the patches (grouped per repo, so submodules get their own folders), and `tele.py` moves a tdesktop checkout to that tag and applies, continues or exports them.
