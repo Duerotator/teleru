@@ -21,6 +21,9 @@ on:
       from_run:
         description: publish the builds of this finished run instead of building again (its patches must match)
         default: ''
+      number:
+        description: release number to build as (must be above every existing one), empty for the next free one
+        default: ''
 
 permissions:
   contents: read
@@ -32,11 +35,14 @@ jobs:
   number:
     name: Release number
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: read
     outputs:
-      tag: ${{ steps.number.outputs.tag }}
-      base: ${{ steps.number.outputs.base }}
-      counter: ${{ steps.number.outputs.counter }}
-      upstream: ${{ steps.number.outputs.upstream }}
+      tag: ${{ steps.number.outputs.tag || steps.finished.outputs.tag }}
+      base: ${{ steps.number.outputs.base || steps.finished.outputs.base }}
+      counter: ${{ steps.number.outputs.counter || steps.finished.outputs.counter }}
+      upstream: ${{ steps.number.outputs.upstream || steps.finished.outputs.upstream }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -59,9 +65,11 @@ jobs:
 
       - name: Pick the release number
         id: number
+        if: ${{ !inputs.from_run }}
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
+          NUMBER: ${{ inputs.number }}
         run: |
           upstream=$(tr -d '[:space:]' < UPSTREAM)
           base="$upstream-tele"
@@ -71,6 +79,13 @@ jobs:
             git ls-remote --tags "$GITHUB_SERVER_URL/$GH_REPO.git" | sed -n 's|^[0-9a-f]*\trefs/tags/||p'
           } | sed -n "s/$pattern/\1/p" | sort -n | tail -n1)
           number=$(( ${last:-0} + 1 ))
+          if [ -n "$NUMBER" ]; then
+            if ! [[ "$NUMBER" =~ ^[1-9][0-9]*$ ]] || [ "$NUMBER" -le "${last:-0}" ]; then
+              echo "::error::the release number has to be above ${last:-0}, got '$NUMBER'"
+              exit 1
+            fi
+            number=$NUMBER
+          fi
           version=$(curl -fsSL "https://raw.githubusercontent.com/telegramdesktop/tdesktop/$upstream/Telegram/build/version" \
             | tr -d '\r' | sed -n 's/^AppVersion *\([0-9][0-9]*\)$/\1/p')
           if [ -z "$version" ]; then
@@ -82,8 +97,32 @@ jobs:
             echo "base=$version"
             echo "counter=$number"
             echo "upstream=$upstream"
-          } >> "$GITHUB_OUTPUT"
+          } | tee -a "$GITHUB_OUTPUT" > number.env
           echo "building $base.$number"
+
+      - name: Keep the release number
+        if: ${{ !inputs.from_run }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: tele-number
+          path: number.env
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Take the release number of the finished run
+        if: inputs.from_run
+        uses: actions/download-artifact@v8
+        with:
+          name: tele-number
+          run-id: ${{ inputs.from_run }}
+          github-token: ${{ github.token }}
+
+      - name: Read the release number
+        id: finished
+        if: inputs.from_run
+        run: |
+          cat number.env >> "$GITHUB_OUTPUT"
+          echo "publishing $(sed -n 's/^tag=//p' number.env) from run ${{ inputs.from_run }}"
 
   windows:
     name: Windows x64
@@ -700,22 +739,12 @@ jobs:
 
       - name: Publish release
         run: |
-          echo "PREVIOUS_TAG=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')" >> "$GITHUB_ENV"
-          patches=$(cd tele && { find patches -name '*.patch' 2>/dev/null || true; } | sort)
-          {
-            echo "Telegram Desktop [$UPSTREAM_TAG](https://github.com/telegramdesktop/tdesktop/releases/tag/$UPSTREAM_TAG) with these patches:"
-            echo
-            if [ -z "$patches" ]; then
-              echo "- none, this is upstream as is"
-            fi
-            for patch in $patches; do
-              echo "- [$patch]($GITHUB_SERVER_URL/$GH_REPO/blob/$GITHUB_SHA/$patch)"
-            done
-            echo
-            echo "macos builds are signed ad-hoc: after unpacking, run \`xattr -dr com.apple.quarantine /Applications/tele.app\` once."
-          } > notes.md
+          previous=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')
+          echo "PREVIOUS_TAG=$previous" >> "$GITHUB_ENV"
+          python3 tele/ci/notes.py --repo tele --tag "$TAG" --previous "$previous" --upstream "$UPSTREAM_TAG" \
+            --url "$GITHUB_SERVER_URL/$GH_REPO" --rev "$GITHUB_SHA" --out notes.md
           gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-update-{win64,linux64,macos}.json \
-            --latest --target "$GITHUB_SHA" --title "$TAG" --notes-file notes.md
+            --latest --target "$GITHUB_SHA" --title "tele ${TAG#*-tele.} · $UPSTREAM_TAG" --notes-file notes.md
           bash tele/ci/issue.sh close build-failure "Built $TAG."
 
       - name: Announce
