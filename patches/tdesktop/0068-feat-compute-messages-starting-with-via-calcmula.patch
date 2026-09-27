@@ -8,11 +8,11 @@ Subject: [PATCH] feat: compute messages starting with = via calcmula
  Telegram/SourceFiles/api/api_sending.cpp      |  11 +
  Telegram/SourceFiles/apiwrap.cpp              |   7 +
  .../SourceFiles/settings/settings_tele.cpp    |   1 +
- Telegram/SourceFiles/tele/tele_calcmula.cpp   | 296 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_calcmula.cpp   | 295 ++++++++++++++++++
  Telegram/SourceFiles/tele/tele_calcmula.h     |  27 ++
  Telegram/SourceFiles/tele/tele_options.cpp    |  12 +
  Telegram/SourceFiles/tele/tele_options.h      |   2 +
- 8 files changed, 358 insertions(+)
+ 8 files changed, 357 insertions(+)
  create mode 100644 Telegram/SourceFiles/tele/tele_calcmula.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_calcmula.h
 
@@ -104,10 +104,10 @@ index b78a3d6ad94c720d920058ab93ab9a8c8c9fe970..fa798e0af6ab33bed7d8a0846bd1ba58
  	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
 diff --git a/Telegram/SourceFiles/tele/tele_calcmula.cpp b/Telegram/SourceFiles/tele/tele_calcmula.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..6c0e8281c06c3a5d2592bc726b85b808ee58f429
+index 0000000000000000000000000000000000000000..acac98e380af2500983b506463e9f9b89fc8ab66
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_calcmula.cpp
-@@ -0,0 +1,296 @@
+@@ -0,0 +1,295 @@
 +#include "tele/tele_calcmula.h"
 +
 +#include "api/api_common.h"
@@ -225,11 +225,10 @@ index 0000000000000000000000000000000000000000..6c0e8281c06c3a5d2592bc726b85b808
 +[[nodiscard]] TextWithTags Compose(
 +		const QString &query,
 +		const QString &value) {
-+	const auto quote = u"= "_q + query;
 +	return {
-+		quote + '\n' + value,
++		query + u"\n= "_q + value,
 +		TextUtilities::ConvertEntitiesToTextTags({
-+			EntityInText(EntityType::Blockquote, 0, int(quote.size())),
++			EntityInText(EntityType::Blockquote, 0, int(query.size())),
 +		}),
 +	};
 +}
