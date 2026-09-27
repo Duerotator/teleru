@@ -744,8 +744,8 @@ jobs:
           previous=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')
           echo "PREVIOUS_TAG=$previous" >> "$GITHUB_ENV"
           python3 tele/ci/notes.py --repo tele --tag "$TAG" --previous "$previous" --upstream "$UPSTREAM_TAG" \
-            --url "$GITHUB_SERVER_URL/$GH_REPO" --rev "$GITHUB_SHA" --out notes.md
-          gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-update-{win64,linux64,macos}.json \
+            --url "$GITHUB_SERVER_URL/$GH_REPO" --rev "$GITHUB_SHA" --out notes.md --json tele-changelog.json
+          gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-update-{win64,linux64,macos}.json tele-changelog.json \
             --latest --target "$GITHUB_SHA" --title "tele ${TAG#*-tele.} · $UPSTREAM_TAG" --notes-file notes.md
           bash tele/ci/issue.sh close build-failure "Built $TAG."
 

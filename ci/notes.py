@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
-"""write the github release notes for a tele release as markdown."""
+"""write the github release notes for a tele release as markdown, and optionally as json for the app."""
 
 import argparse
+import json
 import re
 
 from announce import git, patches, subject, upstream
@@ -45,15 +46,44 @@ def entry(rows, path, fallback, url, rev):
     return f'- {fallback}'
 
 
-def notes(args):
-    rev = args.rev
-    now = patches(args.repo, rev)
+def plain(text):
+    return re.sub(r'\[([^\]]*)\]\([^)]*\)', r'\1', text).replace('`', '')
+
+
+def changes(args):
+    now = patches(args.repo, args.rev)
     before = patches(args.repo, args.previous) if args.previous else {}
-    paths = paths_by_subject(args.repo, rev)
-    rows = readme_rows(args.repo, rev)
+    paths = paths_by_subject(args.repo, args.rev)
+    rows = readme_rows(args.repo, args.rev)
     added = [name for name in now if name not in before]
     changed = [name for name in now if name in before and before[name] != now[name]]
     dropped = [name for name in before if name not in now]
+    return now, paths, rows, added, changed, dropped
+
+
+def changelog(args):
+    _, paths, rows, added, changed, _ = changes(args)
+    items = []
+    for name in added + changed:
+        path = paths.get(name, '')
+        if path in rows:
+            _, what, where = rows[path]
+            item = {'text': plain(what), 'where': plain(where)}
+        else:
+            item = {'text': name, 'where': ''}
+        item['url'] = f'{args.url}/blob/{args.rev}/{path}' if path else ''
+        items.append(item)
+    return {
+        'tag': args.tag,
+        'title': f"tele {args.tag.rsplit('-tele.', 1)[-1]}",
+        'items': items,
+        'url': f'{args.url}/releases/tag/{args.tag}',
+    }
+
+
+def notes(args):
+    rev = args.rev
+    now, paths, rows, added, changed, dropped = changes(args)
 
     tdesktop = f'https://github.com/telegramdesktop/tdesktop/releases/tag/{args.upstream}'
     lines = [f'telegram desktop [{args.upstream}]({tdesktop}) with {len(now)} patches.']
@@ -110,9 +140,14 @@ def main():
     parser.add_argument('--upstream', required=True)
     parser.add_argument('--url', required=True, help='github url of the tele repo')
     parser.add_argument('--out', required=True, help='file to write the markdown to')
+    parser.add_argument('--json', default='', help='file to write the changelog json for the app to')
     args = parser.parse_args()
     with open(args.out, 'w', encoding='utf-8', newline='\n') as file:
         file.write(notes(args))
+    if args.json:
+        with open(args.json, 'w', encoding='utf-8', newline='\n') as file:
+            json.dump(changelog(args), file, ensure_ascii=False, indent=2)
+            file.write('\n')
 
 
 if __name__ == '__main__':
