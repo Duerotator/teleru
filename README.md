@@ -8,7 +8,7 @@ grab the latest build from [releases](https://github.com/nitreojs/tele/releases/
 
 - **windows x64**: `tele-<version>-win64.zip`. unpack it anywhere and run `tele.exe`. it keeps its data next to the exe.
 - **linux x64**: `tele-<version>-linux64.zip`. unpack it somewhere you can write to (like `~/.local/opt/tele`) and run `./tele`. it keeps its data in `~/.local/share/tele` and adds itself to the app menu.
-- **macos** (apple silicon and intel): `tele-<version>-macos.zip`. unpack it, move `tele.app` to applications, then run this once in the terminal, since the build isn't notarized by apple:
+- **macos** (apple silicon and intel): `tele-<version>-macos.dmg`. open it, drag tele into applications, then run this once in the terminal, since the build isn't notarized by apple (the `.zip` next to it is what the self-updater downloads):
 
   ```
   xattr -dr com.apple.quarantine /Applications/tele.app

@@ -10,9 +10,9 @@ from announce import git, patches, subject, upstream
 ROW = re.compile(r'^\| \[(\d+)\]\((patches/[^)]+\.patch)\) \| (.*) \| (.*) \|$')
 
 PLATFORMS = (
-    ('windows', 'win64', 'unpack anywhere and run `tele.exe`.'),
-    ('linux', 'linux64', 'unpack and run `tele`. it adds itself to the app menu on the first start.'),
-    ('macos', 'macos', 'unpack, move `tele.app` to applications and run `xattr -dr com.apple.quarantine /Applications/tele.app` once: the build is signed ad-hoc.'),
+    ('windows', 'win64.zip', 'unpack anywhere and run `tele.exe`.'),
+    ('linux', 'linux64.zip', 'unpack and run `tele`. it adds itself to the app menu on the first start.'),
+    ('macos', 'macos.dmg', 'open it, drag tele into applications and run `xattr -dr com.apple.quarantine /Applications/tele.app` once: the build is signed ad-hoc.'),
 )
 
 
@@ -105,7 +105,7 @@ def notes(args):
     download = f'{args.url}/releases/download/{args.tag}'
     lines += ['', '## download', '', '| system | file | |', '|---|---|---|']
     for name, platform, how in PLATFORMS:
-        file = f'tele-{args.tag}-{platform}.zip'
+        file = f'tele-{args.tag}-{platform}'
         lines.append(f'| {name} | [{file}]({download}/{file}) | {how} |')
     lines += [
         '',

@@ -643,12 +643,24 @@ jobs:
           rm -rf "$RUNNER_TEMP/unzipped" && mkdir "$RUNNER_TEMP/unzipped"
           unzip -q "$zip" -d "$RUNNER_TEMP/unzipped"
           codesign --verify --strict --deep "$RUNNER_TEMP/unzipped/tele.app"
+          dmg="$GITHUB_WORKSPACE/tele-$RELEASE_TAG-macos.dmg"
+          rm -rf "$RUNNER_TEMP/dmg" "$RUNNER_TEMP/mounted" && mkdir "$RUNNER_TEMP/dmg" "$RUNNER_TEMP/mounted"
+          ditto "$app" "$RUNNER_TEMP/dmg/tele.app"
+          ln -s /Applications "$RUNNER_TEMP/dmg/Applications"
+          hdiutil create -quiet -volname tele -srcfolder "$RUNNER_TEMP/dmg" -fs HFS+ -format UDZO -ov "$dmg"
+          [ "$(stat -f%z "$dmg")" -lt $((512 * 1024 * 1024)) ]
+          hdiutil attach -quiet -nobrowse -readonly -mountpoint "$RUNNER_TEMP/mounted" "$dmg"
+          codesign --verify --strict --deep "$RUNNER_TEMP/mounted/tele.app"
+          [ -L "$RUNNER_TEMP/mounted/Applications" ]
+          hdiutil detach -quiet "$RUNNER_TEMP/mounted"
 
       - name: Upload the build
         uses: actions/upload-artifact@v7
         with:
           name: release-macos
-          path: tele-${{ env.RELEASE_TAG }}-macos.zip
+          path: |
+            tele-${{ env.RELEASE_TAG }}-macos.zip
+            tele-${{ env.RELEASE_TAG }}-macos.dmg
           if-no-files-found: error
           retention-days: 1
 
@@ -745,7 +757,7 @@ jobs:
           echo "PREVIOUS_TAG=$previous" >> "$GITHUB_ENV"
           python3 tele/ci/notes.py --repo tele --tag "$TAG" --previous "$previous" --upstream "$UPSTREAM_TAG" \
             --url "$GITHUB_SERVER_URL/$GH_REPO" --rev "$GITHUB_SHA" --out notes.md --json tele-changelog.json
-          gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-update-{win64,linux64,macos}.json tele-changelog.json \
+          gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-"$TAG"-macos.dmg tele-update-{win64,linux64,macos}.json tele-changelog.json \
             --latest --target "$GITHUB_SHA" --title "tele ${TAG#*-tele.} · $UPSTREAM_TAG" --notes-file notes.md
           bash tele/ci/issue.sh close build-failure "Built $TAG."
 
