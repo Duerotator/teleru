@@ -61,21 +61,41 @@ def changes(args):
     return now, paths, rows, added, changed, dropped
 
 
+CATEGORIES = ('interface', 'chats and messages', 'privacy', 'profiles and ids', 'bots', 'server', 'updates',
+              'everywhere', 'other')
+
+
+def category(where, wheres, seen=()):
+    where = plain(where).strip().lower()
+    related = re.match(r'with (\d+)', where)
+    if related:
+        number = int(related.group(1))
+        return category(wheres[number], wheres, (*seen, number)) if number in wheres and number not in seen else 'other'
+    if where.startswith('always on'):
+        return 'everywhere'
+    place = re.match(r'tele → ([^,→]+)', where)
+    name = place.group(1).strip() if place else ''
+    return name if name in CATEGORIES else 'other'
+
+
 def changelog(args):
     _, paths, rows, added, changed, _ = changes(args)
+    wheres = {number: where for number, _, where in rows.values()}
     items = []
     for name in added + changed:
         path = paths.get(name, '')
         if path in rows:
             _, what, where = rows[path]
-            item = {'text': plain(what), 'where': plain(where)}
+            item = {'text': plain(what), 'where': plain(where), 'category': category(where, wheres)}
         else:
-            item = {'text': name, 'where': ''}
+            item = {'text': name, 'where': '', 'category': 'other'}
         item['url'] = f'{args.url}/blob/{args.rev}/{path}' if path else ''
         items.append(item)
+    present = {item['category'] for item in items}
     return {
         'tag': args.tag,
         'title': f"tele {args.tag.rsplit('-tele.', 1)[-1]}",
+        'categories': [name for name in CATEGORIES if name in present],
         'items': items,
         'url': f'{args.url}/releases/tag/{args.tag}',
     }
