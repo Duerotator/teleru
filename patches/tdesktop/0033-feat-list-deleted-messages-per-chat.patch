@@ -1,0 +1,1001 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 05:04:15 +0300
+Subject: [PATCH] feat: list deleted messages per chat
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ Telegram/SourceFiles/tele/tele_deleted.cpp    |  48 +-
+ Telegram/SourceFiles/tele/tele_deleted.h      |   6 +
+ .../SourceFiles/tele/tele_deleted_section.cpp | 774 ++++++++++++++++++
+ .../SourceFiles/tele/tele_deleted_section.h   |  51 ++
+ .../SourceFiles/window/window_peer_menu.cpp   |   2 +
+ 6 files changed, 882 insertions(+), 1 deletion(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_deleted_section.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_deleted_section.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index fb01c7413519e6cc2638840db6fcde2c3b51bd8b..760bd4b297f4bef120f4f031451c2d14b17b6054 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2225,6 +2225,8 @@ PRIVATE
+     tele/tele_button_payload.h
+     tele/tele_deleted.cpp
+     tele/tele_deleted.h
++    tele/tele_deleted_section.cpp
++    tele/tele_deleted_section.h
+     tele/tele_edit_history.cpp
+     tele/tele_edit_history.h
+     tele/tele_gifts.cpp
+diff --git a/Telegram/SourceFiles/tele/tele_deleted.cpp b/Telegram/SourceFiles/tele/tele_deleted.cpp
+index 0327167a6ec85397cf63bac33c0fc4e3994c5b2d..a019441e14a0573cebd46c2feab20e5492fac35c 100644
+--- a/Telegram/SourceFiles/tele/tele_deleted.cpp
++++ b/Telegram/SourceFiles/tele/tele_deleted.cpp
+@@ -1,5 +1,6 @@
+ #include "tele/tele_deleted.h"
+ 
++#include "data/data_histories.h"
+ #include "data/data_media_types.h"
+ #include "data/data_session.h"
+ #include "history/history.h"
+@@ -30,6 +31,7 @@ struct State {
+ 		not_null<Main::Session*>,
+ 		base::flat_map<not_null<History*>, Items>> sessions;
+ 	Icon icon;
++	rpl::event_stream<not_null<History*>> changes;
+ 	rpl::lifetime lifetime;
+ };
+ 
+@@ -63,7 +65,8 @@ void Forget(
+ 	if (i == end(sessions)) {
+ 		return;
+ 	}
+-	const auto j = i->second.find(item->history());
++	const auto history = item->history();
++	const auto j = i->second.find(history);
+ 	if (j == end(i->second)) {
+ 		return;
+ 	}
+@@ -75,6 +78,7 @@ void Forget(
+ 	if (j->second.empty()) {
+ 		i->second.erase(j);
+ 	}
++	Get().changes.fire_copy(history);
+ }
+ 
+ [[nodiscard]] base::flat_map<not_null<History*>, Items> &SessionItems(
+@@ -161,11 +165,16 @@ void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
+ 		kept.push_back(item);
+ 		return true;
+ 	}), end(items));
++	auto histories = base::flat_set<not_null<History*>>();
+ 	for (const auto &item : kept) {
+ 		if (item->isPinned()) {
+ 			item->setIsPinned(false);
+ 		}
+ 		item->history()->owner().requestItemViewRefresh(item);
++		histories.emplace(item->history());
++	}
++	for (const auto &history : histories) {
++		Get().changes.fire_copy(history);
+ 	}
+ }
+ 
+@@ -270,6 +279,43 @@ std::vector<not_null<HistoryItem*>> WithKeptDeleted(
+ 	return items;
+ }
+ 
++std::vector<not_null<HistoryItem*>> KeptDeletedItems(
++		not_null<History*> history) {
++	auto result = std::vector<not_null<HistoryItem*>>();
++	if (const auto kept = Find(history)) {
++		result.reserve(kept->size());
++		for (const auto &[id, item] : *kept) {
++			result.push_back(item);
++		}
++	}
++	return result;
++}
++
++int KeptDeletedCount(not_null<History*> history) {
++	const auto kept = Find(history);
++	return kept ? int(kept->size()) : 0;
++}
++
++rpl::producer<> KeptDeletedChanges(not_null<History*> history) {
++	return Get().changes.events(
++	) | rpl::filter(
++		rpl::mappers::_1 == history
++	) | rpl::to_empty;
++}
++
++void ClearKeptDeleted(not_null<History*> history) {
++	const auto kept = Find(history);
++	if (!kept) {
++		return;
++	}
++	auto ids = MessageIdsList();
++	ids.reserve(kept->size());
++	for (const auto &[id, item] : *kept) {
++		ids.push_back(item->fullId());
++	}
++	history->owner().histories().deleteMessages(ids, false);
++}
++
+ DeletedFade::DeletedFade(
+ 		QPainter &p,
+ 		not_null<const HistoryView::Element*> view) {
+diff --git a/Telegram/SourceFiles/tele/tele_deleted.h b/Telegram/SourceFiles/tele/tele_deleted.h
+index 68b22caca111e7e99e40c299c87f2d89cd41b8be..67f8717202d76d94bae0203097ac16a1d7cac252 100644
+--- a/Telegram/SourceFiles/tele/tele_deleted.h
++++ b/Telegram/SourceFiles/tele/tele_deleted.h
+@@ -20,6 +20,12 @@ int PaintDeletedIcon(QPainter &p, int right, int top);
+ 	std::vector<not_null<HistoryItem*>> items,
+ 	bool older);
+ 
++[[nodiscard]] std::vector<not_null<HistoryItem*>> KeptDeletedItems(
++	not_null<History*> history);
++[[nodiscard]] int KeptDeletedCount(not_null<History*> history);
++[[nodiscard]] rpl::producer<> KeptDeletedChanges(not_null<History*> history);
++void ClearKeptDeleted(not_null<History*> history);
++
+ class DeletedFade final {
+ public:
+ 	DeletedFade(QPainter &p, not_null<const HistoryView::Element*> view);
+diff --git a/Telegram/SourceFiles/tele/tele_deleted_section.cpp b/Telegram/SourceFiles/tele/tele_deleted_section.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..3fe513fcb98679649b20db8188701627b2d01c03
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_deleted_section.cpp
+@@ -0,0 +1,774 @@
++#include "tele/tele_deleted_section.h"
++
++#include "data/data_peer_values.h"
++#include "data/data_session.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "history/history_view_swipe_back_session.h"
++#include "history/view/history_view_top_bar_widget.h"
++#include "main/main_session.h"
++#include "tele/tele_deleted.h"
++#include "tele/tele_options.h"
++#include "ui/boxes/confirm_box.h"
++#include "ui/chat/chat_style.h"
++#include "ui/widgets/buttons.h"
++#include "ui/widgets/elastic_scroll.h"
++#include "ui/widgets/menu/menu_add_action_callback.h"
++#include "ui/widgets/shadow.h"
++#include "ui/ui_utility.h"
++#include "window/window_adaptive.h"
++#include "window/window_session_controller.h"
++#include "styles/style_chat.h"
++#include "styles/style_chat_helpers.h"
++#include "styles/style_layers.h"
++#include "styles/style_menu_icons.h"
++#include "styles/style_window.h"
++
++namespace Tele {
++namespace {
++
++using namespace HistoryView;
++
++[[nodiscard]] QString CountText(int count) {
++	return (count == 1)
++		? u"1 deleted message"_q
++		: u"%1 deleted messages"_q.arg(count);
++}
++
++void ConfirmClear(
++		not_null<Window::SessionController*> controller,
++		not_null<History*> history) {
++	const auto count = KeptDeletedCount(history);
++	if (!count) {
++		return;
++	}
++	const auto weak = base::make_weak(history.get());
++	controller->show(Ui::MakeConfirmBox({
++		.text = u"Clear %1 from this chat? "
++			"They were kept only on this device."_q.arg(CountText(count)),
++		.confirmed = [=](Fn<void()> &&close) {
++			close();
++			if (const auto strong = weak.get()) {
++				ClearKeptDeleted(strong);
++			}
++		},
++		.confirmText = u"Clear"_q,
++		.confirmStyle = &st::attentionBoxButton,
++	}));
++}
++
++class DeletedWidget final
++	: public Window::SectionWidget
++	, private HistoryView::WindowListDelegate {
++public:
++	DeletedWidget(
++		QWidget *parent,
++		not_null<Window::SessionController*> controller,
++		not_null<History*> history);
++
++	Dialogs::RowDescriptor activeChat() const override;
++
++	bool hasTopBarShadow() const override {
++		return true;
++	}
++
++	QPixmap grabForShowAnimation(
++		const Window::SectionSlideParams &params) override;
++
++	bool showInternal(
++		not_null<Window::SectionMemento*> memento,
++		const Window::SectionShow &params) override;
++	std::shared_ptr<Window::SectionMemento> createMemento() override;
++
++	void setInternalState(
++		const QRect &geometry,
++		not_null<DeletedMemento*> memento);
++
++	bool floatPlayerHandleWheelEvent(QEvent *e) override;
++	QRect floatPlayerAvailableRect() override;
++
++	Context listContext() override;
++	bool listScrollTo(int top, bool syntetic = true) override;
++	void listCancelRequest() override;
++	void listDeleteRequest() override;
++	void listTryProcessKeyInput(not_null<QKeyEvent*> e) override;
++	rpl::producer<Data::MessagesSlice> listSource(
++		Data::MessagePosition aroundId,
++		int limitBefore,
++		int limitAfter) override;
++	bool listAllowsMultiSelect() override;
++	bool listIsItemGoodForSelection(not_null<HistoryItem*> item) override;
++	bool listIsLessInOrder(
++		not_null<HistoryItem*> first,
++		not_null<HistoryItem*> second) override;
++	void listSelectionChanged(SelectedItems &&items) override;
++	void listMarkReadTill(not_null<HistoryItem*> item) override;
++	void listMarkContentsRead(
++		const base::flat_set<not_null<HistoryItem*>> &items) override;
++	MessagesBarData listMessagesBar(
++		const std::vector<not_null<Element*>> &elements,
++		bool markLastAsRead) override;
++	void listContentRefreshed() override;
++	void listUpdateDateLink(
++		ClickHandlerPtr &link,
++		not_null<Element*> view) override;
++	bool listElementHideReply(not_null<const Element*> view) override;
++	bool listElementShownUnread(not_null<const Element*> view) override;
++	bool listIsGoodForAroundPosition(
++		not_null<const Element*> view) override;
++	void listSendBotCommand(
++		const QString &command,
++		const FullMsgId &context) override;
++	void listSearch(
++		const QString &query,
++		const FullMsgId &context) override;
++	void listHandleViaClick(not_null<UserData*> bot) override;
++	not_null<Ui::ChatTheme*> listChatTheme() override;
++	CopyRestrictionType listCopyRestrictionType(HistoryItem *item) override;
++	CopyRestrictionType listCopyMediaRestrictionType(
++		not_null<HistoryItem*> item) override;
++	CopyRestrictionType listSelectRestrictionType() override;
++	auto listAllowedReactionsValue()
++		-> rpl::producer<Data::AllowedReactions> override;
++	void listShowPremiumToast(not_null<DocumentData*> document) override;
++	void listOpenPhoto(
++		not_null<PhotoData*> photo,
++		FullMsgId context) override;
++	void listOpenDocument(
++		not_null<DocumentData*> document,
++		FullMsgId context,
++		bool showInMediaView) override;
++	void listPaintEmpty(
++		Painter &p,
++		const Ui::ChatPaintContext &context) override;
++	QString listElementAuthorRank(not_null<const Element*> view) override;
++	bool listElementHideTopicButton(not_null<const Element*> view) override;
++	History *listTranslateHistory() override;
++	void listAddTranslatedItems(
++		not_null<TranslateTracker*> tracker) override;
++	Ui::ElasticScroll *listScrollArea() const override;
++	bool listThanosEffectEnabled() const override;
++
++private:
++	void resizeEvent(QResizeEvent *e) override;
++	void paintEvent(QPaintEvent *e) override;
++
++	void showAnimatedHook(
++		const Window::SectionSlideParams &params) override;
++	void showFinishedHook() override;
++	void doSetInnerFocus() override;
++	void checkActivation() override;
++
++	void onScroll();
++	void updateInnerVisibleArea();
++	void updateControlsGeometry();
++	void updateAdaptiveLayout();
++	void saveState(not_null<DeletedMemento*> memento);
++	void restoreState(not_null<DeletedMemento*> memento);
++
++	void setupSearch();
++	void cancelSearch();
++	void scheduleRefresh();
++	void refresh();
++	void setMessagesCount(int count);
++	[[nodiscard]] Data::MessagesSlice buildSlice(
++		Data::MessagePosition aroundId) const;
++
++	void confirmDeleteSelected();
++	void clearSelected();
++	void recountChatWidth();
++
++	const not_null<History*> _history;
++	std::shared_ptr<Ui::ChatTheme> _theme;
++	QPointer<ListWidget> _inner;
++	object_ptr<TopBarWidget> _topBar;
++	object_ptr<Ui::PlainShadow> _topBarShadow;
++
++	bool _skipScrollEvent = false;
++	std::unique_ptr<Ui::ElasticScroll> _scroll;
++	std::unique_ptr<Ui::FlatButton> _clearButton;
++
++	rpl::event_stream<> _refreshes;
++	QString _query;
++	int _messagesCount = -1;
++	bool _refreshScheduled = false;
++
++};
++
++DeletedWidget::DeletedWidget(
++	QWidget *parent,
++	not_null<Window::SessionController*> controller,
++	not_null<History*> history)
++: Window::SectionWidget(parent, controller, history->peer)
++, HistoryView::WindowListDelegate(controller)
++, _history(history)
++, _topBar(this, controller)
++, _topBarShadow(this)
++, _scroll(std::make_unique<Ui::ElasticScroll>(
++	this,
++	controller->chatStyle()->value(lifetime(), st::historyScroll)))
++, _clearButton(std::make_unique<Ui::FlatButton>(
++	this,
++	u"Clear all"_q.toUpper(),
++	st::historyComposeButton)) {
++	controller->chatStyle()->paletteChanged(
++	) | rpl::on_next([=] {
++		_scroll->updateBars();
++	}, _scroll->lifetime());
++
++	Window::ChatThemeValueFromPeer(
++		controller,
++		history->peer
++	) | rpl::on_next([=](std::shared_ptr<Ui::ChatTheme> &&theme) {
++		_theme = std::move(theme);
++		controller->setChatStyleTheme(_theme);
++	}, lifetime());
++
++	_topBar->setActiveChat(
++		TopBarWidget::ActiveChat{
++			.key = _history,
++			.section = Dialogs::EntryState::Section::Pinned,
++		},
++		nullptr);
++
++	_topBar->move(0, 0);
++	_topBar->resizeToWidth(width());
++	_topBar->show();
++
++	_topBar->deleteSelectionRequest(
++	) | rpl::on_next([=] {
++		confirmDeleteSelected();
++	}, _topBar->lifetime());
++	_topBar->clearSelectionRequest(
++	) | rpl::on_next([=] {
++		clearSelected();
++	}, _topBar->lifetime());
++	setupSearch();
++
++	_topBarShadow->raise();
++	controller->adaptive().value(
++	) | rpl::on_next([=] {
++		updateAdaptiveLayout();
++	}, lifetime());
++
++	_scroll->setHandleTouch(false);
++	_inner = _scroll->setOwnedWidget(object_ptr<ListWidget>(
++		this,
++		&controller->session(),
++		static_cast<ListDelegate*>(this)));
++	_inner->lower();
++	_scroll->move(0, _topBar->height());
++	_scroll->show();
++	_scroll->setOverscrollBg(QColor(0, 0, 0, 0));
++	_scroll->setOverscrollEdges([=] {
++		return _inner->loadedAtTopKnown() && _inner->loadedAtTop();
++	}, [=] {
++		return _inner->loadedAtBottomKnown() && _inner->loadedAtBottom();
++	});
++	_scroll->scrolls(
++	) | rpl::on_next([=] {
++		onScroll();
++	}, lifetime());
++
++	_inner->scrollKeyEvents(
++	) | rpl::on_next([=](not_null<QKeyEvent*> e) {
++		_scroll->keyPressEvent(e);
++	}, lifetime());
++
++	_clearButton->setClickedCallback([=] {
++		ConfirmClear(controller, _history);
++	});
++
++	KeptDeletedChanges(
++		_history
++	) | rpl::on_next([=] {
++		scheduleRefresh();
++	}, lifetime());
++	if (const auto count = KeptDeletedCount(_history)) {
++		setMessagesCount(count);
++	} else {
++		scheduleRefresh();
++	}
++
++	Window::SetupSwipeBackSection(this, _scroll.get(), _inner);
++}
++
++void DeletedWidget::setupSearch() {
++	_topBar->searchRequest(
++	) | rpl::on_next([=] {
++		_topBar->toggleSearch(true, anim::type::normal);
++	}, _topBar->lifetime());
++	_topBar->searchCancelled(
++	) | rpl::on_next([=] {
++		cancelSearch();
++	}, _topBar->lifetime());
++	_topBar->searchQuery(
++	) | rpl::on_next([=](const QString &query) {
++		const auto now = query.trimmed();
++		if (_query != now) {
++			_query = now;
++			_refreshes.fire({});
++		}
++	}, _topBar->lifetime());
++}
++
++void DeletedWidget::cancelSearch() {
++	_topBar->searchClear();
++	_topBar->toggleSearch(false, anim::type::normal);
++	doSetInnerFocus();
++}
++
++void DeletedWidget::scheduleRefresh() {
++	if (_refreshScheduled) {
++		return;
++	}
++	_refreshScheduled = true;
++	crl::on_main(this, [=] {
++		_refreshScheduled = false;
++		refresh();
++	});
++}
++
++void DeletedWidget::refresh() {
++	const auto count = KeptDeletedCount(_history);
++	if (!count) {
++		controller()->showBackFromStack();
++		return;
++	}
++	setMessagesCount(count);
++	_refreshes.fire({});
++}
++
++void DeletedWidget::setMessagesCount(int count) {
++	if (_messagesCount == count) {
++		return;
++	}
++	_messagesCount = count;
++	_topBar->setCustomTitle(CountText(count));
++}
++
++Data::MessagesSlice DeletedWidget::buildSlice(
++		Data::MessagePosition aroundId) const {
++	auto items = KeptDeletedItems(_history);
++	if (!_query.isEmpty()) {
++		const auto skip = [&](not_null<HistoryItem*> item) {
++			return !item->originalText().text.contains(
++				_query,
++				Qt::CaseInsensitive);
++		};
++		items.erase(ranges::remove_if(items, skip), end(items));
++	}
++	auto result = Data::MessagesSlice();
++	const auto size = int(items.size());
++	result.fullCount = size;
++	result.skippedBefore = result.skippedAfter = 0;
++	if (!size) {
++		return result;
++	}
++	const auto around = (aroundId.fullId.msg > 0)
++		? aroundId.fullId.msg
++		: (ServerMaxMsgId - 1);
++	const auto i = ranges::find_if(items, [&](not_null<HistoryItem*> item) {
++		return item->id >= around;
++	});
++	result.nearestToAround = ((i != end(items)) ? *i : items.back())->fullId();
++	result.ids.reserve(size);
++	for (const auto &item : items) {
++		result.ids.push_back(item->fullId());
++	}
++	return result;
++}
++
++void DeletedWidget::updateAdaptiveLayout() {
++	_topBarShadow->moveToLeft(
++		controller()->adaptive().isOneColumn() ? 0 : st::lineWidth,
++		_topBar->height());
++}
++
++Dialogs::RowDescriptor DeletedWidget::activeChat() const {
++	return {
++		_history,
++		FullMsgId(_history->peer->id, ShowAtUnreadMsgId)
++	};
++}
++
++QPixmap DeletedWidget::grabForShowAnimation(
++		const Window::SectionSlideParams &params) {
++	_topBar->updateControlsVisibility();
++	if (params.withTopBarShadow) _topBarShadow->hide();
++	auto result = Ui::GrabWidget(this);
++	if (params.withTopBarShadow) _topBarShadow->show();
++	return result;
++}
++
++void DeletedWidget::checkActivation() {
++	_inner->checkActivation();
++}
++
++void DeletedWidget::doSetInnerFocus() {
++	if (!_topBar->searchSetFocus()) {
++		_inner->setFocus();
++	}
++}
++
++bool DeletedWidget::showInternal(
++		not_null<Window::SectionMemento*> memento,
++		const Window::SectionShow &params) {
++	if (const auto deleted = dynamic_cast<DeletedMemento*>(memento.get())) {
++		if (deleted->history() == _history) {
++			restoreState(deleted);
++			return true;
++		}
++	}
++	return false;
++}
++
++void DeletedWidget::setInternalState(
++		const QRect &geometry,
++		not_null<DeletedMemento*> memento) {
++	setGeometry(geometry);
++	Ui::SendPendingMoveResizeEvents(this);
++	restoreState(memento);
++}
++
++std::shared_ptr<Window::SectionMemento> DeletedWidget::createMemento() {
++	auto result = std::make_shared<DeletedMemento>(_history);
++	saveState(result.get());
++	return result;
++}
++
++void DeletedWidget::saveState(not_null<DeletedMemento*> memento) {
++	_inner->saveState(memento->list());
++}
++
++void DeletedWidget::restoreState(not_null<DeletedMemento*> memento) {
++	_inner->restoreState(memento->list());
++}
++
++void DeletedWidget::resizeEvent(QResizeEvent *e) {
++	if (!width() || !height()) {
++		return;
++	}
++	recountChatWidth();
++	updateControlsGeometry();
++}
++
++void DeletedWidget::recountChatWidth() {
++	auto layout = (width() < st::adaptiveChatWideWidth)
++		? Window::Adaptive::ChatLayout::Normal
++		: Window::Adaptive::ChatLayout::Wide;
++	controller()->adaptive().setChatLayout(layout);
++}
++
++void DeletedWidget::updateControlsGeometry() {
++	const auto contentWidth = width();
++
++	const auto newScrollTop = _scroll->isHidden()
++		? std::nullopt
++		: base::make_optional(_scroll->scrollTop() + takeTopDelta());
++	_topBar->resizeToWidth(contentWidth);
++	_topBarShadow->resize(contentWidth, st::lineWidth);
++
++	const auto bottom = height() - _clearButton->height();
++	_clearButton->resizeToWidth(contentWidth);
++	_clearButton->move(0, bottom);
++	const auto top = _topBar->height();
++	const auto scrollSize = QSize(contentWidth, bottom - top);
++	if (_scroll->size() != scrollSize) {
++		_skipScrollEvent = true;
++		_scroll->resize(scrollSize);
++		_inner->resizeToWidth(scrollSize.width(), _scroll->height());
++		_skipScrollEvent = false;
++	}
++	_scroll->move(0, top);
++	if (!_scroll->isHidden()) {
++		if (newScrollTop) {
++			_scroll->scrollToY(*newScrollTop);
++		}
++		updateInnerVisibleArea();
++	}
++}
++
++void DeletedWidget::paintEvent(QPaintEvent *e) {
++	if (animatingShow()) {
++		SectionWidget::paintEvent(e);
++		return;
++	} else if (controller()->contentOverlapped(this, e)) {
++		return;
++	}
++
++	const auto aboveHeight = _topBar->height();
++	const auto bg = e->rect().intersected(
++		QRect(0, aboveHeight, width(), height() - aboveHeight));
++	SectionWidget::PaintBackground(controller(), _theme.get(), this, bg);
++}
++
++void DeletedWidget::onScroll() {
++	if (_skipScrollEvent) {
++		return;
++	}
++	updateInnerVisibleArea();
++}
++
++void DeletedWidget::updateInnerVisibleArea() {
++	const auto scrollTop = _scroll->scrollTop();
++	_inner->setVisibleTopBottom(scrollTop, scrollTop + _scroll->height());
++}
++
++void DeletedWidget::showAnimatedHook(
++		const Window::SectionSlideParams &params) {
++	_topBar->setAnimatingMode(true);
++	if (params.withTopBarShadow) {
++		_topBarShadow->show();
++	}
++}
++
++void DeletedWidget::showFinishedHook() {
++	_topBar->setAnimatingMode(false);
++	_inner->showFinished();
++}
++
++bool DeletedWidget::floatPlayerHandleWheelEvent(QEvent *e) {
++	return _scroll->viewportEvent(e);
++}
++
++QRect DeletedWidget::floatPlayerAvailableRect() {
++	return mapToGlobal(_scroll->geometry());
++}
++
++Context DeletedWidget::listContext() {
++	return Context::Pinned;
++}
++
++bool DeletedWidget::listScrollTo(int top, bool syntetic) {
++	top = std::clamp(top, 0, _scroll->scrollTopMax());
++	if (_scroll->scrollTop() == top) {
++		updateInnerVisibleArea();
++		return false;
++	}
++	_scroll->scrollToY(top);
++	return true;
++}
++
++void DeletedWidget::listCancelRequest() {
++	if (_inner && !_inner->getSelectedIds().empty()) {
++		clearSelected();
++		return;
++	} else if (_topBar->searchMode()) {
++		cancelSearch();
++		return;
++	}
++	controller()->showBackFromStack();
++}
++
++void DeletedWidget::listDeleteRequest() {
++	confirmDeleteSelected();
++}
++
++void DeletedWidget::listTryProcessKeyInput(not_null<QKeyEvent*> e) {
++}
++
++rpl::producer<Data::MessagesSlice> DeletedWidget::listSource(
++		Data::MessagePosition aroundId,
++		int limitBefore,
++		int limitAfter) {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		_refreshes.events()
++	) | rpl::map([=] {
++		return buildSlice(aroundId);
++	});
++}
++
++bool DeletedWidget::listAllowsMultiSelect() {
++	return true;
++}
++
++bool DeletedWidget::listIsItemGoodForSelection(
++		not_null<HistoryItem*> item) {
++	return item->canBeSelected();
++}
++
++bool DeletedWidget::listIsLessInOrder(
++		not_null<HistoryItem*> first,
++		not_null<HistoryItem*> second) {
++	return first->id < second->id;
++}
++
++void DeletedWidget::listSelectionChanged(SelectedItems &&items) {
++	auto state = TopBarWidget::SelectedState();
++	state.count = items.size();
++	for (const auto &item : items) {
++		if (item.canDelete) {
++			++state.canDeleteCount;
++		}
++	}
++	_topBar->showSelected(state);
++}
++
++void DeletedWidget::listMarkReadTill(not_null<HistoryItem*> item) {
++}
++
++void DeletedWidget::listMarkContentsRead(
++	const base::flat_set<not_null<HistoryItem*>> &items) {
++}
++
++MessagesBarData DeletedWidget::listMessagesBar(
++		const std::vector<not_null<Element*>> &elements,
++		bool markLastAsRead) {
++	return {};
++}
++
++void DeletedWidget::listContentRefreshed() {
++}
++
++void DeletedWidget::listUpdateDateLink(
++	ClickHandlerPtr &link,
++	not_null<Element*> view) {
++}
++
++bool DeletedWidget::listElementHideReply(not_null<const Element*> view) {
++	return false;
++}
++
++bool DeletedWidget::listElementShownUnread(not_null<const Element*> view) {
++	return false;
++}
++
++bool DeletedWidget::listIsGoodForAroundPosition(
++		not_null<const Element*> view) {
++	return true;
++}
++
++void DeletedWidget::listSendBotCommand(
++	const QString &command,
++	const FullMsgId &context) {
++}
++
++void DeletedWidget::listSearch(
++		const QString &query,
++		const FullMsgId &context) {
++	const auto inChat = _history->peer->isUser()
++		? Dialogs::Key()
++		: Dialogs::Key(_history);
++	controller()->searchMessages(query, inChat);
++}
++
++void DeletedWidget::listHandleViaClick(not_null<UserData*> bot) {
++}
++
++not_null<Ui::ChatTheme*> DeletedWidget::listChatTheme() {
++	return _theme.get();
++}
++
++CopyRestrictionType DeletedWidget::listCopyRestrictionType(
++		HistoryItem *item) {
++	return CopyRestrictionTypeFor(_history->peer, item);
++}
++
++CopyRestrictionType DeletedWidget::listCopyMediaRestrictionType(
++		not_null<HistoryItem*> item) {
++	return CopyMediaRestrictionTypeFor(_history->peer, item);
++}
++
++CopyRestrictionType DeletedWidget::listSelectRestrictionType() {
++	return SelectRestrictionTypeFor(_history->peer);
++}
++
++auto DeletedWidget::listAllowedReactionsValue()
++-> rpl::producer<Data::AllowedReactions> {
++	return Data::PeerAllowedReactionsValue(_history->peer);
++}
++
++void DeletedWidget::listShowPremiumToast(not_null<DocumentData*> document) {
++}
++
++void DeletedWidget::listOpenPhoto(
++		not_null<PhotoData*> photo,
++		FullMsgId context) {
++	controller()->openPhoto(photo, { .id = context });
++}
++
++void DeletedWidget::listOpenDocument(
++		not_null<DocumentData*> document,
++		FullMsgId context,
++		bool showInMediaView) {
++	controller()->openDocument(document, showInMediaView, { .id = context });
++}
++
++void DeletedWidget::listPaintEmpty(
++	Painter &p,
++	const Ui::ChatPaintContext &context) {
++}
++
++QString DeletedWidget::listElementAuthorRank(not_null<const Element*> view) {
++	return {};
++}
++
++bool DeletedWidget::listElementHideTopicButton(
++		not_null<const Element*> view) {
++	return true;
++}
++
++History *DeletedWidget::listTranslateHistory() {
++	return nullptr;
++}
++
++void DeletedWidget::listAddTranslatedItems(
++	not_null<TranslateTracker*> tracker) {
++}
++
++Ui::ElasticScroll *DeletedWidget::listScrollArea() const {
++	return _scroll.get();
++}
++
++bool DeletedWidget::listThanosEffectEnabled() const {
++	return false;
++}
++
++void DeletedWidget::confirmDeleteSelected() {
++	ConfirmDeleteSelectedItems(_inner);
++}
++
++void DeletedWidget::clearSelected() {
++	_inner->cancelSelection();
++}
++
++} // namespace
++
++DeletedMemento::DeletedMemento(not_null<History*> history)
++: _history(history) {
++}
++
++object_ptr<Window::SectionWidget> DeletedMemento::createWidget(
++		QWidget *parent,
++		not_null<Window::SessionController*> controller,
++		Window::Column column,
++		const QRect &geometry) {
++	if (column == Window::Column::Third) {
++		return nullptr;
++	}
++	auto result = object_ptr<DeletedWidget>(parent, controller, _history);
++	result->setInternalState(geometry, this);
++	return result;
++}
++
++void AddDeletedActions(
++		not_null<Window::SessionController*> controller,
++		Data::Thread *thread,
++		const Ui::Menu::MenuCallback &addAction) {
++	const auto history = thread ? thread->asHistory() : nullptr;
++	if (!history || !KeepDeletedMessages()) {
++		return;
++	}
++	const auto count = KeptDeletedCount(history);
++	if (!count) {
++		return;
++	}
++	addAction(u"Deleted messages (%1)"_q.arg(count), [=] {
++		controller->showSection(std::make_shared<DeletedMemento>(history));
++	}, &st::menuIconDelete);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_deleted_section.h b/Telegram/SourceFiles/tele/tele_deleted_section.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..b0b0a838ea4bccb09be3b094533eb0016acfde00
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_deleted_section.h
+@@ -0,0 +1,51 @@
++#pragma once
++
++#include "window/section_widget.h"
++#include "window/section_memento.h"
++#include "history/view/history_view_list_widget.h"
++
++class History;
++
++namespace Data {
++class Thread;
++} // namespace Data
++
++namespace Ui::Menu {
++struct MenuCallback;
++} // namespace Ui::Menu
++
++namespace Window {
++class SessionController;
++} // namespace Window
++
++namespace Tele {
++
++class DeletedMemento final : public Window::SectionMemento {
++public:
++	explicit DeletedMemento(not_null<History*> history);
++
++	object_ptr<Window::SectionWidget> createWidget(
++		QWidget *parent,
++		not_null<Window::SessionController*> controller,
++		Window::Column column,
++		const QRect &geometry) override;
++
++	[[nodiscard]] not_null<History*> history() const {
++		return _history;
++	}
++	[[nodiscard]] not_null<HistoryView::ListMemento*> list() {
++		return &_list;
++	}
++
++private:
++	const not_null<History*> _history;
++	HistoryView::ListMemento _list;
++
++};
++
++void AddDeletedActions(
++	not_null<Window::SessionController*> controller,
++	Data::Thread *thread,
++	const Ui::Menu::MenuCallback &addAction);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/window/window_peer_menu.cpp b/Telegram/SourceFiles/window/window_peer_menu.cpp
+index 7198154f4c69197c236ad0e3e376d291b4e34713..b696d23617567db7ee219ed8c0ca3965aa42a7f2 100644
+--- a/Telegram/SourceFiles/window/window_peer_menu.cpp
++++ b/Telegram/SourceFiles/window/window_peer_menu.cpp
+@@ -126,6 +126,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "boxes/peers/edit_peer_info_box.h"
+ #include "boxes/peers/manage_community_box.h"
+ #include "boxes/premium_preview_box.h"
++#include "tele/tele_deleted_section.h"
+ #include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+@@ -1936,6 +1937,7 @@ void Filler::fillHistoryActions() {
+ 	addViewDiscussion();
+ 	addDirectMessages();
+ 	addExportChat();
++	Tele::AddDeletedActions(_controller, _thread, _addAction);
+ 	addTranslate();
+ 	addReport();
+ 	addClearHistory();

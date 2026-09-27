@@ -1,0 +1,114 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 06:08:02 +0300
+Subject: [PATCH] feat: hide the mtproxy sponsor channel
+
+---
+ .../data/components/promo_suggestions.cpp     |  6 +++++-
+ .../SourceFiles/settings/settings_tele.cpp    |  1 +
+ Telegram/SourceFiles/tele/tele_options.cpp    | 20 +++++++++++++++++--
+ Telegram/SourceFiles/tele/tele_options.h      |  3 +++
+ 4 files changed, 27 insertions(+), 3 deletions(-)
+
+diff --git a/Telegram/SourceFiles/data/components/promo_suggestions.cpp b/Telegram/SourceFiles/data/components/promo_suggestions.cpp
+index d068bb432575ca8c5214d724ef083db470c992fa..1e4072e5ba826982b29d67f8331429a4570ed348 100644
+--- a/Telegram/SourceFiles/data/components/promo_suggestions.cpp
++++ b/Telegram/SourceFiles/data/components/promo_suggestions.cpp
+@@ -54,6 +54,10 @@ PromoSuggestions::PromoSuggestions(
+ 	) | rpl::on_next([=] {
+ 		refreshTopPromotion();
+ 	}, _lifetime);
++	Tele::HideProxySponsorChanges(
++	) | rpl::on_next([=] {
++		invalidate();
++	}, _lifetime);
+ }
+ 
+ PromoSuggestions::~PromoSuggestions() = default;
+@@ -132,7 +136,7 @@ void PromoSuggestions::refreshTopPromotion() {
+ 					|= _dismissedSuggestions.emplace(qs(suggestion)).second;
+ 			}
+ 
+-			const auto peer = (data.is_proxy() && Tele::HideSponsored())
++			const auto peer = (data.is_proxy() && Tele::HideProxySponsor())
+ 				? tl::conditional<MTPPeer>()
+ 				: data.vpeer();
+ 			if (peer) {
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 30b66e181be363d55399433ca5f65eb94da9c684..6645bb5acf47788206680752bde4fc4da5379759 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -777,6 +777,7 @@ void TeleSection::setupContent() {
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionHideCalls);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionHideSponsored);
++	AddOptionToggle(content, controller(), ::Tele::kOptionHideProxySponsor);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionNoLinkWarning);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionHideAllChats);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionJumpToFirst);
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 4c9f7497661e4f41ef5698f3ef4cf5d2fcbe3a43..ab7f1d8d7556403aa017705668af86cf3aecc9fa 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -20,6 +20,7 @@ const char kOptionBubbleBadges[] = "tele-bubble-badges";
+ const char kOptionHideCalls[] = "tele-hide-calls";
+ const char kOptionLowercase[] = "tele-lowercase";
+ const char kOptionHideSponsored[] = "tele-hide-sponsored";
++const char kOptionHideProxySponsor[] = "tele-hide-proxy-sponsor";
+ const char kOptionNoLinkWarning[] = "tele-no-link-warning";
+ const char kOptionHideAllChats[] = "tele-hide-all-chats";
+ const char kOptionJumpToFirst[] = "tele-jump-to-first";
+@@ -170,8 +171,15 @@ base::options::toggle HideSponsoredOption({
+ 	.id = kOptionHideSponsored,
+ 	.name = "Hide sponsored messages",
+ 	.description = "Don't load ads: no sponsored messages in channels "
+-		"and bots, no ads in channel videos, no sponsored results "
+-		"in search and no proxy sponsor channel in the chat list.",
++		"and bots, no ads in channel videos and no sponsored results "
++		"in search.",
++});
++
++base::options::toggle HideProxySponsorOption({
++	.id = kOptionHideProxySponsor,
++	.name = "Hide the proxy sponsor channel",
++	.description = "When you connect through an MTProxy, its sponsor "
++		"channel isn't pinned at the top of the chat list.",
+ });
+ 
+ base::options::toggle NoLinkWarningOption({
+@@ -437,6 +445,14 @@ rpl::producer<bool> HideSponsoredValue() {
+ 	});
+ }
+ 
++bool HideProxySponsor() {
++	return HideProxySponsorOption.value();
++}
++
++rpl::producer<> HideProxySponsorChanges() {
++	return HideProxySponsorOption.changes() | rpl::to_empty;
++}
++
+ bool NoLinkWarning() {
+ 	return NoLinkWarningOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index bd0ad61be7725c054a72e67757f31032c6280e6c..3f1ff7c196310dbc387dae1856215003312b6163 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -18,6 +18,7 @@ extern const char kOptionBubbleBadges[];
+ extern const char kOptionHideCalls[];
+ extern const char kOptionLowercase[];
+ extern const char kOptionHideSponsored[];
++extern const char kOptionHideProxySponsor[];
+ extern const char kOptionNoLinkWarning[];
+ extern const char kOptionHideAllChats[];
+ extern const char kOptionJumpToFirst[];
+@@ -60,6 +61,8 @@ void SetGhostChats(const QString &value);
+ [[nodiscard]] rpl::producer<> HideCallsChanges();
+ [[nodiscard]] bool HideSponsored();
+ [[nodiscard]] rpl::producer<bool> HideSponsoredValue();
++[[nodiscard]] bool HideProxySponsor();
++[[nodiscard]] rpl::producer<> HideProxySponsorChanges();
+ [[nodiscard]] bool NoLinkWarning();
+ [[nodiscard]] bool HideAllChats();
+ [[nodiscard]] rpl::producer<> HideAllChatsChanges();

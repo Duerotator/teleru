@@ -52,6 +52,30 @@ everything tele adds lives in settings → tele, right below the language row.
 | [24](patches/tdesktop/0024-feat-format-peer-ids-without-spaces-or-bot-api-style.patch) | peer ids without spaces, or in bot api style (-100… for channels) | tele → ids, off |
 | [25](patches/tdesktop/0025-feat-copy-links-to-tele-settings.patch) | right-click any tele setting to copy a link that opens it | always on |
 | [26](patches/tdesktop/0026-feat-ignore-users-by-hiding-or-fading-their-messages.patch) | ignore users from their userpic menu: their messages fade or disappear, the list lives in settings | tele → ignoring |
+| [27](patches/tdesktop/0027-feat-show-seconds-in-message-times.patch) | message times show seconds, like 14:03:21 | tele → messages, off |
+| [28](patches/tdesktop/0028-feat-keep-the-edit-history-of-messages.patch) | remembers what edited messages looked like while tele runs: right-click an edited message → edit history | tele → messages, off |
+| [29](patches/tdesktop/0029-feat-keep-deleted-messages.patch) | messages deleted by others or from your other devices stay in the chat until tele restarts, faded or with a trash icon by the time | tele → messages, off |
+| [30](patches/tdesktop/0030-fix-fade-every-unsupported-experimental-option.patch) | experimental options your system doesn't support are faded completely, title included | always on |
+| [31](patches/tdesktop/0031-feat-hide-call-buttons.patch) | no call button in private chats and profiles | tele → chats, off |
+| [32](patches/tdesktop/0032-feat-lowercase-every-interface-text.patch) | lowercases the whole interface. messages and names stay as they are | tele → interface, off, needs a restart |
+| [33](patches/tdesktop/0033-feat-list-deleted-messages-per-chat.patch) | each chat gets a page with its kept deleted messages and a clear all button: chat menu → deleted messages | with 29 |
+| [34](patches/tdesktop/0034-feat-show-the-data-center-in-profiles.patch) | a dc row in profiles: the data center the account or chat lives in | tele → ids, off |
+| [35](patches/tdesktop/0035-feat-hide-sponsored-messages.patch) | no ads: no sponsored messages in channels and bots, no video ads, no sponsored search results | tele → chats, off |
+| [36](patches/tdesktop/0036-feat-open-links-without-confirmation.patch) | links with custom text open right away, without the confirmation | tele → chats, off |
+| [37](patches/tdesktop/0037-feat-open-disappearing-media-without-burning-it.patch) | view-once and timed media open without burning, and the sender still sees them unopened. message menu → mark as viewed burns them | tele → messages, off |
+| [38](patches/tdesktop/0038-feat-allow-screenshots-of-disappearing-media.patch) | view-once and timed media can be screenshotted and recorded | tele → messages, off |
+| [39](patches/tdesktop/0039-feat-copy-the-callback-data-of-bot-buttons.patch) | right-click over a bot button to copy its callback data, inline query, web app url and so on | always on |
+| [40](patches/tdesktop/0040-feat-show-the-message-id-in-the-message-menu.patch) | the message menu starts with the message id, click it to copy | tele → ids, off |
+| [41](patches/tdesktop/0041-feat-view-messages-as-tl.patch) | view as tl in the message menu: fetches the message from the server and opens it on [schema.jppgr.am](https://schema.jppgr.am) | tele → ids, off |
+| [42](patches/tdesktop/0042-feat-hide-the-all-chats-folder.patch) | hides the all chats folder when you have other folders, the list opens on your first one | tele → chats, off |
+| [43](patches/tdesktop/0043-feat-jump-to-the-first-message-of-a-chat.patch) | jump to the first message, in the chat menu | tele → chats, off |
+| [44](patches/tdesktop/0044-feat-add-ghost-mode.patch) | ghost mode: no read receipts, typing, online status or story views, each switchable. optionally reads a chat when you reply, and the message menu has mark as read up to here. quick toggle in the side menu | tele → ghost mode, off |
+| [45](patches/tdesktop/0045-feat-override-ghost-mode-per-chat.patch) | ghost mode per chat: always or never, from the chat menu | chat menu → ghost mode in this chat |
+| [46](patches/tdesktop/0046-fix-show-checkmarks-next-to-emoji-statuses.patch) | checkmarks show next to emoji statuses instead of being replaced by them | always on |
+| [47](patches/tdesktop/0047-feat-view-any-telegram-object-as-tl.patch) | view as tl also for chats, profiles, members, topics, stickers and sets, custom emoji, gifts, stories and folders | with 41 |
+| [48](patches/tdesktop/0048-feat-hide-the-mtproxy-sponsor-channel.patch) | no sponsor channel pinned to the chat list when you connect through an mtproxy | tele → chats, off |
+| [49](patches/tdesktop/0049-feat-lowercase-tele-s-own-texts-too.patch) | lowercase covers tele's own texts too | with 32 |
+| [50](patches/tdesktop/0050-fix-stop-maximized-windows-jittering-on-monitors-wit.patch) | a maximized window no longer jitters on a monitor without a taskbar (windows) | always on |
 
 ### title bar template
 

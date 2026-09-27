@@ -1,0 +1,572 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 04:21:54 +0300
+Subject: [PATCH] feat: keep the edit history of messages
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../history/history_inner_widget.cpp          |   5 +
+ Telegram/SourceFiles/history/history_item.cpp |   2 +
+ .../view/history_view_context_menu.cpp        |   2 +
+ .../SourceFiles/settings/settings_tele.cpp    |   1 +
+ .../SourceFiles/tele/tele_edit_history.cpp    | 342 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_edit_history.h |  42 +++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  23 ++
+ Telegram/SourceFiles/tele/tele_options.h      |   3 +
+ 9 files changed, 422 insertions(+)
+ create mode 100644 Telegram/SourceFiles/tele/tele_edit_history.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_edit_history.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 95ef96e82383309f15a50088fee04aec53573bfa..7ab552386605738f3c82dab107983fb87d8fd647 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2223,6 +2223,8 @@ PRIVATE
+     tele/tele_bubble_badges.h
+     tele/tele_button_payload.cpp
+     tele/tele_button_payload.h
++    tele/tele_edit_history.cpp
++    tele/tele_edit_history.h
+     tele/tele_gifts.cpp
+     tele/tele_gifts.h
+     tele/tele_ignored.cpp
+diff --git a/Telegram/SourceFiles/history/history_inner_widget.cpp b/Telegram/SourceFiles/history/history_inner_widget.cpp
+index e437058654c61daad5c0a49d7454a8dfc390482f..e39cf5fd94b428edb2857a32bc837c2897a34d57 100644
+--- a/Telegram/SourceFiles/history/history_inner_widget.cpp
++++ b/Telegram/SourceFiles/history/history_inner_widget.cpp
+@@ -128,6 +128,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_histories.h"
+ #include "data/data_changes.h"
+ #include "dialogs/ui/dialogs_video_userpic.h"
++#include "tele/tele_edit_history.h"
+ #include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_menu_icons.h"
+@@ -3029,6 +3030,10 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
+ 				}
+ 			}, &st::menuIconEdit);
+ 		}
++		Tele::AddEditHistoryAction(
++			_menu.get(),
++			controller,
++			albumPartItem ? albumPartItem : item);
+ 		if (session->factchecks().canEdit(item)) {
+ 			const auto text = item->factcheckText();
+ 			const auto phrase = text.empty()
+diff --git a/Telegram/SourceFiles/history/history_item.cpp b/Telegram/SourceFiles/history/history_item.cpp
+index 60c1cca41fa4a83bfeb75978ef24b94cb66aa653..71618c0c91edcea331a4c836528ef10f1382b8eb 100644
+--- a/Telegram/SourceFiles/history/history_item.cpp
++++ b/Telegram/SourceFiles/history/history_item.cpp
+@@ -80,6 +80,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "payments/payments_non_panel_process.h" // ProcessNonPanelPaymentFormFactory.
+ #include "platform/platform_notifications_manager.h"
+ #include "spellcheck/spellcheck_highlight_syntax.h"
++#include "tele/tele_edit_history.h"
+ #include "styles/style_dialogs.h"
+ 
+ namespace {
+@@ -2344,6 +2345,7 @@ void HistoryItem::clearMainView() {
+ 
+ void HistoryItem::applyEdition(HistoryMessageEdition &&edition) {
+ 	history()->session().ephemeralMessages().revertAnchored(this);
++	const auto teleEdit = Tele::EditCapture(this);
+ 
+ 	int keyboardTop = -1;
+ 	//if (!pendingResize()) {// #TODO edit bot message
+diff --git a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
+index c00d49c6bfe78762f640779a5d26bcbda71ae72b..fb44404ad53d22a3c151b23c6dfda83c77094bb5 100644
+--- a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
+@@ -113,6 +113,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "media/player/media_player_instance.h"
+ #include "spellcheck/spellcheck_types.h"
+ #include "apiwrap.h"
++#include "tele/tele_edit_history.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_layers.h"
+@@ -1393,6 +1394,7 @@ void AddTopMessageActions(
+ 	AddGoToMessageAction(menu, request, list);
+ 	AddViewRepliesAction(menu, request, list);
+ 	AddEditMessageAction(menu, request, list);
++	Tele::AddEditHistoryAction(menu, request.navigation, request.item);
+ 	AddFactcheckAction(menu, request, list);
+ 	AddPinMessageAction(menu, request, list);
+ 	AddViewStatisticsAction(menu, request, list);
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 2e858a9acceed6d41e8ec651153d56ff4b9edc4c..40916b3666b829d00bb2068827845c6a121c35e2 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -630,6 +630,7 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
++	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_edit_history.cpp b/Telegram/SourceFiles/tele/tele_edit_history.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..fe79dde3e9d6f18f6949a77a5eca54e904438436
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_edit_history.cpp
+@@ -0,0 +1,342 @@
++#include "tele/tele_edit_history.h"
++
++#include "base/unixtime.h"
++#include "core/ui_integration.h"
++#include "data/data_document.h"
++#include "data/data_groups.h"
++#include "data/data_media_types.h"
++#include "data/data_photo.h"
++#include "data/data_poll.h"
++#include "data/data_session.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "history/history_item_components.h"
++#include "lang/lang_keys.h"
++#include "main/main_session.h"
++#include "tele/tele_options.h"
++#include "ui/layers/generic_box.h"
++#include "ui/widgets/labels.h"
++#include "ui/widgets/popup_menu.h"
++#include "window/window_session_controller.h"
++#include "styles/style_layers.h"
++#include "styles/style_menu_icons.h"
++
++namespace Tele {
++namespace {
++
++struct Version {
++	EditContent content;
++	TimeId date = 0;
++	bool original = false;
++};
++
++struct Record {
++	std::vector<Version> versions;
++	TimeId since = 0;
++	bool original = false;
++};
++
++struct SessionState {
++	base::flat_map<not_null<const HistoryItem*>, Record> records;
++	rpl::lifetime lifetime;
++};
++
++struct State {
++	State();
++
++	base::flat_map<
++		not_null<Main::Session*>,
++		std::unique_ptr<SessionState>> sessions;
++	rpl::lifetime lifetime;
++};
++
++struct Entry {
++	QString header;
++	TextWithEntities text;
++};
++
++[[nodiscard]] State &Get() {
++	static State state;
++	return state;
++}
++
++State::State() {
++	EditHistoryValue(
++	) | rpl::on_next([=](bool enabled) {
++		if (!enabled) {
++			sessions.clear();
++		}
++	}, lifetime);
++}
++
++[[nodiscard]] SessionState &Sessions(not_null<Main::Session*> session) {
++	auto &sessions = Get().sessions;
++	const auto i = sessions.find(session);
++	if (i != end(sessions)) {
++		return *i->second;
++	}
++	const auto state = sessions.emplace(
++		session,
++		std::make_unique<SessionState>()).first->second.get();
++	session->data().itemRemoved(
++	) | rpl::on_next([=](not_null<const HistoryItem*> item) {
++		state->records.remove(item);
++	}, state->lifetime);
++	session->lifetime().add([=] {
++		Get().sessions.remove(session);
++	});
++	return *state;
++}
++
++[[nodiscard]] Record *FindRecord(not_null<const HistoryItem*> item) {
++	auto &sessions = Get().sessions;
++	const auto session = not_null<Main::Session*>(
++		&item->history()->session());
++	const auto i = sessions.find(session);
++	if (i == end(sessions)) {
++		return nullptr;
++	}
++	auto &records = i->second->records;
++	const auto j = records.find(item);
++	return (j != end(records)) ? &j->second : nullptr;
++}
++
++[[nodiscard]] QString DocumentDescription(not_null<DocumentData*> document) {
++	if (document->isVideoMessage()) {
++		return u"video message"_q;
++	} else if (document->isVoiceMessage()) {
++		return u"voice message"_q;
++	} else if (document->sticker()) {
++		return u"sticker"_q;
++	} else if (document->isAnimation()) {
++		return u"GIF"_q;
++	} else if (document->isVideoFile()) {
++		return u"video"_q;
++	}
++	const auto name = document->filename();
++	return !name.isEmpty()
++		? name
++		: document->isAudioFile()
++		? u"audio"_q
++		: u"file"_q;
++}
++
++[[nodiscard]] EditContent Read(not_null<const HistoryItem*> item) {
++	auto result = EditContent{ .text = item->originalText() };
++	const auto media = item->media();
++	if (!media || media->webpage()) {
++		return result;
++	} else if (const auto photo = media->photo()) {
++		result.media = u"photo"_q;
++		result.mediaId = photo->id;
++	} else if (const auto document = media->document()) {
++		result.media = DocumentDescription(document);
++		result.mediaId = document->id;
++	} else if (const auto poll = media->poll()) {
++		result.media = u"poll"_q;
++		result.mediaId = poll->id;
++	} else if (media->location()) {
++		result.media = u"location"_q;
++	} else if (media->sharedContact()) {
++		result.media = u"contact"_q;
++	} else if (media->todolist()) {
++		result.media = u"checklist"_q;
++	} else {
++		result.media = u"media"_q;
++	}
++	return result;
++}
++
++[[nodiscard]] bool SameMedia(const EditContent &a, const EditContent &b) {
++	return (a.media == b.media) && (a.mediaId == b.mediaId);
++}
++
++[[nodiscard]] bool Same(const EditContent &a, const EditContent &b) {
++	return SameMedia(a, b) && (a.text == b.text);
++}
++
++[[nodiscard]] TimeId EditDate(not_null<const HistoryItem*> item) {
++	const auto edited = item->Get<HistoryMessageEdited>();
++	return edited ? edited->date : TimeId();
++}
++
++[[nodiscard]] Record *Versions(not_null<const HistoryItem*> item) {
++	if (!EditHistory()) {
++		return nullptr;
++	}
++	const auto record = FindRecord(item);
++	if (!record) {
++		return nullptr;
++	}
++	const auto current = Read(item);
++	auto &versions = record->versions;
++	while (!versions.empty() && Same(versions.back().content, current)) {
++		record->since = versions.back().date;
++		record->original = versions.back().original;
++		versions.pop_back();
++	}
++	return versions.empty() ? nullptr : record;
++}
++
++[[nodiscard]] HistoryItem *FindTarget(not_null<HistoryItem*> item) {
++	if (Versions(item)) {
++		return item;
++	}
++	const auto group = item->history()->owner().groups().find(item);
++	if (group) {
++		for (const auto &part : group->items) {
++			if (Versions(part)) {
++				return part;
++			}
++		}
++	}
++	return nullptr;
++}
++
++[[nodiscard]] QString FormatDate(TimeId date) {
++	const auto parsed = base::unixtime::parse(date);
++	const auto time = parsed.time().toString(u"HH:mm:ss"_q);
++	return (parsed.date() == QDate::currentDate())
++		? time
++		: (QLocale().toString(parsed.date(), QLocale::ShortFormat)
++			+ QChar(' ')
++			+ time);
++}
++
++[[nodiscard]] std::vector<Entry> Entries(
++		not_null<const HistoryItem*> item,
++		const Record &record) {
++	auto list = record.versions;
++	list.push_back({
++		.content = Read(item),
++		.date = record.since,
++		.original = record.original,
++	});
++	auto result = std::vector<Entry>();
++	result.reserve(list.size());
++	for (auto i = 0, count = int(list.size()); i != count; ++i) {
++		const auto &version = list[i];
++		const auto &content = version.content;
++		const auto date = FormatDate(version.date);
++		auto header = (i + 1 < count)
++			? (version.original
++				? u"Original, %1"_q.arg(date)
++				: u"Edited %1"_q.arg(date))
++			: (version.original
++				? u"Current, original, %1"_q.arg(date)
++				: u"Current, edited %1"_q.arg(date));
++		const auto mediaChanged = (i > 0
++				&& !SameMedia(list[i - 1].content, content))
++			|| (i + 1 < count
++				&& !SameMedia(list[i + 1].content, content));
++		if (!content.media.isEmpty()
++			&& (content.text.empty() || mediaChanged)) {
++			header += u" \u00B7 "_q + content.media;
++		}
++		result.push_back({
++			.header = std::move(header),
++			.text = content.text,
++		});
++	}
++	return result;
++}
++
++void EditHistoryBox(
++		not_null<Ui::GenericBox*> box,
++		not_null<Main::Session*> session,
++		std::vector<Entry> entries) {
++	box->setTitle(rpl::single(u"Edit history"_q));
++	box->setWidth(st::boxWideWidth);
++	const auto padding = style::margins(
++		st::boxRowPadding.left(),
++		st::defaultSubsectionTitlePadding.top(),
++		st::boxRowPadding.right(),
++		st::defaultSubsectionTitlePadding.bottom());
++	for (const auto &entry : entries) {
++		box->addRow(
++			object_ptr<Ui::FlatLabel>(
++				box,
++				entry.header,
++				st::defaultSubsectionTitle),
++			padding);
++		if (!entry.text.empty()) {
++			const auto label = box->addRow(
++				object_ptr<Ui::FlatLabel>(
++					box,
++					rpl::single(entry.text),
++					st::boxLabel,
++					st::defaultPopupMenu,
++					Core::TextContext({ .session = session })));
++			label->setSelectable(true);
++		}
++	}
++	box->addSkip(st::boxLittleSkip);
++	box->addButton(tr::lng_close(), [=] {
++		box->closeBox();
++	});
++}
++
++} // namespace
++
++EditCapture::EditCapture(not_null<HistoryItem*> item) {
++	if (!EditHistory() || item->isService() || item->isEditingMedia()) {
++		return;
++	}
++	_item = item;
++	_before = Read(item);
++	_editDate = EditDate(item);
++}
++
++EditCapture::~EditCapture() {
++	if (!_item || !EditHistory() || _item->isService()) {
++		return;
++	}
++	const auto item = not_null<HistoryItem*>(_item);
++	if (Same(_before, Read(item))) {
++		return;
++	}
++	auto &records = Sessions(&item->history()->session()).records;
++	auto i = records.find(item);
++	if (i == end(records)) {
++		i = records.emplace(item, Record{
++			.since = _editDate ? _editDate : item->date(),
++			.original = !_editDate,
++		}).first;
++	}
++	auto &record = i->second;
++	record.versions.push_back({
++		.content = std::move(_before),
++		.date = record.since,
++		.original = record.original,
++	});
++	const auto editDate = EditDate(item);
++	record.since = (editDate > 0 && editDate != _editDate)
++		? editDate
++		: base::unixtime::now();
++	record.original = false;
++}
++
++void AddEditHistoryAction(
++		not_null<Ui::PopupMenu*> menu,
++		not_null<Window::SessionNavigation*> navigation,
++		HistoryItem *item) {
++	const auto target = item ? FindTarget(item) : nullptr;
++	if (!target) {
++		return;
++	}
++	const auto session = &target->history()->session();
++	const auto itemId = target->fullId();
++	const auto controller = navigation->parentController();
++	menu->addAction(u"Edit history"_q, [=] {
++		const auto item = session->data().message(itemId);
++		const auto record = item ? Versions(item) : nullptr;
++		if (record) {
++			controller->show(Box(
++				EditHistoryBox,
++				session,
++				Entries(item, *record)));
++		}
++	}, &st::menuIconGroupLog);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_edit_history.h b/Telegram/SourceFiles/tele/tele_edit_history.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..9240c6a0f458a1a29a465b94a4e7094f0bf51fc6
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_edit_history.h
+@@ -0,0 +1,42 @@
++#pragma once
++
++#include "ui/text/text_entity.h"
++
++class HistoryItem;
++
++namespace Ui {
++class PopupMenu;
++} // namespace Ui
++
++namespace Window {
++class SessionNavigation;
++} // namespace Window
++
++namespace Tele {
++
++struct EditContent {
++	TextWithEntities text;
++	QString media;
++	uint64 mediaId = 0;
++};
++
++class EditCapture final {
++public:
++	explicit EditCapture(not_null<HistoryItem*> item);
++	EditCapture(const EditCapture &) = delete;
++	EditCapture &operator=(const EditCapture &) = delete;
++	~EditCapture();
++
++private:
++	HistoryItem *_item = nullptr;
++	EditContent _before;
++	TimeId _editDate = 0;
++
++};
++
++void AddEditHistoryAction(
++	not_null<Ui::PopupMenu*> menu,
++	not_null<Window::SessionNavigation*> navigation,
++	HistoryItem *item);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 67d3bd386647abab556894201b74de3bf774e049..d5978504dfb55a38f701ecb39f35bc1aa8b78503 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -16,6 +16,7 @@ const char kOptionBotApiPeerIds[] = "tele-bot-api-peer-ids";
+ const char kOptionHideIgnored[] = "tele-hide-ignored";
+ const char kOptionIgnoredUsers[] = "tele-ignored-users";
+ const char kOptionMessageSeconds[] = "tele-message-seconds";
++const char kOptionEditHistory[] = "tele-edit-history";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -113,6 +114,14 @@ base::options::toggle MessageSecondsOption({
+ 		"like 14:03:21.",
+ });
+ 
++base::options::toggle EditHistoryOption({
++	.id = kOptionEditHistory,
++	.name = "Keep edit history",
++	.description = "Remember what messages looked like before they were "
++		"edited while tele is running. Right-click an edited message "
++		"to see every version. Kept in memory only.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -226,6 +235,20 @@ rpl::producer<bool> MessageSecondsValue() {
+ 	});
+ }
+ 
++bool EditHistory() {
++	return EditHistoryOption.value();
++}
++
++rpl::producer<bool> EditHistoryValue() {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		EditHistoryOption.changes()
++	) | rpl::map([] {
++		return EditHistoryOption.value();
++	});
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index dad7dec0f2c9e4896efb2196853dac8b1d5ee277..7dbbf295f7eaf3c43ead8513a59388a92c10f78c 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -14,6 +14,7 @@ extern const char kOptionBotApiPeerIds[];
+ extern const char kOptionHideIgnored[];
+ extern const char kOptionIgnoredUsers[];
+ extern const char kOptionMessageSeconds[];
++extern const char kOptionEditHistory[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -34,6 +35,8 @@ void SetIgnoredList(const QString &value);
+ [[nodiscard]] rpl::producer<QString> IgnoredListValue();
+ [[nodiscard]] bool MessageSeconds();
+ [[nodiscard]] rpl::producer<bool> MessageSecondsValue();
++[[nodiscard]] bool EditHistory();
++[[nodiscard]] rpl::producer<bool> EditHistoryValue();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();

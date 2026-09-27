@@ -1,0 +1,28 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 05:32:14 +0300
+Subject: [PATCH] fix: show checkmarks next to emoji statuses
+
+---
+ Telegram/SourceFiles/ui/unread_badge.cpp | 8 ++------
+ 1 file changed, 2 insertions(+), 6 deletions(-)
+
+diff --git a/Telegram/SourceFiles/ui/unread_badge.cpp b/Telegram/SourceFiles/ui/unread_badge.cpp
+index 37bb050311647243b88629f3b9e10ad4adf55ad8..d748ead0a66f43517f8e449afff4607c5befe6ae 100644
+--- a/Telegram/SourceFiles/ui/unread_badge.cpp
++++ b/Telegram/SourceFiles/ui/unread_badge.cpp
+@@ -250,12 +250,8 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
+ 		&& !emojiStatus
+ 		&& peer->isPremium();
+ 
+-	const auto paintVerify = verifyCheck
+-		&& (descriptor.prioritizeVerification
+-			|| descriptor.bothVerifyAndStatus
+-			|| !emojiStatus);
+-	const auto paintEmoji = emojiStatus
+-		&& (!paintVerify || descriptor.bothVerifyAndStatus);
++	const auto paintVerify = verifyCheck;
++	const auto paintEmoji = emojiStatus;
+ 	const auto paintStar = premiumStar && !paintVerify;
+ 
+ 	auto result = 0;

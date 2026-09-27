@@ -1,0 +1,296 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 04:09:25 +0300
+Subject: [PATCH] feat: show seconds in message times
+
+---
+ Telegram/CMakeLists.txt                       |  2 +
+ .../history/view/history_view_bottom_info.cpp |  7 +-
+ .../SourceFiles/settings/settings_tele.cpp    |  5 +
+ Telegram/SourceFiles/tele/tele_ignored.cpp    | 15 +++
+ Telegram/SourceFiles/tele/tele_options.cpp    | 22 +++++
+ Telegram/SourceFiles/tele/tele_options.h      |  3 +
+ Telegram/SourceFiles/tele/tele_time.cpp       | 96 +++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_time.h         |  8 ++
+ 8 files changed, 155 insertions(+), 3 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_time.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_time.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index b4b2d203f4100a29cb98634d102578a65b0d04e1..95ef96e82383309f15a50088fee04aec53573bfa 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2233,6 +2233,8 @@ PRIVATE
+     tele/tele_peer_id.h
+     tele/tele_shortcuts.cpp
+     tele/tele_shortcuts.h
++    tele/tele_time.cpp
++    tele/tele_time.h
+     tele/tele_title.cpp
+     tele/tele_title.h
+     tele/tele_updater.cpp
+diff --git a/Telegram/SourceFiles/history/view/history_view_bottom_info.cpp b/Telegram/SourceFiles/history/view/history_view_bottom_info.cpp
+index 21ac2d09730569f4e4c4b5db79a68e97204252e9..730ed0f5b9f83b79c639cb29209062b1351eb88e 100644
+--- a/Telegram/SourceFiles/history/view/history_view_bottom_info.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_bottom_info.cpp
+@@ -33,6 +33,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_session.h"
+ #include "data/data_message_reactions.h"
+ #include "window/window_session_controller.h"
++#include "tele/tele_time.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_credits.h"
+ 
+@@ -71,7 +72,7 @@ namespace {
+ 
+ [[nodiscard]] QString FormatEditedDate(QDateTime sent, QDateTime edited) {
+ 	const auto today = QDateTime::currentDateTime().date();
+-	const auto time = QLocale().toString(edited.time(), QLocale::ShortFormat);
++	const auto time = Tele::FormatMessageTime(edited.time());
+ 	if (sent.date() == today && edited.date() == today) {
+ 		return tr::lng_edited_at(tr::now, lt_time, time);
+ 	}
+@@ -503,8 +504,8 @@ void BottomInfo::layoutDateText() {
+ 	const auto date = editedPrimary
+ 		? FormatEditedDate(_data.date, _data.editedDate)
+ 		: edited + ((_data.flags & Data::Flag::ForwardedDate)
+-		? Ui::FormatDateTimeSavedFrom(_data.date)
+-		: QLocale().toString(_data.date.time(), QLocale::ShortFormat));
++		? Tele::FormatMessageSavedFromDate(_data.date)
++		: Tele::FormatMessageTime(_data.date.time()));
+ 	const auto afterAuthor = prefix + date;
+ 	const auto afterAuthorWidth = st::msgDateFont->width(afterAuthor);
+ 	const auto authorWidth = st::msgDateFont->width(author);
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 5c432ffed51471aa72113fa6b028755a77252afb..2e858a9acceed6d41e8ec651153d56ff4b9edc4c 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -628,6 +628,11 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
++	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
++	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
++	Ui::AddSkip(content);
++	Ui::AddDivider(content);
++	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
+index 4e4a5d5e1847399fc90bbf528b3f4093b5b0f627..baecb81248fcd68bf53ffbe36ecfb56da477a9fa 100644
+--- a/Telegram/SourceFiles/tele/tele_ignored.cpp
++++ b/Telegram/SourceFiles/tele/tele_ignored.cpp
+@@ -94,6 +94,16 @@ void Refresh(const State &state, const base::flat_set<Key> &changed) {
+ 	}
+ }
+ 
++void RefreshData(const State &state) {
++	auto items = base::flat_set<not_null<HistoryItem*>>();
++	for (const auto &view : state.views) {
++		items.emplace(view->data());
++	}
++	for (const auto &item : items) {
++		item->history()->owner().notifyItemDataChange(item);
++	}
++}
++
+ State::State() {
+ 	IgnoredListValue(
+ 	) | rpl::on_next([=](const QString &value) {
+@@ -118,6 +128,11 @@ State::State() {
+ 	) | rpl::skip(1) | rpl::on_next([=] {
+ 		Refresh(*this, keys);
+ 	}, lifetime);
++
++	MessageSecondsValue(
++	) | rpl::skip(1) | rpl::on_next([=] {
++		RefreshData(*this);
++	}, lifetime);
+ }
+ 
+ [[nodiscard]] bool Applies(Context context) {
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 76c4449d77364d4693adc1a799caac8c2cdd535e..67d3bd386647abab556894201b74de3bf774e049 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -15,6 +15,7 @@ const char kOptionPeerIdsWithoutSpaces[] = "tele-peer-ids-without-spaces";
+ const char kOptionBotApiPeerIds[] = "tele-bot-api-peer-ids";
+ const char kOptionHideIgnored[] = "tele-hide-ignored";
+ const char kOptionIgnoredUsers[] = "tele-ignored-users";
++const char kOptionMessageSeconds[] = "tele-message-seconds";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -105,6 +106,13 @@ base::options::option<QString> IgnoredUsersOption({
+ 		"Right-click a userpic in a group to ignore someone.",
+ });
+ 
++base::options::toggle MessageSecondsOption({
++	.id = kOptionMessageSeconds,
++	.name = "Show seconds in message times",
++	.description = "Times in message bubbles show seconds too, "
++		"like 14:03:21.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -204,6 +212,20 @@ rpl::producer<QString> IgnoredListValue() {
+ 	});
+ }
+ 
++bool MessageSeconds() {
++	return MessageSecondsOption.value();
++}
++
++rpl::producer<bool> MessageSecondsValue() {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		MessageSecondsOption.changes()
++	) | rpl::map([] {
++		return MessageSecondsOption.value();
++	});
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 0e1aabd4e07b37ff98696589a659f0fb72faef09..dad7dec0f2c9e4896efb2196853dac8b1d5ee277 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -13,6 +13,7 @@ extern const char kOptionPeerIdsWithoutSpaces[];
+ extern const char kOptionBotApiPeerIds[];
+ extern const char kOptionHideIgnored[];
+ extern const char kOptionIgnoredUsers[];
++extern const char kOptionMessageSeconds[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -31,6 +32,8 @@ extern const char kOptionTitleTemplate[];
+ [[nodiscard]] rpl::producer<bool> HideIgnoredValue();
+ void SetIgnoredList(const QString &value);
+ [[nodiscard]] rpl::producer<QString> IgnoredListValue();
++[[nodiscard]] bool MessageSeconds();
++[[nodiscard]] rpl::producer<bool> MessageSecondsValue();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();
+diff --git a/Telegram/SourceFiles/tele/tele_time.cpp b/Telegram/SourceFiles/tele/tele_time.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..528af5cfd66ea7988c0596d0f1fa07377e6316bb
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_time.cpp
+@@ -0,0 +1,96 @@
++#include "tele/tele_time.h"
++
++#include "base/unixtime.h"
++#include "lang/lang_keys.h"
++#include "tele/tele_options.h"
++#include "ui/text/format_values.h"
++
++#include <QtCore/QLocale>
++
++namespace Tele {
++namespace {
++
++constexpr auto kSecondsInYear = 365 * 24 * 60 * 60;
++
++[[nodiscard]] QString WithSeconds(const QString &format) {
++	auto quoted = false;
++	auto minutesEnd = -1;
++	for (auto i = 0, size = int(format.size()); i != size; ++i) {
++		const auto ch = format[i];
++		if (ch == QChar('\'')) {
++			quoted = !quoted;
++		} else if (quoted) {
++			continue;
++		} else if (ch == QChar('s')) {
++			return format;
++		} else if (ch == QChar('m')) {
++			minutesEnd = i + 1;
++		}
++	}
++	if (minutesEnd < 0) {
++		return format;
++	}
++	auto minutesStart = minutesEnd;
++	while (minutesStart > 0 && format[minutesStart - 1] == QChar('m')) {
++		--minutesStart;
++	}
++	auto separatorStart = minutesStart;
++	while (separatorStart > 0
++		&& !format[separatorStart - 1].isLetter()
++		&& format[separatorStart - 1] != QChar('\'')) {
++		--separatorStart;
++	}
++	const auto separator = format.mid(
++		separatorStart,
++		minutesStart - separatorStart);
++	const auto literal = (separatorStart > 0)
++		&& (format[separatorStart - 1] == QChar('\''));
++	return format.left(minutesEnd)
++		+ ((literal || separator.trimmed().isEmpty()) ? u":"_q : separator)
++		+ u"ss"_q
++		+ format.mid(minutesEnd);
++}
++
++} // namespace
++
++QString FormatMessageTime(const QTime &time) {
++	const auto locale = QLocale();
++	if (!MessageSeconds()) {
++		return locale.toString(time, QLocale::ShortFormat);
++	}
++	return locale.toString(
++		time,
++		WithSeconds(locale.timeFormat(QLocale::ShortFormat)));
++}
++
++QString FormatMessageSavedFromDate(const QDateTime &dateTime) {
++	if (!MessageSeconds()) {
++		return Ui::FormatDateTimeSavedFrom(dateTime);
++	}
++	const auto current = QDate::currentDate();
++	const auto date = dateTime.date();
++	const auto time = FormatMessageTime(dateTime.time());
++	if (date == current) {
++		return tr::lng_mediaview_today(tr::now, lt_time, time);
++	} else if (date == current.addDays(-1)) {
++		return tr::lng_mediaview_yesterday(tr::now, lt_time, time);
++	}
++	const auto diff = std::abs(
++		base::unixtime::now() - base::unixtime::serialize(dateTime));
++	const auto day = (diff < kSecondsInYear)
++		? tr::lng_month_day(
++			tr::now,
++			lt_month,
++			Lang::MonthSmall(date.month())(tr::now),
++			lt_day,
++			QString::number(date.day()))
++		: langDayOfMonthFull(date);
++	return tr::lng_mediaview_date_time(
++		tr::now,
++		lt_date,
++		day,
++		lt_time,
++		time);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_time.h b/Telegram/SourceFiles/tele/tele_time.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..c584a9a5d03de038c0d9ccda78cf395711cafb03
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_time.h
+@@ -0,0 +1,8 @@
++#pragma once
++
++namespace Tele {
++
++[[nodiscard]] QString FormatMessageTime(const QTime &time);
++[[nodiscard]] QString FormatMessageSavedFromDate(const QDateTime &dateTime);
++
++} // namespace Tele

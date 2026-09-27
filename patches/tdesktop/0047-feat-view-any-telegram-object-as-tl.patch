@@ -1,0 +1,883 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 05:44:33 +0300
+Subject: [PATCH] feat: view any telegram object as tl
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../boxes/peers/edit_participants_box.cpp     |   5 +
+ .../SourceFiles/boxes/sticker_set_box.cpp     |   3 +
+ .../chat_helpers/emoji_list_widget.cpp        |   2 +
+ .../chat_helpers/stickers_list_widget.cpp     |   3 +
+ .../media/view/media_view_overlay_widget.cpp  |   2 +
+ .../settings/settings_credits_graphics.cpp    |   2 +
+ .../SourceFiles/settings/settings_tele.cpp    |   2 +-
+ .../SourceFiles/tele/tele_message_menu.cpp    |  67 +---
+ Telegram/SourceFiles/tele/tele_options.cpp    |   7 +-
+ Telegram/SourceFiles/tele/tele_view_tl.cpp    | 370 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_view_tl.h      | 117 ++++++
+ .../ui/widgets/chat_filters_tabs_strip.cpp    |   2 +
+ .../window/window_filters_menu.cpp            |   2 +
+ .../SourceFiles/window/window_peer_menu.cpp   |   3 +
+ 15 files changed, 521 insertions(+), 68 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_view_tl.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_view_tl.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 65e821aeb43ab0d4842ba8bac2d06e5769d20a2b..7beb762e818b945de96b33b70dfc9d5abbd49dd0 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2257,6 +2257,8 @@ PRIVATE
+     tele/tele_title.h
+     tele/tele_updater.cpp
+     tele/tele_updater.h
++    tele/tele_view_tl.cpp
++    tele/tele_view_tl.h
+ )
+ set_source_files_properties(${src_loc}/tele/tele_build.cpp
+ PROPERTIES
+diff --git a/Telegram/SourceFiles/boxes/peers/edit_participants_box.cpp b/Telegram/SourceFiles/boxes/peers/edit_participants_box.cpp
+index 76a1c0065038e4ec48d66b6405a0561c7d09c627..8daacf9c6729f47f9fce74458b622a8d1d89c1af 100644
+--- a/Telegram/SourceFiles/boxes/peers/edit_participants_box.cpp
++++ b/Telegram/SourceFiles/boxes/peers/edit_participants_box.cpp
+@@ -42,6 +42,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "window/window_session_controller.h"
+ #include "history/history.h"
+ #include "history/view/history_view_message.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_menu_icons.h"
+ 
+@@ -2058,6 +2059,10 @@ base::unique_qptr<Ui::PopupMenu> ParticipantsBoxController::rowContextMenu(
+ 			(participant->isUser()
+ 				? &st::menuIconProfile
+ 				: &st::menuIconInfo));
++		Tele::AddViewTlAction(
++			result.get(),
++			_navigation->uiShow(),
++			participant);
+ 	}
+ 	if (user && SupportsMemberTags(_peer)) {
+ 		const auto isSelf = user->isSelf();
+diff --git a/Telegram/SourceFiles/boxes/sticker_set_box.cpp b/Telegram/SourceFiles/boxes/sticker_set_box.cpp
+index b16a7d8f1fbfcf182eb351d81c31aedfa048543b..23e34281c04e774f542af74eaaf08f7ea53171d8 100644
+--- a/Telegram/SourceFiles/boxes/sticker_set_box.cpp
++++ b/Telegram/SourceFiles/boxes/sticker_set_box.cpp
+@@ -68,6 +68,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "ui/rect.h"
+ #include "ui/vertical_list.h"
+ #include "window/window_session_controller.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_dialogs.h"
+@@ -1097,6 +1098,7 @@ void StickerSetBox::updateButtons() {
+ 					tr::lng_context_copy_link(tr::now),
+ 					copyLink,
+ 					&st::menuIconCopy);
++				Tele::AddViewTlAction(raw, _show, _set);
+ 				if (fillSetCreatorMenu) {
+ 					fillSetCreatorMenu(raw);
+ 				}
+@@ -1759,6 +1761,7 @@ void StickerSetBox::Inner::contextMenuEvent(QContextMenuEvent *e) {
+ 		this,
+ 		st::popupMenuWithIcons);
+ 	const auto details = _show->sendMenuDetails();
++	Tele::AddViewTlAction(_menu.get(), _show, chosenDocument);
+ 	if (setType() == Data::StickersType::Emoji) {
+ 		EmojiStatusMenu::AddSetAsStatusAction(
+ 			Ui::Menu::CreateAddActionCallback(_menu.get()),
+diff --git a/Telegram/SourceFiles/chat_helpers/emoji_list_widget.cpp b/Telegram/SourceFiles/chat_helpers/emoji_list_widget.cpp
+index fb433361e1a6524f9f50afb76c9e95fb9bbc07fe..e968fbec2a904eccc255b82c1f4c83b87fd212c3 100644
+--- a/Telegram/SourceFiles/chat_helpers/emoji_list_widget.cpp
++++ b/Telegram/SourceFiles/chat_helpers/emoji_list_widget.cpp
+@@ -58,6 +58,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "core/application.h"
+ #include "settings/sections/settings_premium.h"
+ #include "window/window_session_controller.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_menu_icons.h"
+ 
+@@ -2004,6 +2005,7 @@ base::unique_qptr<Ui::PopupMenu> EmojiListWidget::fillContextMenu(
+ 	} else if (_mode == Mode::EmojiStatus || _mode == Mode::ChannelStatus) {
+ 		fillEmojiStatusMenu(menu, section, index);
+ 	}
++	Tele::AddViewTlAction(menu.get(), _show, lookupCustomEmoji(over).document);
+ 	if (menu->empty()) {
+ 		return nullptr;
+ 	}
+diff --git a/Telegram/SourceFiles/chat_helpers/stickers_list_widget.cpp b/Telegram/SourceFiles/chat_helpers/stickers_list_widget.cpp
+index 7e6b3d34be93fe73c9b71568db909fe1524bc1c8..b6b7334d622ae53dfbb1ad36408e2ec8d3d91580 100644
+--- a/Telegram/SourceFiles/chat_helpers/stickers_list_widget.cpp
++++ b/Telegram/SourceFiles/chat_helpers/stickers_list_widget.cpp
+@@ -54,6 +54,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "apiwrap.h"
+ #include "api/api_toggling_media.h" // Api::ToggleFavedSticker
+ #include "api/api_premium.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_window.h"
+ #include "styles/style_menu_icons.h"
+@@ -2694,6 +2695,7 @@ base::unique_qptr<Ui::PopupMenu> StickersListWidget::fillContextMenu(
+ 				false);
+ 		}, &icons->menuRecentRemove);
+ 	}
++	Tele::AddViewTlAction(menu.get(), _show, document);
+ 
+ 	SendMenu::AttachSendMenuEffect(
+ 		menu,
+@@ -2792,6 +2794,7 @@ base::unique_qptr<Ui::PopupMenu> FillStickerSetContextMenu(
+ 			});
+ 		},
+ 		&icons.menuSetCopyLink);
++	Tele::AddViewTlAction(menu.get(), show, set->identifier());
+ 	if (installed) {
+ 		menu->addSeparator();
+ 		menu->addAction(
+diff --git a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
+index 2f5bff03445da1caccdd19826f830813aa712075..0764704bdfeee833ff8f69d571328e329a8a4d5b 100644
+--- a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
++++ b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
+@@ -119,6 +119,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "platform/platform_text_recognition.h"
+ #include "tele/tele_options.h"
+ #include "tele/tele_secret_media.h"
++#include "tele/tele_view_tl.h"
+ 
+ #include <QGraphicsOpacityEffect>
+ 
+@@ -2513,6 +2514,7 @@ void OverlayWidget::fillContextMenuActions(
+ 			_stories->reportRequested();
+ 		}, &st::mediaMenuIconReport);
+ 	}
++	Tele::AddViewTlAction(addAction, uiShow(), story, _message);
+ }
+ 
+ auto OverlayWidget::computeOverviewType() const
+diff --git a/Telegram/SourceFiles/settings/settings_credits_graphics.cpp b/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
+index a5b4917b0a7dd5548b5050b4a5d4d390f2d6cee1..e3dfbfcdcdc9e91bc84e12f5bf55e1167e4e9946 100644
+--- a/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
++++ b/Telegram/SourceFiles/settings/settings_credits_graphics.cpp
+@@ -98,6 +98,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "ui/wrap/vertical_layout.h"
+ #include "ui/ui_utility.h"
+ #include "window/window_session_controller.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_boxes.h"
+ #include "styles/style_calls.h"
+ #include "styles/style_channel_earn.h"
+@@ -1061,6 +1062,7 @@ void FillUniqueGiftMenu(
+ 		&& !e.converted;
+ 
+ 	const auto unique = e.uniqueGift;
++	Tele::AddViewTlAction(menu, show, unique, savedId);
+ 	if (unique
+ 		&& canToggle
+ 		&& e.savedToProfile
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 0ad3bbdae4535ed40010c8f5810ade647052c1f3..30b66e181be363d55399433ca5f65eb94da9c684 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -796,7 +796,6 @@ void TeleSection::setupContent() {
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionDeletedIcon);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionKeepSecretMedia);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionScreenshotSecretMedia);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionViewAsTl);
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
+@@ -813,6 +812,7 @@ void TeleSection::setupContent() {
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionBotApiPeerIds);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionShowDc);
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionMessageIdMenu);
++	AddOptionToggle(content, controller(), ::Tele::kOptionViewAsTl);
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_message_menu.cpp b/Telegram/SourceFiles/tele/tele_message_menu.cpp
+index 241653dc0dd1ff2616bc5454249d9688a7aa6f2f..145be78a1919b81e854e02d91f5610f3f8ec751c 100644
+--- a/Telegram/SourceFiles/tele/tele_message_menu.cpp
++++ b/Telegram/SourceFiles/tele/tele_message_menu.cpp
+@@ -1,20 +1,16 @@
+ #include "tele/tele_message_menu.h"
+ 
+-#include "apiwrap.h"
+-#include "data/data_channel.h"
+ #include "data/data_peer.h"
+ #include "history/history.h"
+ #include "history/history_item.h"
+-#include "main/main_session.h"
+ #include "main/session/session_show.h"
+ #include "tele/tele_options.h"
+-#include "ui/basic_click_handlers.h"
++#include "tele/tele_view_tl.h"
+ #include "ui/toast/toast.h"
+ #include "ui/widgets/menu/menu_action.h"
+ #include "ui/widgets/menu/menu_common.h"
+ #include "ui/widgets/menu/menu_separator.h"
+ #include "ui/widgets/popup_menu.h"
+-#include "window/themes/window_theme.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_menu_icons.h"
+ 
+@@ -49,63 +45,6 @@ namespace {
+ 		nullptr);
+ }
+ 
+-[[nodiscard]] QByteArray Serialize(const MTPMessage &message) {
+-	auto buffer = mtpBuffer();
+-	message.write(buffer);
+-	return QByteArray(
+-		reinterpret_cast<const char*>(buffer.constData()),
+-		buffer.size() * sizeof(buffer.front()));
+-}
+-
+-void OpenTl(const QByteArray &bytes) {
+-	const auto data = bytes.toBase64(
+-		QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
+-	UrlClickHandler::Open(
+-		u"https://schema.jppgr.am/embed#layer=%1&theme=%2&data=%3"_q
+-			.arg(int(MTP::details::kCurrentLayer))
+-			.arg(Window::Theme::IsNightMode() ? u"dark"_q : u"light"_q)
+-			.arg(QString::fromLatin1(data)));
+-}
+-
+-void RequestTl(
+-		std::shared_ptr<Main::SessionShow> show,
+-		not_null<PeerData*> peer,
+-		MsgId id) {
+-	const auto ids = MTP_vector<MTPInputMessage>(
+-		1,
+-		MTP_inputMessageID(MTP_int(id)));
+-	const auto done = [=](const MTPmessages_Messages &result) {
+-		const auto list = result.match([](
+-				const MTPDmessages_messagesNotModified &) {
+-			return QVector<MTPMessage>();
+-		}, [](const auto &data) {
+-			return data.vmessages().v;
+-		});
+-		for (const auto &message : list) {
+-			if (message.type() != mtpc_messageEmpty
+-				&& IdFromMessage(message) == id) {
+-				OpenTl(Serialize(message));
+-				return;
+-			}
+-		}
+-		show->showToast(u"The server didn't return this message."_q);
+-	};
+-	const auto fail = [=](const MTP::Error &error) {
+-		show->showToast(error.type());
+-	};
+-	auto &api = peer->session().api();
+-	if (const auto channel = peer->asChannel()) {
+-		api.request(MTPchannels_GetMessages(
+-			channel->inputChannel(),
+-			ids
+-		)).done(done).fail(fail).send();
+-	} else {
+-		api.request(MTPmessages_GetMessages(
+-			ids
+-		)).done(done).fail(fail).send();
+-	}
+-}
+-
+ [[nodiscard]] base::unique_qptr<Ui::Menu::ItemBase> MakeTlAction(
+ 		not_null<Ui::PopupMenu*> menu,
+ 		std::shared_ptr<Main::SessionShow> show,
+@@ -115,8 +54,8 @@ void RequestTl(
+ 	const auto parent = menu->menu();
+ 	const auto action = Ui::Menu::CreateAction(
+ 		parent,
+-		u"View as TL"_q,
+-		[=] { RequestTl(show, peer, id); });
++		ViewTlText(),
++		[=] { ViewMessageTl(show, peer, id); });
+ 	return base::make_unique_q<Ui::Menu::Action>(
+ 		parent,
+ 		menu->st().menu,
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 02e1051a2ad14b0dcbbbd6c03515ea46596dcbf0..4c9f7497661e4f41ef5698f3ef4cf5d2fcbe3a43 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -296,9 +296,10 @@ base::options::toggle ScreenshotSecretMediaOption({
+ 
+ base::options::toggle ViewAsTlOption({
+ 	.id = kOptionViewAsTl,
+-	.name = "View messages as TL",
+-	.description = "The message menu gets View as TL: it fetches the "
+-		"message from the server and opens its raw TL object on "
++	.name = "View as TL",
++	.description = "Adds View as TL to menus of messages, chats, "
++		"profiles, topics, stickers, gifts, stories and folders: it "
++		"fetches the object from the server and opens it on "
+ 		"schema.jppgr.am in the browser.",
+ });
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_view_tl.cpp b/Telegram/SourceFiles/tele/tele_view_tl.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..21392f571090085e79266a0f9a69712731e03cf3
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_view_tl.cpp
+@@ -0,0 +1,370 @@
++#include "tele/tele_view_tl.h"
++
++#include "api/api_credits.h"
++#include "base/random.h"
++#include "apiwrap.h"
++#include "data/data_channel.h"
++#include "data/data_chat.h"
++#include "data/data_document.h"
++#include "data/data_forum_topic.h"
++#include "data/data_peer.h"
++#include "data/data_saved_sublist.h"
++#include "data/data_star_gift.h"
++#include "data/data_story.h"
++#include "data/data_user.h"
++#include "data/stickers/data_stickers.h"
++#include "data/stickers/data_stickers_set.h"
++#include "dialogs/dialogs_key.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "main/main_session.h"
++#include "main/session/session_show.h"
++#include "tele/tele_options.h"
++#include "ui/basic_click_handlers.h"
++#include "window/themes/window_theme.h"
++#include "styles/style_menu_icons.h"
++
++#include <QtCore/QDir>
++#include <QtGui/QDesktopServices>
++
++#include <zlib.h>
++
++namespace Tele {
++namespace {
++
++constexpr auto kPackFrom = 512;
++constexpr auto kDirectUrlLength = 2000;
++
++
++void ViewPeerTl(
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<PeerData*> peer) {
++	if (const auto user = peer->asUser()) {
++		RequestTl(show, MTPusers_GetFullUser(user->inputUser()));
++	} else if (const auto chat = peer->asChat()) {
++		RequestTl(show, MTPmessages_GetFullChat(chat->inputChat()));
++	} else if (const auto channel = peer->asChannel()) {
++		RequestTl(show, MTPchannels_GetFullChannel(channel->inputChannel()));
++	}
++}
++
++void ViewTopicTl(
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<PeerData*> peer,
++		MsgId rootId) {
++	RequestTl(show, MTPmessages_GetForumTopicsByID(
++		peer->input(),
++		MTP_vector<MTPint>(1, MTP_int(rootId))));
++}
++
++[[nodiscard]] QByteArray FindDocument(
++		const QVector<MTPDocument> &list,
++		DocumentId id) {
++	for (const auto &document : list) {
++		if (document.type() == mtpc_document
++			&& document.c_document().vid().v == id) {
++			return SerializeTl(document);
++		}
++	}
++	return QByteArray();
++}
++
++void ViewDocumentTl(
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<DocumentData*> document) {
++	const auto id = document->id;
++	const auto sticker = document->sticker();
++	if (sticker
++		&& sticker->set
++		&& sticker->setType != Data::StickersType::Emoji) {
++		RequestTl(show, MTPmessages_GetStickerSet(
++			Data::InputStickerSet(sticker->set),
++			MTP_int(0)
++		), [=](const MTPmessages_StickerSet &result) {
++			return result.match([&](const MTPDmessages_stickerSet &data) {
++				return FindDocument(data.vdocuments().v, id);
++			}, [](const MTPDmessages_stickerSetNotModified &) {
++				return QByteArray();
++			});
++		});
++	} else {
++		RequestTl(show, MTPmessages_GetCustomEmojiDocuments(
++			MTP_vector<MTPlong>(1, MTP_long(id))
++		), [=](const MTPVector<MTPDocument> &result) {
++			return FindDocument(result.v, id);
++		});
++	}
++}
++
++void ViewStoryTl(
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<PeerData*> peer,
++		StoryId id) {
++	RequestTl(show, MTPstories_GetStoriesByID(
++		peer->input(),
++		MTP_vector<MTPint>(1, MTP_int(id))));
++}
++
++[[nodiscard]] QByteArray RawDeflate(const QByteArray &bytes) {
++	auto stream = z_stream();
++	if (deflateInit2(
++			&stream,
++			Z_BEST_COMPRESSION,
++			Z_DEFLATED,
++			-MAX_WBITS,
++			9,
++			Z_DEFAULT_STRATEGY) != Z_OK) {
++		return QByteArray();
++	}
++	const auto guard = gsl::finally([&] { deflateEnd(&stream); });
++	auto result = QByteArray(
++		int(deflateBound(&stream, uLong(bytes.size()))),
++		Qt::Uninitialized);
++	stream.next_in = reinterpret_cast<Bytef*>(
++		const_cast<char*>(bytes.constData()));
++	stream.avail_in = uInt(bytes.size());
++	stream.next_out = reinterpret_cast<Bytef*>(result.data());
++	stream.avail_out = uInt(result.size());
++	if (deflate(&stream, Z_FINISH) != Z_STREAM_END) {
++		return QByteArray();
++	}
++	result.resize(int(stream.total_out));
++	return result;
++}
++
++[[nodiscard]] QString WriteRedirectPage(const QString &url) {
++	const auto folder = QDir(QDir::tempPath());
++	for (const auto &old : folder.entryInfoList(
++			{ u"tele-tl-*.html"_q },
++			QDir::Files)) {
++		if (old.lastModified().secsTo(QDateTime::currentDateTime()) > 60) {
++			QFile::remove(old.absoluteFilePath());
++		}
++	}
++	const auto path = folder.absoluteFilePath(u"tele-tl-%1.html"_q.arg(
++		base::RandomValue<uint32>()));
++	auto file = QFile(path);
++	if (!file.open(QIODevice::WriteOnly)) {
++		return QString();
++	}
++	file.write((u"<!doctype html><meta charset=\"utf-8\"><title>tele</title>"
++		"<script>location.replace(\"%1\")</script>"
++		"<a href=\"%1\">open</a>"_q).arg(url).toUtf8());
++	return path;
++}
++
++} // namespace
++
++void OpenTl(const QByteArray &bytes) {
++	const auto packed = (bytes.size() > kPackFrom)
++		? RawDeflate(bytes)
++		: QByteArray();
++	const auto compressed = !packed.isEmpty() && packed.size() < bytes.size();
++	const auto data = (compressed ? packed : bytes).toBase64(
++		QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
++	const auto url = u"https://schema.jppgr.am/embed#layer=%1&theme=%2%3&data=%4"_q
++		.arg(int(MTP::details::kCurrentLayer))
++		.arg(Window::Theme::IsNightMode() ? u"dark"_q : u"light"_q)
++		.arg(compressed ? u"&z=1"_q : QString())
++		.arg(QString::fromLatin1(data));
++	if (url.size() <= kDirectUrlLength) {
++		UrlClickHandler::Open(url);
++	} else if (const auto page = WriteRedirectPage(url); !page.isEmpty()) {
++		QDesktopServices::openUrl(QUrl::fromLocalFile(page));
++	}
++}
++
++MTP::Sender &TlSender(const std::shared_ptr<Main::SessionShow> &show) {
++	return show->session().api();
++}
++
++void OpenTlResult(
++		const std::shared_ptr<Main::SessionShow> &show,
++		const QByteArray &bytes) {
++	if (bytes.isEmpty()) {
++		show->showToast(u"The server didn't return this object."_q);
++	} else {
++		OpenTl(bytes);
++	}
++}
++
++void ShowTlError(
++		const std::shared_ptr<Main::SessionShow> &show,
++		const MTP::Error &error) {
++	show->showToast(error.type());
++}
++
++QString ViewTlText() {
++	return u"View as TL"_q;
++}
++
++void ViewMessageTl(
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<PeerData*> peer,
++		MsgId id) {
++	const auto extract = [=](const MTPmessages_Messages &result) {
++		const auto list = result.match([](
++				const MTPDmessages_messagesNotModified &) {
++			return QVector<MTPMessage>();
++		}, [](const auto &data) {
++			return data.vmessages().v;
++		});
++		for (const auto &message : list) {
++			if (message.type() != mtpc_messageEmpty
++				&& IdFromMessage(message) == id) {
++				return SerializeTl(message);
++			}
++		}
++		return QByteArray();
++	};
++	const auto ids = MTP_vector<MTPInputMessage>(
++		1,
++		MTP_inputMessageID(MTP_int(id)));
++	if (const auto channel = peer->asChannel()) {
++		RequestTl(
++			show,
++			MTPchannels_GetMessages(channel->inputChannel(), ids),
++			extract);
++	} else {
++		RequestTl(show, MTPmessages_GetMessages(ids), extract);
++	}
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		const Dialogs::EntryState &request) {
++	using Section = Dialogs::EntryState::Section;
++	const auto section = request.section;
++	if (!ViewAsTl()
++		|| section == Section::Scheduled
++		|| section == Section::Pinned
++		|| section == Section::ShortcutMessages
++		|| section == Section::WelcomeMessages) {
++		return;
++	}
++	const auto &key = request.key;
++	if (const auto topic = key.topic()) {
++		const auto peer = topic->peer();
++		const auto rootId = topic->rootId();
++		addAction(ViewTlText(), [=] {
++			ViewTopicTl(show, peer, rootId);
++		}, &st::menuIconInfo);
++	} else if (section == Section::Replies) {
++		return;
++	} else if (const auto sublist = key.sublist()) {
++		AddViewTlAction(addAction, show, sublist->sublistPeer());
++	} else if (const auto history = key.history()) {
++		AddViewTlAction(addAction, show, history->peer);
++	}
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		not_null<PeerData*> peer) {
++	if (!ViewAsTl()) {
++		return;
++	}
++	addAction(ViewTlText(), [=] {
++		ViewPeerTl(show, peer);
++	}, &st::menuIconInfo);
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		DocumentData *document) {
++	if (!ViewAsTl() || !document) {
++		return;
++	}
++	const auto strong = not_null<DocumentData*>(document);
++	addAction(ViewTlText(), [=] {
++		ViewDocumentTl(show, strong);
++	}, &st::menuIconInfo);
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		const StickerSetIdentifier &set) {
++	if (!ViewAsTl() || !set) {
++		return;
++	}
++	addAction(ViewTlText(), [=] {
++		RequestTl(show, MTPmessages_GetStickerSet(
++			Data::InputStickerSet(set),
++			MTP_int(0)));
++	}, &st::menuIconInfo);
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		Data::Story *story,
++		HistoryItem *item) {
++	if (!ViewAsTl()) {
++		return;
++	} else if (story) {
++		const auto peer = story->peer();
++		const auto id = story->id();
++		addAction(ViewTlText(), [=] {
++			ViewStoryTl(show, peer, id);
++		}, &st::mediaMenuIconInfo);
++	} else if (item && item->isRegular() && IsServerMsgId(item->id)) {
++		const auto peer = item->history()->peer;
++		const auto id = item->id;
++		addAction(ViewTlText(), [=] {
++			ViewMessageTl(show, peer, id);
++		}, &st::mediaMenuIconInfo);
++	}
++}
++
++void AddViewTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		const std::shared_ptr<Data::UniqueGift> &unique,
++		const Data::SavedStarGiftId &savedId) {
++	if (!ViewAsTl()) {
++		return;
++	} else if (unique && !unique->slug.isEmpty()) {
++		const auto slug = unique->slug;
++		addAction(ViewTlText(), [=] {
++			RequestTl(show, MTPpayments_GetUniqueStarGift(MTP_string(slug)));
++		}, &st::menuIconInfo);
++	} else if (savedId) {
++		const auto input = Api::InputSavedStarGiftId(savedId);
++		addAction(ViewTlText(), [=] {
++			RequestTl(show, MTPpayments_GetSavedStarGift(
++				MTP_vector<MTPInputSavedStarGift>(1, input)));
++		}, &st::menuIconInfo);
++	}
++}
++
++void AddViewFolderTlAction(
++		const Ui::Menu::MenuCallback &addAction,
++		std::shared_ptr<Main::SessionShow> show,
++		FilterId id) {
++	if (!ViewAsTl()) {
++		return;
++	}
++	const auto extract = [=](const MTPmessages_DialogFilters &result) {
++		for (const auto &filter : result.data().vfilters().v) {
++			const auto found = filter.match([&](
++					const MTPDdialogFilterDefault &) {
++				return !id;
++			}, [&](const auto &data) {
++				return (data.vid().v == id);
++			});
++			if (found) {
++				return SerializeTl(filter);
++			}
++		}
++		return QByteArray();
++	};
++	addAction(ViewTlText(), [=] {
++		RequestTl(show, MTPmessages_GetDialogFilters(), extract);
++	}, &st::menuIconInfo);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_view_tl.h b/Telegram/SourceFiles/tele/tele_view_tl.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..ab44954f6eac2c32f390c44bc8a9cea7aaa0d670
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_view_tl.h
+@@ -0,0 +1,117 @@
++#pragma once
++
++#include "mtproto/sender.h"
++#include "ui/widgets/menu/menu_add_action_callback.h"
++#include "ui/widgets/menu/menu_add_action_callback_factory.h"
++
++class DocumentData;
++class PeerData;
++class HistoryItem;
++
++namespace Data {
++class SavedStarGiftId;
++class Story;
++struct UniqueGift;
++} // namespace Data
++
++namespace Dialogs {
++struct EntryState;
++} // namespace Dialogs
++
++namespace Main {
++class SessionShow;
++} // namespace Main
++
++namespace Ui {
++class PopupMenu;
++} // namespace Ui
++
++namespace Tele {
++
++template <typename Value>
++[[nodiscard]] QByteArray SerializeTl(const Value &value) {
++	auto buffer = mtpBuffer();
++	value.write(buffer);
++	return QByteArray(
++		reinterpret_cast<const char*>(buffer.constData()),
++		buffer.size() * sizeof(buffer.front()));
++}
++
++void OpenTl(const QByteArray &bytes);
++
++[[nodiscard]] MTP::Sender &TlSender(
++	const std::shared_ptr<Main::SessionShow> &show);
++void OpenTlResult(
++	const std::shared_ptr<Main::SessionShow> &show,
++	const QByteArray &bytes);
++void ShowTlError(
++	const std::shared_ptr<Main::SessionShow> &show,
++	const MTP::Error &error);
++
++template <typename Request, typename Extract>
++void RequestTl(
++		std::shared_ptr<Main::SessionShow> show,
++		Request request,
++		Extract extract) {
++	using Result = typename Request::ResponseType;
++	TlSender(show).request(
++		std::move(request)
++	).done([=](const Result &result) {
++		OpenTlResult(show, extract(result));
++	}).fail([=](const MTP::Error &error) {
++		ShowTlError(show, error);
++	}).send();
++}
++
++template <typename Request>
++void RequestTl(std::shared_ptr<Main::SessionShow> show, Request request) {
++	RequestTl(std::move(show), std::move(request), [](const auto &result) {
++		return SerializeTl(result);
++	});
++}
++
++[[nodiscard]] QString ViewTlText();
++void ViewMessageTl(
++	std::shared_ptr<Main::SessionShow> show,
++	not_null<PeerData*> peer,
++	MsgId id);
++
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	const Dialogs::EntryState &request);
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	not_null<PeerData*> peer);
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	DocumentData *document);
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	const StickerSetIdentifier &set);
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	Data::Story *story,
++	HistoryItem *item);
++void AddViewTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	const std::shared_ptr<Data::UniqueGift> &unique,
++	const Data::SavedStarGiftId &savedId);
++void AddViewFolderTlAction(
++	const Ui::Menu::MenuCallback &addAction,
++	std::shared_ptr<Main::SessionShow> show,
++	FilterId id);
++
++template <typename ...Args>
++void AddViewTlAction(not_null<Ui::PopupMenu*> menu, Args &&...args) {
++	AddViewTlAction(
++		Ui::Menu::CreateAddActionCallback(menu),
++		std::forward<Args>(args)...);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/ui/widgets/chat_filters_tabs_strip.cpp b/Telegram/SourceFiles/ui/widgets/chat_filters_tabs_strip.cpp
+index 0f071ac6c623db7a6b32960c8189af48288b606f..bad85707eb644aa7c43aca3ac85b484c44590055 100644
+--- a/Telegram/SourceFiles/ui/widgets/chat_filters_tabs_strip.cpp
++++ b/Telegram/SourceFiles/ui/widgets/chat_filters_tabs_strip.cpp
+@@ -25,6 +25,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "main/main_session.h"
+ #include "settings/sections/settings_folders.h"
+ #include "tele/tele_folders.h"
++#include "tele/tele_view_tl.h"
+ #include "ui/widgets/menu/menu_action.h"
+ #include "ui/filter_icons.h"
+ #include "ui/power_saving.h"
+@@ -127,6 +128,7 @@ void ShowMenu(
+ 			std::move(openFiltersSettings),
+ 			&st::menuIconEdit);
+ 	}
++	Tele::AddViewFolderTlAction(addAction, controller->uiShow(), id);
+ 	if (state->menu->empty()) {
+ 		state->menu = nullptr;
+ 		return;
+diff --git a/Telegram/SourceFiles/window/window_filters_menu.cpp b/Telegram/SourceFiles/window/window_filters_menu.cpp
+index 329a4a84a3c9f3b19930fee5bf86791f7697d4de..f831d2e7ca7d9b267a38f3f45ae2a177545bc643 100644
+--- a/Telegram/SourceFiles/window/window_filters_menu.cpp
++++ b/Telegram/SourceFiles/window/window_filters_menu.cpp
+@@ -43,6 +43,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "settings/sections/settings_folders.h"
+ #include "storage/storage_media_prepare.h"
+ #include "tele/tele_folders.h"
++#include "tele/tele_view_tl.h"
+ #include "api/api_chat_filters.h"
+ #include "apiwrap.h"
+ #include "styles/style_widgets.h"
+@@ -794,6 +795,7 @@ void FiltersMenu::showMenu(QPoint position, FilterId id) {
+ 			crl::guard(&_outer, [=] { openFiltersSettings(); }),
+ 			&st::menuIconEdit);
+ 	}
++	Tele::AddViewFolderTlAction(addAction, _session->uiShow(), id);
+ 	if (_popupMenu->empty()) {
+ 		_popupMenu = nullptr;
+ 		return;
+diff --git a/Telegram/SourceFiles/window/window_peer_menu.cpp b/Telegram/SourceFiles/window/window_peer_menu.cpp
+index 6237cb1d6e4a1559b76833836faf09f6ec96a059..5c068d1f0ad3d087ac8bf9357366f0ba58dd041e 100644
+--- a/Telegram/SourceFiles/window/window_peer_menu.cpp
++++ b/Telegram/SourceFiles/window/window_peer_menu.cpp
+@@ -130,6 +130,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "tele/tele_ghost.h"
+ #include "tele/tele_ignored.h"
+ #include "tele/tele_jump_to_first.h"
++#include "tele/tele_view_tl.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_credits.h"
+@@ -4354,6 +4355,7 @@ void FillDialogsEntryMenu(
+ 		Dialogs::EntryState request,
+ 		const PeerMenuCallback &callback) {
+ 	Filler(controller, request, callback).fill();
++	Tele::AddViewTlAction(callback, controller->uiShow(), request);
+ }
+ 
+ bool FillVideoChatMenu(
+@@ -4504,6 +4506,7 @@ void FillSenderUserpicMenu(
+ 		}
+ 	}
+ 	Tele::AddIgnoreAction(peer, addAction);
++	Tele::AddViewTlAction(addAction, controller->uiShow(), peer);
+ }
+ 
+ void AddSenderUserpicModerateAction(
