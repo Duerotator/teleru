@@ -32,6 +32,8 @@ jobs:
         run: |
           git -c advice.detachedHead=false clone --quiet --depth 50 --recurse-submodules --shallow-submodules \
             --branch dev https://github.com/telegramdesktop/tdesktop.git ../tdesktop
+          upstream=$(tr -d '[:space:]' < UPSTREAM)
+          git -C ../tdesktop fetch --quiet --depth 1 origin "+refs/tags/$upstream:refs/tags/$upstream"
           sha=$(git -C ../tdesktop rev-parse HEAD)
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
           echo "upstream dev is at $sha: $(git -C ../tdesktop log -1 --format='%cs %s')"
