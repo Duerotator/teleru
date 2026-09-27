@@ -8,10 +8,10 @@ Subject: [PATCH] feat: clean tracking parameters from sent links
  Telegram/SourceFiles/apiwrap.cpp              |   2 +
  .../SourceFiles/settings/settings_tele.cpp    |   4 +-
  Telegram/SourceFiles/tele/tele_links.cpp      | 110 ++++++++++++++++++
- Telegram/SourceFiles/tele/tele_links.h        |   3 +
- Telegram/SourceFiles/tele/tele_options.cpp    |  11 ++
+ Telegram/SourceFiles/tele/tele_links.h        |   2 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |  13 +++
  Telegram/SourceFiles/tele/tele_options.h      |   2 +
- 7 files changed, 136 insertions(+), 2 deletions(-)
+ 7 files changed, 137 insertions(+), 2 deletions(-)
 
 diff --git a/Telegram/SourceFiles/api/api_sending.cpp b/Telegram/SourceFiles/api/api_sending.cpp
 index 38ce94efec594427baf02b37c18fc27624a4e214..de2267135ca96df78a7da2fe66c7cf4a324547a9 100644
@@ -94,18 +94,18 @@ index 6c29500e3c7b703ac643192ec7b5864763b894c0..25e3b9447da6ed1e0f40e3930920d463
  }
  
 diff --git a/Telegram/SourceFiles/tele/tele_links.cpp b/Telegram/SourceFiles/tele/tele_links.cpp
-index 3a8499f1990e8e546b2581a573a37bc7fe21f454..fd287d574cd9a94afcae66fe18a5a63c0c6a52bd 100644
+index e7afc4beb70694ae825a024f9ffe07c4f5cbf015..ca549c235a462c9b036481753fe9ec84827922b5 100644
 --- a/Telegram/SourceFiles/tele/tele_links.cpp
 +++ b/Telegram/SourceFiles/tele/tele_links.cpp
-@@ -1,6 +1,7 @@
- #include "tele/tele_links.h"
- 
+@@ -3,6 +3,7 @@
+ #include "tele/tele_lowercase.h"
  #include "tele/tele_options.h"
+ #include "ui/basic_click_handlers.h"
 +#include "ui/text/text_entity.h"
+ #include "ui/widgets/popup_menu.h"
+ #include "styles/style_menu_icons.h"
  
- #include <QtCore/QRegularExpression>
- #include <QtCore/QUrl>
-@@ -318,6 +319,89 @@ using Rules = std::vector<const QRegularExpression*>;
+@@ -319,6 +320,89 @@ using Rules = std::vector<const QRegularExpression*>;
  	return result;
  }
  
@@ -195,8 +195,8 @@ index 3a8499f1990e8e546b2581a573a37bc7fe21f454..fd287d574cd9a94afcae66fe18a5a63c
  } // namespace
  
  QString StripTracking(const QString &url) {
-@@ -412,4 +496,30 @@ QString PrepareOpenedLink(const QString &url) {
- 	return CleanOpenedLinks() ? StripTracking(url) : url;
+@@ -430,4 +514,30 @@ void AddOpenUncleanedAction(
+ 	}, &st::menuIconLink);
  }
  
 +void PrepareSentLinks(TextWithEntities &text) {
@@ -227,23 +227,26 @@ index 3a8499f1990e8e546b2581a573a37bc7fe21f454..fd287d574cd9a94afcae66fe18a5a63c
 +
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_links.h b/Telegram/SourceFiles/tele/tele_links.h
-index b6e2a81ad803c03ad397341140e91139d632f77d..d8c3267a3425bd10f173588ab20f19ece6948173 100644
+index 2d487cd586091c56adc46f873c15ce85364d3e83..e8701cda69df1040ea2f62bfc9a51e4d3d5fe6fb 100644
 --- a/Telegram/SourceFiles/tele/tele_links.h
 +++ b/Telegram/SourceFiles/tele/tele_links.h
-@@ -1,8 +1,11 @@
+@@ -1,5 +1,6 @@
  #pragma once
  
 +struct TextWithEntities;
-+
- namespace Tele {
+ class ClickHandler;
+ 
+ namespace Ui {
+@@ -10,6 +11,7 @@ namespace Tele {
  
  [[nodiscard]] QString StripTracking(const QString &url);
  [[nodiscard]] QString PrepareOpenedLink(const QString &url);
 +void PrepareSentLinks(TextWithEntities &text);
- 
- } // namespace Tele
+ void AddOpenUncleanedAction(
+ 	not_null<Ui::PopupMenu*> menu,
+ 	const std::shared_ptr<ClickHandler> &link);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index cecd14a5731ae8c387ebebef448718ddda1f26e2..fa49146f01116c20a626b83c0835b049aa14300b 100644
+index c059d38b5284a23c3e02e5e76d6574ad639f4000..7417340503f33ebf388d825283da89b6596a6828 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -27,6 +27,7 @@ const char kOptionHideProxySponsor[] = "tele-hide-proxy-sponsor";
@@ -254,20 +257,22 @@ index cecd14a5731ae8c387ebebef448718ddda1f26e2..fa49146f01116c20a626b83c0835b049
  const char kOptionHideAllChats[] = "tele-hide-all-chats";
  const char kOptionJumpToFirst[] = "tele-jump-to-first";
  const char kOptionStaticUserpicsList[] = "tele-static-userpics-list";
-@@ -206,6 +207,12 @@ base::options::toggle CleanOpenedLinksOption({
- 	.description = "Removes utm, fbclid, si and similar parameters.",
+@@ -208,6 +209,14 @@ base::options::toggle CleanOpenedLinksOption({
+ 		"you open.",
  });
  
 +base::options::toggle CleanSentLinksOption({
 +	.id = kOptionCleanSentLinks,
-+	.name = "Clean tracking from sent links",
-+	.description = "Applies to links in new messages and captions.",
++	.name = "SUPER MAGA PALANTIR ICE PETER THIEL AI DATA HARVESTER 9000 "
++		"remover (sent links)",
++	.description = "Strips the same tracking from links in messages and "
++		"captions you send.",
 +});
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
  	.name = "Hide the All chats folder",
-@@ -519,6 +526,10 @@ bool CleanOpenedLinks() {
+@@ -521,6 +530,10 @@ bool CleanOpenedLinks() {
  	return CleanOpenedLinksOption.value();
  }
  

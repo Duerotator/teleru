@@ -8,11 +8,12 @@ Subject: [PATCH] feat: clean tracking parameters from opened links
  .../SourceFiles/core/click_handler_types.cpp  |   2 +
  Telegram/SourceFiles/core/ui_integration.cpp  |   4 +-
  .../SourceFiles/settings/settings_tele.cpp    |   4 +
- Telegram/SourceFiles/tele/tele_links.cpp      | 415 ++++++++++++++++++
- Telegram/SourceFiles/tele/tele_links.h        |   8 +
- Telegram/SourceFiles/tele/tele_options.cpp    |  11 +
+ .../SourceFiles/tele/tele_button_payload.cpp  |   2 +
+ Telegram/SourceFiles/tele/tele_links.cpp      | 433 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_links.h        |  17 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |  13 +
  Telegram/SourceFiles/tele/tele_options.h      |   2 +
- 8 files changed, 447 insertions(+), 1 deletion(-)
+ 9 files changed, 478 insertions(+), 1 deletion(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_links.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_links.h
 
@@ -87,15 +88,39 @@ index ae1acb075b7a82a5dc16bbff4c336067ca31ebba..6c29500e3c7b703ac643192ec7b58647
  	builder.addSkip();
  }
  
+diff --git a/Telegram/SourceFiles/tele/tele_button_payload.cpp b/Telegram/SourceFiles/tele/tele_button_payload.cpp
+index 6d1a90b8543261db3a76959e2caf2822505285fb..9ee9395ca1129edb0c8688782bcfd20431e0b536 100644
+--- a/Telegram/SourceFiles/tele/tele_button_payload.cpp
++++ b/Telegram/SourceFiles/tele/tele_button_payload.cpp
+@@ -10,6 +10,7 @@
+ #include "inline_bots/bot_attach_web_view.h"
+ #include "lang/lang_keys.h"
+ #include "main/session/session_show.h"
++#include "tele/tele_links.h"
+ #include "tele/tele_lowercase.h"
+ #include "tele/tele_options.h"
+ #include "ui/toast/toast.h"
+@@ -282,6 +283,7 @@ void AddCopyButtonPayloadAction(
+ 		not_null<Ui::PopupMenu*> menu,
+ 		std::shared_ptr<Main::SessionShow> show,
+ 		const ClickHandlerPtr &link) {
++	AddOpenUncleanedAction(menu, link);
+ 	const auto handler = dynamic_cast<ReplyMarkupClickHandler*>(link.get());
+ 	const auto button = handler ? handler->getButton() : nullptr;
+ 	if (!button) {
 diff --git a/Telegram/SourceFiles/tele/tele_links.cpp b/Telegram/SourceFiles/tele/tele_links.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7fe21f454
+index 0000000000000000000000000000000000000000..e7afc4beb70694ae825a024f9ffe07c4f5cbf015
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_links.cpp
-@@ -0,0 +1,415 @@
+@@ -0,0 +1,433 @@
 +#include "tele/tele_links.h"
 +
++#include "tele/tele_lowercase.h"
 +#include "tele/tele_options.h"
++#include "ui/basic_click_handlers.h"
++#include "ui/widgets/popup_menu.h"
++#include "styles/style_menu_icons.h"
 +
 +#include <QtCore/QRegularExpression>
 +#include <QtCore/QUrl>
@@ -104,6 +129,8 @@ index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7
 +namespace {
 +
 +constexpr auto kCaseInsensitive = QRegularExpression::CaseInsensitiveOption;
++
++auto SkipCleaning = false;
 +
 +struct ProviderData {
 +	QString host;
@@ -148,7 +175,8 @@ index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7
 +		u"hmb_(?:campaign|medium|source)"_q,
 +		u"itm_(?:campaign|medium|source)"_q, u"otm_[a-z_]*"_q, u"cmpid"_q,
 +		u"os_ehash"_q, u"__twitter_impression"_q, u"tracking_source"_q,
-+		u"echobox"_q, u"spm"_q, u"_branch_match_id"_q, u"_branch_referrer"_q
++		u"echobox"_q, u"spm"_q, u"_branch_match_id"_q, u"_branch_referrer"_q,
++		u"si"_q
 +	});
 +	return result;
 +}
@@ -158,13 +186,13 @@ index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7
 +		{
 +			u"(?:^|\\.)(?:youtube\\.com|youtu\\.be|youtube-nocookie\\.com)$"_q,
 +			{
-+				u"si"_q, u"feature"_q, u"pp"_q, u"kw"_q
++				u"feature"_q, u"pp"_q, u"kw"_q
 +			}
 +		},
 +		{
 +			u"(?:^|\\.)(?:spotify\\.com)$"_q,
 +			{
-+				u"si"_q, u"context"_q, u"nd"_q, u"dl_branch"_q
++				u"context"_q, u"nd"_q, u"dl_branch"_q
 +			}
 +		},
 +		{
@@ -337,12 +365,6 @@ index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7
 +			}
 +		},
 +		{
-+			u"(?:^|\\.)(?:soundcloud\\.com)$"_q,
-+			{
-+				u"si"_q
-+			}
-+		},
-+		{
 +			u"(?:^|\\.)(?:apple\\.com)$"_q,
 +			{
 +				u"ign-itsc[a-z]+"_q, u"itscg"_q, u"itsct"_q
@@ -504,26 +526,52 @@ index 0000000000000000000000000000000000000000..3a8499f1990e8e546b2581a573a37bc7
 +}
 +
 +QString PrepareOpenedLink(const QString &url) {
-+	return CleanOpenedLinks() ? StripTracking(url) : url;
++	return (CleanOpenedLinks() && !SkipCleaning) ? StripTracking(url) : url;
++}
++
++void AddOpenUncleanedAction(
++		not_null<Ui::PopupMenu*> menu,
++		const std::shared_ptr<ClickHandler> &link) {
++	if (!link || !CleanOpenedLinks()) {
++		return;
++	}
++	const auto url = link->url();
++	if (url.isEmpty() || StripTracking(url) == url) {
++		return;
++	}
++	menu->addAction(Lower(u"Open without cleaning"_q), [=] {
++		SkipCleaning = true;
++		UrlClickHandler::Open(url);
++		SkipCleaning = false;
++	}, &st::menuIconLink);
 +}
 +
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_links.h b/Telegram/SourceFiles/tele/tele_links.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..b6e2a81ad803c03ad397341140e91139d632f77d
+index 0000000000000000000000000000000000000000..2d487cd586091c56adc46f873c15ce85364d3e83
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_links.h
-@@ -0,0 +1,8 @@
+@@ -0,0 +1,17 @@
 +#pragma once
++
++class ClickHandler;
++
++namespace Ui {
++class PopupMenu;
++} // namespace Ui
 +
 +namespace Tele {
 +
 +[[nodiscard]] QString StripTracking(const QString &url);
 +[[nodiscard]] QString PrepareOpenedLink(const QString &url);
++void AddOpenUncleanedAction(
++	not_null<Ui::PopupMenu*> menu,
++	const std::shared_ptr<ClickHandler> &link);
 +
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index 89c5bc7d6e1c22153baad65cd1ba36b5f2a001de..cecd14a5731ae8c387ebebef448718ddda1f26e2 100644
+index 89c5bc7d6e1c22153baad65cd1ba36b5f2a001de..c059d38b5284a23c3e02e5e76d6574ad639f4000 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -26,6 +26,7 @@ const char kOptionHideSponsored[] = "tele-hide-sponsored";
@@ -534,20 +582,22 @@ index 89c5bc7d6e1c22153baad65cd1ba36b5f2a001de..cecd14a5731ae8c387ebebef448718dd
  const char kOptionHideAllChats[] = "tele-hide-all-chats";
  const char kOptionJumpToFirst[] = "tele-jump-to-first";
  const char kOptionStaticUserpicsList[] = "tele-static-userpics-list";
-@@ -199,6 +200,12 @@ base::options::toggle OpenLinksInAppsOption({
+@@ -199,6 +200,14 @@ base::options::toggle OpenLinksInAppsOption({
  	.description = "Spotify, Steam, Discord, Zoom and more, when the app is installed.",
  });
  
 +base::options::toggle CleanOpenedLinksOption({
 +	.id = kOptionCleanOpenedLinks,
-+	.name = "Clean tracking from opened links",
-+	.description = "Removes utm, fbclid, si and similar parameters.",
++	.name = "SUPER MAGA PALANTIR ICE PETER THIEL AI DATA HARVESTER 9000 "
++		"remover (opened links)",
++	.description = "Strips tracking like utm, fbclid and si from links "
++		"you open.",
 +});
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
  	.name = "Hide the All chats folder",
-@@ -508,6 +515,10 @@ bool OpenLinksInApps() {
+@@ -508,6 +517,10 @@ bool OpenLinksInApps() {
  	return OpenLinksInAppsOption.value();
  }
  

@@ -45,7 +45,7 @@ index 6ff5002ffe93f9c994848705b247fd2499f59408..d1bcc0d0d1d5ad663bf2de1e4300f73f
  }
  
 diff --git a/Telegram/SourceFiles/tele/tele_gifts.cpp b/Telegram/SourceFiles/tele/tele_gifts.cpp
-index a50ec73cbc1059b1eb9d91b22f4c112bf6685de9..f096fc2f395b8287b5b16efdf0d6b721684b242d 100644
+index a50ec73cbc1059b1eb9d91b22f4c112bf6685de9..a7879ec3e8c3b6a8bb39ab82c9d00cda551b09a3 100644
 --- a/Telegram/SourceFiles/tele/tele_gifts.cpp
 +++ b/Telegram/SourceFiles/tele/tele_gifts.cpp
 @@ -1,15 +1,24 @@
@@ -91,7 +91,7 @@ index a50ec73cbc1059b1eb9d91b22f4c112bf6685de9..f096fc2f395b8287b5b16efdf0d6b721
 +		object_ptr<Ui::FlatLabel>(
 +			box,
 +			rpl::single(tr::link(TextWithEntities{
-+				Lower(u"Open in see.tg"_q),
++				Lower(u"Open in see.tg "_q),
 +			}.append(Ui::Text::IconEmoji(&st::textMoreIconEmoji)))),
 +			st::creditsBoxAboutDivider),
 +		style::al_top);

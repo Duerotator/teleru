@@ -286,7 +286,7 @@ index 6b7fab34ca678d470c2fed8c0d93fd1f71adc4d5..7213c91aeabd2ccd58c666bd268f4ecc
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index f89c313469291bd7374f652c06501f0edc1c6ae6..b43f4075916b4c91949821247d9c3d296aaeebfb 100644
+index 150259e7bd9c754823dc1e305746dfd293cab2f5..0b5c07c1383edfa360c10cf202bdf8a1e670b2ac 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -50,6 +50,7 @@ const char kOptionScreenshotSecretMedia[] = "tele-screenshot-secret-media";
@@ -297,7 +297,7 @@ index f89c313469291bd7374f652c06501f0edc1c6ae6..b43f4075916b4c91949821247d9c3d29
  const char kOptionServerUrl[] = "tele-server-url";
  const char kOptionTitleTemplate[] = "tele-title";
  const char kOptionWindowTitleTemplate[] = "tele-window-title";
-@@ -346,6 +347,12 @@ base::options::toggle CalcmulaOption({
+@@ -350,6 +351,12 @@ base::options::toggle CalcmulaOption({
  		"the result.",
  });
  
@@ -310,7 +310,7 @@ index f89c313469291bd7374f652c06501f0edc1c6ae6..b43f4075916b4c91949821247d9c3d29
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
  	.name = "tele server",
-@@ -697,6 +704,10 @@ bool Calcmula() {
+@@ -701,6 +708,10 @@ bool Calcmula() {
  	return CalcmulaOption.value();
  }
  

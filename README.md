@@ -100,12 +100,13 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [72](patches/tdesktop/0072-feat-move-late-sent-messages-to-the-bottom.patch) | a message that took long to send moves to the bottom of the chat once it's sent, so it's clear when it went out | tele → chats and messages, off |
 | [73](patches/tdesktop/0073-feat-queue-messages-behind-an-uploading-media.patch) | messages sent while a media is uploading wait for it and go out after it, in order | tele → chats and messages, off |
 | [74](patches/tdesktop/0074-feat-open-links-in-their-desktop-apps.patch) | spotify, steam, discord, zoom, teams, notion, slack and epic links open in their desktop apps when they're installed | tele → chats and messages, off |
-| [75](patches/tdesktop/0075-feat-clean-tracking-parameters-from-opened-links.patch) | opened links lose their tracking parameters: utm, fbclid, si and similar | tele → chats and messages, off |
-| [76](patches/tdesktop/0076-feat-clean-tracking-parameters-from-sent-links.patch) | links in sent messages and captions lose their tracking parameters, the rest of the text stays as it is | tele → chats and messages, off |
+| [75](patches/tdesktop/0075-feat-clean-tracking-parameters-from-opened-links.patch) | the SUPER MAGA PALANTIR ICE PETER THIEL AI DATA HARVESTER 9000 remover: opened links lose their tracking parameters (utm, fbclid, si, gclid and [more](#link-cleaner)). when it would change a link, its right-click menu offers open without cleaning | tele → chats and messages, off |
+| [76](patches/tdesktop/0076-feat-clean-tracking-parameters-from-sent-links.patch) | the same remover for links in sent messages and captions, the rest of the text stays as it is | tele → chats and messages, off |
 | [77](patches/tdesktop/0077-feat-reveal-spoilers-automatically.patch) | text and media spoilers are revealed right away, in chats and the chat list | tele → chats and messages, off |
 | [78](patches/tdesktop/0078-feat-move-tele-tools-to-the-bottom-of-the-message-me.patch) | tele's items sit at the bottom of the message menu: view as tl, then the message id | always on |
 | [79](patches/tdesktop/0079-feat-copy-custom-emoji-ids-from-the-message-menu.patch) | right-click a custom emoji in a message to copy its id | tele → chats and messages, off |
 | [80](patches/tdesktop/0080-fix-change-the-speed-instead-of-moving-the-media-vie.patch) | dragging while holding a video to speed it up changes the speed instead of moving the media viewer window, and the speedup no longer stops by itself | always on |
+| [81](patches/tdesktop/0081-feat-reorder-and-hide-message-menu-items.patch) | reorder and hide items of the message menu, items it doesn't know keep their place | tele → chats and messages → message menu |
 
 ### title bar template
 
@@ -120,6 +121,11 @@ the default is `TELE {build}`. empty hides the label.
 
 the window title (what the taskbar, alt+tab and the system window frame show) takes the same template, set next to the label. `{label}` puts the rendered label there, so `{label}` alone keeps both in sync. empty keeps telegram's own title, and a template that renders to nothing leaves the title blank.
 
+### link cleaner
+
+on every site: `utm*`, `mtm_*`, `pk_*`, `ga_*`, `_ga`, `_gl`, `gclid`, `gclsrc`, `gbraid`, `wbraid`, `dclid`, `gad_source`, `gad_campaignid`, `fbclid`, `fb_action_*`, `fb_source`, `fb_ref`, `action_*_map`, `msclkid`, `twclid`, `ttclid`, `li_fat_id`, `epik`, `yclid`, `ysclid`, `_openstat`, `mc_cid`, `mc_eid`, `mc_tc`, `ml_subscriber*`, `mkt_tok`, `igshid`, `igsh`, `_hsenc`, `_hsmi`, `__hsfp`, `__hssc`, `__hstc`, `hsctatracking`, `srsltid`, `s_kwcid`, `s_cid`, `oly_*_id`, `rb_clickid`, `vero_*`, `wickedid`, `_kx`, `wt_mc`, `wtrid`, `hmb_*`, `itm_*`, `otm_*`, `cmpid`, `os_ehash`, `__twitter_impression`, `tracking_source`, `echobox`, `spm`, `_branch_match_id`, `_branch_referrer`, `si`. fragments like `#utm_source=…` go too.
+
+per site, on top of that: youtube (`feature`, `pp`, `kw`), spotify (`context`, `nd`, `dl_branch`), twitter / x and fx/vx mirrors (`s`, `t`, `src`, `ref_src`, `ref_url`, `cn`), threads (`xmt`, `slof`), tiktok (`_r`, `_t`, `is_from_webapp`, `sender_device`, `share_*` and more), facebook (`mibextid`, `__tn__`, `__cft__`, `ref*`, `notif_*` and more), reddit (`share_id`, `ref*`, `correlation_id`, `rdt`), amazon (`pd_rd_*`, `qid`, `ref_`, `tag`, `linkCode`, `/ref=…` in the path and more), aliexpress (`aff_*`, `algo_*`, `pvid`, `scm*` and more), vk (`from`, `ref`, `ref_domain`), yandex (`from`, `clid`, `redircnt`), google search (`ved`, `ei`, `sa`, `usg`, `oq`, `aqs`, `gs_*` and more), google docs / drive (`usp`), linkedin (`trk*`, `refId`, `lipi` and more), ebay (`_trk*`, `mk*`, `campid` and more), medium (`source`), github (`email_token`, `email_source`), steam (`snr`), netflix (`trackId`, `tctx`), twitch (`tt_medium`, `tt_content`), imdb (`ref_`, `pf_rd_*`), bing, msn, apple (`itsct`, `itscg`), pinterest, hh.ru, ozon. t.me links are never touched.
 ### tele server
 
 tele can pull extra account data, like checkmarks, custom verification, scam / fake marks and support marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.

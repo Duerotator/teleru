@@ -251,7 +251,7 @@ index 25e3b9447da6ed1e0f40e3930920d463dfbf5863..1da08b725841e34f7a6ab87f4a4a0de0
  	AddGroupTitle(builder, u"Sending"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index fa49146f01116c20a626b83c0835b049aa14300b..f89c313469291bd7374f652c06501f0edc1c6ae6 100644
+index 7417340503f33ebf388d825283da89b6596a6828..150259e7bd9c754823dc1e305746dfd293cab2f5 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -44,6 +44,7 @@ const char kOptionMessageSeconds[] = "tele-message-seconds";
@@ -262,7 +262,7 @@ index fa49146f01116c20a626b83c0835b049aa14300b..f89c313469291bd7374f652c06501f0e
  const char kOptionKeepSecretMedia[] = "tele-keep-secret-media";
  const char kOptionScreenshotSecretMedia[] = "tele-screenshot-secret-media";
  const char kOptionViewAsTl[] = "tele-view-as-tl";
-@@ -308,6 +309,12 @@ base::options::toggle DeletedIconOption({
+@@ -312,6 +313,12 @@ base::options::toggle DeletedIconOption({
  	.name = "Mark with a trash icon instead of fading",
  });
  
@@ -275,7 +275,7 @@ index fa49146f01116c20a626b83c0835b049aa14300b..f89c313469291bd7374f652c06501f0e
  base::options::toggle KeepSecretMediaOption({
  	.id = kOptionKeepSecretMedia,
  	.name = "Open disappearing media without burning it",
-@@ -662,6 +669,14 @@ rpl::producer<bool> DeletedTrashIconValue() {
+@@ -666,6 +673,14 @@ rpl::producer<bool> DeletedTrashIconValue() {
  	});
  }
  
