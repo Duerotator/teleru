@@ -760,6 +760,7 @@ jobs:
           gh release create "$TAG" tele-"$TAG"-{win64,linux64,macos}.zip tele-"$TAG"-macos.dmg tele-update-{win64,linux64,macos}.json tele-changelog.json \
             --latest --target "$GITHUB_SHA" --title "tele ${TAG#*-tele.} · $UPSTREAM_TAG" --notes-file notes.md
           bash tele/ci/issue.sh close build-failure "Built $TAG."
+          bash tele/ci/issue.sh close new-upstream "Released $TAG."
 
       - name: Announce
         continue-on-error: true

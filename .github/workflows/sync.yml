@@ -71,8 +71,23 @@ jobs:
           git commit --quiet -m "chore: bump upstream to $TAG"
           git push --quiet
           # pushes made with GITHUB_TOKEN don't start workflows
-          gh workflow run build.yml --ref "$GITHUB_REF_NAME"
+          gh workflow run build.yml --ref "$GITHUB_REF_NAME" -f publish=false
           bash ci/issue.sh close patch-conflict "Patches apply cleanly to $TAG."
+          sleep 15
+          run=$(gh run list --workflow build.yml --branch "$GITHUB_REF_NAME" --event workflow_dispatch --limit 1 \
+            --json databaseId --jq '.[0].databaseId')
+          {
+            echo "Telegram Desktop [$TAG](https://github.com/telegramdesktop/tdesktop/releases/tag/$TAG) is out, the patches apply and UPSTREAM is $TAG now."
+            echo
+            echo "Build (not published): $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$run"
+            echo
+            echo 'Once it succeeds, publish it without rebuilding (its builds are kept for a day):'
+            echo
+            echo '```'
+            echo "gh workflow run build.yml --ref $GITHUB_REF_NAME -f from_run=$run -f publish=true"
+            echo '```'
+          } > issue.md
+          bash ci/issue.sh open new-upstream "tdesktop $TAG is built, not released yet" issue.md
 
       - name: Report conflicts
         if: failure() && steps.apply.outcome == 'failure'
