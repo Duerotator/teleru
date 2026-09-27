@@ -20,6 +20,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 UPSTREAM_URL = 'https://github.com/telegramdesktop/tdesktop.git'
@@ -230,6 +231,32 @@ def apply_pending(tdesktop, state):
     save_state(tdesktop, state)
 
 
+def prime_patch_blobs(tdesktop):
+    # a 3-way fallback needs each patch's preimage blob; for files an earlier tele patch already
+    # touched, that blob only exists after replaying the queue on UPSTREAM, which a fresh clone lacks
+    patches = patch_groups().get(ROOT_GROUP)
+    if not patches:
+        return
+    upstream = read_upstream()
+    ref = f'refs/tags/{upstream}'
+    if run_git(tdesktop, 'rev-parse', '--verify', '--quiet', ref + '^{commit}').returncode != 0:
+        shallow = git(tdesktop, 'rev-parse', '--is-shallow-repository') == 'true'
+        git(tdesktop, 'fetch', '--quiet', '--no-tags', *(['--depth', '1'] if shallow else []),
+            UPSTREAM_URL, f'+{ref}:{ref}')
+    if git(tdesktop, 'rev-parse', 'HEAD') == git(tdesktop, 'rev-parse', ref + '^{commit}'):
+        return
+    print(f'replaying the patches on {upstream} to get their base files', flush=True)
+    scratch = Path(tempfile.mkdtemp(prefix='tele-prime-'))
+    worktree = scratch / 'tdesktop'
+    git(tdesktop, 'worktree', 'add', '--quiet', '--detach', str(worktree), ref)
+    try:
+        if run_git(worktree, *AM_ARGS, *map(str, patches)).returncode != 0:
+            run_git(worktree, 'am', '--abort')
+    finally:
+        git(tdesktop, 'worktree', 'remove', '--force', str(worktree))
+        shutil.rmtree(scratch, ignore_errors=True)
+
+
 def start_applying(tdesktop, tag):
     groups = patch_groups()
     heads = current_heads(tdesktop)
@@ -237,6 +264,7 @@ def start_applying(tdesktop, tag):
         if group not in heads:
             raise Fail(f'patches/{group}: {group} is not a submodule of tdesktop {tag}')
     ignore_submodule_changes(tdesktop)
+    prime_patch_blobs(tdesktop)
     state = {'tag': tag, 'bases': heads, 'pending': list(groups), 'heads': {}}
     save_state(tdesktop, state)
     apply_pending(tdesktop, state)
