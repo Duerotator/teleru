@@ -1,0 +1,90 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 10:00:26 +0300
+Subject: [PATCH] fix: show the changelog to users updating from builds without
+ it
+
+---
+ Telegram/SourceFiles/tele/tele_changelog.cpp | 44 +++++++++++++-------
+ 1 file changed, 30 insertions(+), 14 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_changelog.cpp b/Telegram/SourceFiles/tele/tele_changelog.cpp
+index 4fffa1033a1836f7f95468339a72df16b0889286..5808c0a01575282aa4176e0a289ea856a71835ab 100644
+--- a/Telegram/SourceFiles/tele/tele_changelog.cpp
++++ b/Telegram/SourceFiles/tele/tele_changelog.cpp
+@@ -36,6 +36,8 @@ public:
+ 	Changelog();
+ 
+ private:
++	[[nodiscard]] std::vector<not_null<Main::Session*>> sessions() const;
++	void fetch();
+ 	void fetched(const QByteArray &data);
+ 	void show(const TextWithEntities &text);
+ 	void fail(const QString &error);
+@@ -107,6 +109,31 @@ QPointer<Changelog> Instance;
+ 
+ Changelog::Changelog()
+ : QObject(QCoreApplication::instance()) {
++	const auto domain = &Core::App().domain();
++	domain->activeValue(
++	) | rpl::to_empty | rpl::filter([=] {
++		return domain->started();
++	}) | rpl::take(1) | rpl::on_next([=] {
++		if (sessions().empty()) {
++			SetChangelogShown(BuildNumber());
++			deleteLater();
++		} else {
++			fetch();
++		}
++	}, _lifetime);
++}
++
++std::vector<not_null<Main::Session*>> Changelog::sessions() const {
++	auto result = std::vector<not_null<Main::Session*>>();
++	for (const auto &[index, account] : Core::App().domain().accounts()) {
++		if (const auto session = account->maybeSession()) {
++			result.push_back(session);
++		}
++	}
++	return result;
++}
++
++void Changelog::fetch() {
+ 	auto request = QNetworkRequest(QUrl(Url()));
+ 	request.setAttribute(
+ 		QNetworkRequest::RedirectPolicyAttribute,
+@@ -144,23 +171,12 @@ void Changelog::fetched(const QByteArray &data) {
+ 		fail(u"malformed changelog"_q);
+ 		return;
+ 	}
+-	const auto domain = &Core::App().domain();
+-	domain->activeValue(
+-	) | rpl::to_empty | rpl::filter([=] {
+-		return domain->started();
+-	}) | rpl::take(1) | rpl::on_next([=] {
+-		show(*text);
+-	}, _lifetime);
++	show(*text);
+ }
+ 
+ void Changelog::show(const TextWithEntities &text) {
+ 	const auto build = BuildNumber();
+-	auto sessions = std::vector<not_null<Main::Session*>>();
+-	for (const auto &[index, account] : Core::App().domain().accounts()) {
+-		if (const auto session = account->maybeSession()) {
+-			sessions.push_back(session);
+-		}
+-	}
++	const auto sessions = this->sessions();
+ 	if (sessions.empty()) {
+ 		SetChangelogShown(build);
+ 	}
+@@ -200,7 +216,7 @@ void StartChangelog() {
+ 	const auto shown = ChangelogShown();
+ 	if (shown >= build) {
+ 		return;
+-	} else if (shown <= 0 || !ShowChangelog()) {
++	} else if (!ShowChangelog()) {
+ 		SetChangelogShown(build);
+ 		return;
+ 	}

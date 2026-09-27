@@ -89,6 +89,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [61](patches/tdesktop/0061-feat-search-tele-settings.patch) | a search field on the tele settings page | always on |
 | [62](patches/tdesktop/0062-refactor-shorten-tele-option-descriptions.patch) | shorter descriptions for every tele setting | always on |
 | [63](patches/tdesktop/0063-fix-open-tele-categories-from-old-settings-links-aft.patch) | old links to tele settings open the right page | always on |
+| [64](patches/tdesktop/0064-fix-show-the-changelog-to-users-updating-from-builds.patch) | the what's new message shows up on the first update from tele 7 or older too, fresh installs skip it | with 55 |
 
 ### title bar template
 
