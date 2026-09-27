@@ -276,7 +276,7 @@ jobs:
         run: |
           call tele\ci\msvc.cmd || exit /b 1
           cd /d %TBUILD%\tdesktop\Telegram
-          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
+          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
           cmake --build ..\out --config Release --parallel --target Telegram
 
       - name: Package
@@ -444,7 +444,7 @@ jobs:
             -D CMAKE_CONFIGURATION_TYPES=Release \
             -D CMAKE_C_FLAGS_RELEASE="-O3 -DNDEBUG -fpch-preprocess" \
             -D CMAKE_CXX_FLAGS_RELEASE="-O3 -DNDEBUG -fpch-preprocess" \
-            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
             -D TDESKTOP_API_ID="$API_ID" -D TDESKTOP_API_HASH="$API_HASH" -D TELE_BUILD="$TELE_BUILD"
 
       # the image's ccache is epel's 3.7: no --print-stats or --evict-older-than, CCACHE_MAXSIZE bounds it instead
@@ -622,7 +622,7 @@ jobs:
           cd tdesktop/Telegram
           ./configure.sh -D CMAKE_CONFIGURATION_TYPES=Release \
             -D CMAKE_XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED=NO \
-            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON \
+            -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF \
             -D TDESKTOP_API_ID="$API_ID" -D TDESKTOP_API_HASH="$API_HASH" -D TELE_BUILD="$TELE_BUILD"
           cmake --build ../out --config Release --parallel --target Telegram -- -quiet
 
