@@ -34,6 +34,12 @@ UPSTREAM_FILE = HERE / 'UPSTREAM'
 FORMAT_PATCH_ARGS = ['--zero-commit', '--no-signature', '--no-numbered', '--full-index']
 # am strips \r and every [bracketed] subject prefix by default, which would rewrite patches on the next export
 AM_ARGS = ['am', '--3way', '--keep-cr', '--keep-non-patch']
+# every release bumps the version lines right next to the renamed app name lines, so the rename
+# conflicts each time: upstream keeps its version values, the patch keeps its name values
+VERSION_FILES = {'Telegram/SourceFiles/core/version.h', 'Telegram/Resources/winrc/Telegram.rc'}
+NAME_KEYS = {'AppName', 'AppFile', 'FileDescription', 'ProductName'}
+LINE_KEY = re.compile(r'^\s*(?:constexpr\s+auto\s+(\w+)\s*=|VALUE\s+"(\w+)"\s*,)')
+CONFLICT = re.compile(r'<<<<<<< [^\n]*\n(.*?)(?:\|\|\|\|\|\|\| [^\n]*\n.*?)?=======\r?\n(.*?)>>>>>>> [^\n]*\n', re.S)
 
 
 class Fail(Exception):
@@ -158,12 +164,62 @@ def conflict_report(tdesktop, group, patches, am_output):
     return '\n'.join(lines)
 
 
+def line_key(line):
+    match = LINE_KEY.match(line)
+    return match and (match.group(1) or match.group(2))
+
+
+def merge_version_block(upstream, patched):
+    upstream_lines = upstream.splitlines(keepends=True)
+    upstream_keys = [line_key(line) for line in upstream_lines]
+    names = {}
+    for line in patched.splitlines(keepends=True):
+        key = line_key(line)
+        if key in NAME_KEYS:
+            names[key] = line
+        elif not key or key not in upstream_keys:
+            return None
+    if not names or not set(names) <= set(upstream_keys):
+        return None
+    return ''.join(names.get(key, line) for key, line in zip(upstream_keys, upstream_lines))
+
+
+def resolve_version_conflicts(repo):
+    conflicted = git(repo, 'diff', '--name-only', '--diff-filter=U').splitlines()
+    if not conflicted or not set(conflicted) <= VERSION_FILES:
+        return False
+    resolved = {}
+    for name in conflicted:
+        text = (repo / name).read_bytes().decode('utf-8')
+        failed = False
+
+        def merge(match):
+            nonlocal failed
+            block = merge_version_block(match.group(1), match.group(2))
+            failed = failed or block is None
+            return block or ''
+
+        text = CONFLICT.sub(merge, text)
+        if failed or '<<<<<<<' in text or '>>>>>>>' in text:
+            return False
+        resolved[name] = text
+    for name, text in resolved.items():
+        (repo / name).write_bytes(text.encode('utf-8'))
+        git(repo, 'add', '--', name)
+    print(f'kept upstream version lines and tele names in {", ".join(sorted(resolved))}', flush=True)
+    return True
+
+
+
 def apply_pending(tdesktop, state):
     groups = patch_groups()
     while state['pending']:
         group = state['pending'][0]
         patches = groups[group]
-        result = run_git(repo_path(tdesktop, group), *AM_ARGS, *map(str, patches))
+        repo = repo_path(tdesktop, group)
+        result = run_git(repo, *AM_ARGS, *map(str, patches))
+        while result.returncode != 0 and resolve_version_conflicts(repo):
+            result = run_git(repo, 'am', '--continue')
         if result.returncode != 0:
             save_state(tdesktop, state)
             raise Fail(conflict_report(tdesktop, group, patches, result.stdout + result.stderr))
