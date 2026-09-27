@@ -18,6 +18,9 @@ on:
         description: publish a release (only from main, and only when every platform built)
         type: boolean
         default: true
+      from_run:
+        description: publish the builds of this finished run instead of building again (its patches must match)
+        default: ''
 
 permissions:
   contents: read
@@ -85,7 +88,7 @@ jobs:
   windows:
     name: Windows x64
     needs: number
-    if: contains(inputs.platforms || 'windows linux macos', 'windows')
+    if: ${{ !inputs.from_run && contains(inputs.platforms || 'windows linux macos', 'windows') }}
     runs-on: windows-latest
     timeout-minutes: 360
     permissions:
@@ -262,7 +265,7 @@ jobs:
   linux-env:
     name: Linux libraries
     needs: number
-    if: contains(inputs.platforms || 'windows linux macos', 'linux')
+    if: ${{ !inputs.from_run && contains(inputs.platforms || 'windows linux macos', 'linux') }}
     runs-on: ubuntu-latest
     timeout-minutes: 360
     permissions:
@@ -455,7 +458,7 @@ jobs:
   macos-libs:
     name: macOS libraries
     needs: number
-    if: contains(inputs.platforms || 'windows linux macos', 'macos')
+    if: ${{ !inputs.from_run && contains(inputs.platforms || 'windows linux macos', 'macos') }}
     # prepare.py keys every stage on the cpu count and absolute paths, keep the runner and layout stable
     runs-on: macos-latest
     timeout-minutes: 360
@@ -617,11 +620,17 @@ jobs:
   publish:
     name: Publish
     needs: [number, windows, linux, macos]
-    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+    if: >-
+      !cancelled()
+      && github.ref == 'refs/heads/main'
+      && (github.event_name == 'push' || inputs.publish)
+      && needs.number.result == 'success'
+      && (inputs.from_run || (needs.windows.result == 'success' && needs.linux.result == 'success' && needs.macos.result == 'success'))
     runs-on: ubuntu-latest
     permissions:
       contents: write
       issues: write
+      actions: read
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
@@ -637,11 +646,37 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      - name: Check the finished run
+        if: inputs.from_run
+        env:
+          RUN: ${{ inputs.from_run }}
+        run: |
+          read -r conclusion sha < <(gh api "repos/$GH_REPO/actions/runs/$RUN" --jq '"\(.conclusion) \(.head_sha)"')
+          if [ "$conclusion" != success ]; then
+            echo "::error::run $RUN finished with '$conclusion'"
+            exit 1
+          fi
+          if ! git -C tele diff --quiet "$sha" HEAD -- UPSTREAM patches tele.py; then
+            echo "::error::run $RUN built other patches than $GITHUB_SHA"
+            exit 1
+          fi
+          echo "publishing the builds of run $RUN ($sha)"
+
       - name: Download the builds
+        if: ${{ !inputs.from_run }}
         uses: actions/download-artifact@v8
         with:
           pattern: release-*
           merge-multiple: true
+
+      - name: Download the builds of the finished run
+        if: inputs.from_run
+        uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          run-id: ${{ inputs.from_run }}
+          github-token: ${{ github.token }}
 
       - name: Sign the update feeds
         env:
