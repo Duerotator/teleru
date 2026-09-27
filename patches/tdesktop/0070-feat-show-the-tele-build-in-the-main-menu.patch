@@ -1,0 +1,65 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 18:41:36 +0300
+Subject: [PATCH] feat: show the tele build in the main menu
+
+---
+ Telegram/SourceFiles/tele/tele_build.cpp         | 8 ++++++++
+ Telegram/SourceFiles/tele/tele_build.h           | 1 +
+ Telegram/SourceFiles/window/window_main_menu.cpp | 2 ++
+ 3 files changed, 11 insertions(+)
+
+diff --git a/Telegram/SourceFiles/tele/tele_build.cpp b/Telegram/SourceFiles/tele/tele_build.cpp
+index cbe75951c5997381cca8d39d3a1ee133cc8fbabe..ef28f22324dbb08d8461e57209c973b142b7880c 100644
+--- a/Telegram/SourceFiles/tele/tele_build.cpp
++++ b/Telegram/SourceFiles/tele/tele_build.cpp
+@@ -1,5 +1,7 @@
+ #include "tele/tele_build.h"
+ 
++#include "tele/tele_lowercase.h"
++
+ namespace Tele {
+ 
+ int BuildNumber() {
+@@ -12,4 +14,10 @@ QString TitleLabel() {
+ 		: u"TELE DEV"_q;
+ }
+ 
++QString BuildLabel() {
++	return Lower((BuildNumber() > 0)
++		? u"build #%1"_q.arg(BuildNumber())
++		: u"dev build"_q);
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_build.h b/Telegram/SourceFiles/tele/tele_build.h
+index 2e2bceb142dfe499e63f170dc41128d275b365ea..e880d5ec79fc956288af0095bc983730ea916168 100644
+--- a/Telegram/SourceFiles/tele/tele_build.h
++++ b/Telegram/SourceFiles/tele/tele_build.h
+@@ -4,5 +4,6 @@ namespace Tele {
+ 
+ [[nodiscard]] int BuildNumber();
+ [[nodiscard]] QString TitleLabel();
++[[nodiscard]] QString BuildLabel();
+ 
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/window/window_main_menu.cpp b/Telegram/SourceFiles/window/window_main_menu.cpp
+index decd6e19a998d6c2a04e7afb32591099b54c4204..bf79ec8bd448a085e8380603f898bca34d41767f 100644
+--- a/Telegram/SourceFiles/window/window_main_menu.cpp
++++ b/Telegram/SourceFiles/window/window_main_menu.cpp
+@@ -69,6 +69,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "window/window_main_menu_helpers.h"
+ #include "window/window_peer_menu.h"
+ #include "window/window_session_controller.h"
++#include "tele/tele_build.h"
+ #include "tele/tele_ghost.h"
+ #include "styles/style_chat.h" // popupMenuExpandedSeparator
+ #include "styles/style_menu_icons.h"
+@@ -403,6 +404,7 @@ MainMenu::MainMenu(
+ 					lt_version,
+ 					currentVersionShortText()),
+ 			1) // Link 1.
++		.append(u" \u00B7 "_q + Tele::BuildLabel())
+ 		.append(QChar(' '))
+ 		.append(QChar(8211))
+ 		.append(QChar(' '))

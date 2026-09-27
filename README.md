@@ -48,7 +48,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [20](patches/tdesktop/0020-feat-show-checkmarks-and-custom-verification-next-to.patch) | checkmarks and custom verification next to sender names in messages | tele → interface, off |
 | [21](patches/tdesktop/0021-feat-show-a-copyable-gift-id-in-the-unique-gift-card.patch) | a copyable gift id at the top of the collectible gift card | tele → profiles and ids, off |
 | [22](patches/tdesktop/0022-fix-only-say-a-gift-is-on-the-blockchain-when-it-is.patch) | the gift card only says a gift is on the ton blockchain while it really is there | always on |
-| [23](patches/tdesktop/0023-feat-show-the-peer-id-as-its-own-profile-row.patch) | the peer id gets its own profile row instead of trailing the bio | experimental → show peer ids |
+| [23](patches/tdesktop/0023-feat-show-the-peer-id-as-its-own-profile-row.patch) | the peer id gets its own profile row instead of trailing the bio | tele → profiles and ids, off (see 69) |
 | [24](patches/tdesktop/0024-feat-format-peer-ids-without-spaces-or-bot-api-style.patch) | peer ids without spaces, or in bot api style (-100… for channels) | tele → profiles and ids, off |
 | [25](patches/tdesktop/0025-feat-copy-links-to-tele-settings.patch) | right-click any tele setting to copy a link that opens it | always on |
 | [26](patches/tdesktop/0026-feat-ignore-users-by-hiding-or-fading-their-messages.patch) | ignore users from their userpic menu: their messages fade or disappear, the list lives in settings | tele → privacy |
@@ -65,7 +65,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [37](patches/tdesktop/0037-feat-open-disappearing-media-without-burning-it.patch) | view-once and timed media open without burning, and the sender still sees them unopened. message menu → mark as viewed burns them | tele → chats and messages, off |
 | [38](patches/tdesktop/0038-feat-allow-screenshots-of-disappearing-media.patch) | view-once and timed media can be screenshotted and recorded | tele → chats and messages, off |
 | [39](patches/tdesktop/0039-feat-copy-the-callback-data-of-bot-buttons.patch) | right-click over a bot button to copy its callback data, inline query, web app url and so on | always on |
-| [40](patches/tdesktop/0040-feat-show-the-message-id-in-the-message-menu.patch) | the message menu starts with the message id, click it to copy | tele → chats and messages, off |
+| [40](patches/tdesktop/0040-feat-show-the-message-id-in-the-message-menu.patch) | the message menu ends with the message id, click it to copy | tele → chats and messages, off |
 | [41](patches/tdesktop/0041-feat-view-messages-as-tl.patch) | view as tl in the message menu: fetches the message from the server and opens it on [schema.jppgr.am](https://schema.jppgr.am) | tele → chats and messages, off |
 | [42](patches/tdesktop/0042-feat-hide-the-all-chats-folder.patch) | hides the all chats folder when you have other folders, the list opens on your first one | tele → interface, off |
 | [43](patches/tdesktop/0043-feat-jump-to-the-first-message-of-a-chat.patch) | jump to the first message, in the chat menu | tele → chats and messages, off |
@@ -90,6 +90,22 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [62](patches/tdesktop/0062-refactor-shorten-tele-option-descriptions.patch) | shorter descriptions for every tele setting | always on |
 | [63](patches/tdesktop/0063-fix-open-tele-categories-from-old-settings-links-aft.patch) | old links to tele settings open the right page | always on |
 | [64](patches/tdesktop/0064-fix-show-the-changelog-to-users-updating-from-builds.patch) | the what's new message shows up on the first update from tele 7 or older too, fresh installs skip it | with 55 |
+| [65](patches/tdesktop/0065-feat-show-times-on-service-messages.patch) | service messages like joins and pins show their time too, with seconds | with 27 |
+| [66](patches/tdesktop/0066-feat-upload-media-in-several-chats-at-once.patch) | media uploads in several chats at once instead of waiting for each other. files in one chat still go one after another | tele → chats and messages, off |
+| [67](patches/tdesktop/0067-feat-reply-timestamps-for-media-in-rich-messages.patch) | time codes like 1:23 in a reply to a rich message link to its video or audio, the first one if there are several | always on |
+| [68](patches/tdesktop/0068-feat-compute-messages-starting-with-via-calcmula.patch) | messages and captions starting with `= ` are computed with [calcmula](https://calcmula.app) and sent as the quoted query plus the result. if it fails, nothing is sent and the text goes back into the field | tele → chats and messages, off |
+| [69](patches/tdesktop/0069-feat-move-show-peer-ids-into-tele-settings.patch) | show peer ids moved from experimental settings into tele | tele → profiles and ids |
+| [70](patches/tdesktop/0070-feat-show-the-tele-build-in-the-main-menu.patch) | the main menu shows the tele build next to the version | always on |
+| [71](patches/tdesktop/0071-feat-open-collectible-gifts-in-see.tg.patch) | an open in see.tg link on collectible gift cards | tele → profiles and ids, off |
+| [72](patches/tdesktop/0072-feat-move-late-sent-messages-to-the-bottom.patch) | a message that took long to send moves to the bottom of the chat once it's sent, so it's clear when it went out | tele → chats and messages, off |
+| [73](patches/tdesktop/0073-feat-queue-messages-behind-an-uploading-media.patch) | messages sent while a media is uploading wait for it and go out after it, in order | tele → chats and messages, off |
+| [74](patches/tdesktop/0074-feat-open-links-in-their-desktop-apps.patch) | spotify, steam, discord, zoom, teams, notion, slack and epic links open in their desktop apps when they're installed | tele → chats and messages, off |
+| [75](patches/tdesktop/0075-feat-clean-tracking-parameters-from-opened-links.patch) | opened links lose their tracking parameters: utm, fbclid, si and similar | tele → chats and messages, off |
+| [76](patches/tdesktop/0076-feat-clean-tracking-parameters-from-sent-links.patch) | links in sent messages and captions lose their tracking parameters, the rest of the text stays as it is | tele → chats and messages, off |
+| [77](patches/tdesktop/0077-feat-reveal-spoilers-automatically.patch) | text and media spoilers are revealed right away, in chats and the chat list | tele → chats and messages, off |
+| [78](patches/tdesktop/0078-feat-move-tele-tools-to-the-bottom-of-the-message-me.patch) | tele's items sit at the bottom of the message menu: view as tl, then the message id | always on |
+| [79](patches/tdesktop/0079-feat-copy-custom-emoji-ids-from-the-message-menu.patch) | right-click a custom emoji in a message to copy its id | tele → chats and messages, off |
+| [80](patches/tdesktop/0080-fix-change-the-speed-instead-of-moving-the-media-vie.patch) | dragging while holding a video to speed it up changes the speed instead of moving the media viewer window, and the speedup no longer stops by itself | always on |
 
 ### title bar template
 

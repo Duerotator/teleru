@@ -1,0 +1,300 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 18:52:06 +0300
+Subject: [PATCH] feat: clean tracking parameters from sent links
+
+---
+ Telegram/SourceFiles/api/api_sending.cpp      |   6 +
+ Telegram/SourceFiles/apiwrap.cpp              |   2 +
+ .../SourceFiles/settings/settings_tele.cpp    |   4 +-
+ Telegram/SourceFiles/tele/tele_links.cpp      | 110 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_links.h        |   3 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |  11 ++
+ Telegram/SourceFiles/tele/tele_options.h      |   2 +
+ 7 files changed, 136 insertions(+), 2 deletions(-)
+
+diff --git a/Telegram/SourceFiles/api/api_sending.cpp b/Telegram/SourceFiles/api/api_sending.cpp
+index 38ce94efec594427baf02b37c18fc27624a4e214..de2267135ca96df78a7da2fe66c7cf4a324547a9 100644
+--- a/Telegram/SourceFiles/api/api_sending.cpp
++++ b/Telegram/SourceFiles/api/api_sending.cpp
+@@ -38,6 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "apiwrap.h"
+ #include "tele/tele_ghost.h"
+ #include "tele/tele_calcmula.h"
++#include "tele/tele_links.h"
+ 
+ namespace Api {
+ namespace {
+@@ -257,6 +258,7 @@ void SendExistingMedia(
+ 		TextUtilities::ConvertTextTagsToEntities(message.textWithTags.tags)
+ 	};
+ 	TextUtilities::Trim(caption);
++	Tele::PrepareSentLinks(caption);
+ 	auto sentEntities = EntitiesToMTP(
+ 		session,
+ 		caption.entities,
+@@ -750,6 +752,7 @@ void SendMusicSelection(
+ 		TextUtilities::ConvertTextTagsToEntities(message.textWithTags.tags)
+ 	};
+ 	TextUtilities::Trim(caption);
++	Tele::PrepareSentLinks(caption);
+ 
+ 	const auto api = &message.action.history->session().api();
+ 
+@@ -1191,6 +1194,9 @@ struct ConfirmedLocalFile {
+ 	action.replaceMediaOf = file->to.replaceMediaOf;
+ 
+ 	auto caption = PrepareConfirmedFileCaption(history, session, file);
++	if (!isEditing) {
++		Tele::PrepareSentLinks(caption);
++	}
+ 	const auto flags = PrepareConfirmedFileFlags(
+ 		session,
+ 		action,
+diff --git a/Telegram/SourceFiles/apiwrap.cpp b/Telegram/SourceFiles/apiwrap.cpp
+index a73dec051b873bf03f0f0798299cf9a7136558d7..1e24ddd32d944a8122a63126ddfa01d82f3207f5 100644
+--- a/Telegram/SourceFiles/apiwrap.cpp
++++ b/Telegram/SourceFiles/apiwrap.cpp
+@@ -110,6 +110,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "tele/tele_secret_media.h"
+ #include "tele/tele_ghost.h"
+ #include "tele/tele_calcmula.h"
++#include "tele/tele_links.h"
+ 
+ namespace {
+ 
+@@ -4751,6 +4752,7 @@ void ApiWrap::sendMessage(
+ 		history,
+ 		_session->user()).flags;
+ 	TextUtilities::PrepareForSending(left, prepareFlags);
++	Tele::PrepareSentLinks(left);
+ 
+ 	HistoryItem *lastMessage = nullptr;
+ 
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 6c29500e3c7b703ac643192ec7b5864763b894c0..25e3b9447da6ed1e0f40e3930920d463dfbf5863 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -973,8 +973,6 @@ void FillChats(SectionBuilder &builder) {
+ 	AddOptionToggle(builder, ::Tele::kOptionViewAsTl);
+ 	AddGroupDivider(builder);
+ 	AddGroupTitle(builder, u"Chats"_q);
+-	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
+-	AddOptionToggle(builder, ::Tele::kOptionOpenLinksInApps);
+ 	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
+ 	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
+ 	AddOptionToggle(builder, ::Tele::kOptionHideProxySponsor);
+@@ -982,6 +980,8 @@ void FillChats(SectionBuilder &builder) {
+ 	AddGroupTitle(builder, u"Links"_q);
+ 	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
+ 	AddOptionToggle(builder, ::Tele::kOptionCleanOpenedLinks);
++	AddOptionToggle(builder, ::Tele::kOptionCleanSentLinks);
++	AddOptionToggle(builder, ::Tele::kOptionOpenLinksInApps);
+ 	builder.addSkip();
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_links.cpp b/Telegram/SourceFiles/tele/tele_links.cpp
+index 3a8499f1990e8e546b2581a573a37bc7fe21f454..fd287d574cd9a94afcae66fe18a5a63c0c6a52bd 100644
+--- a/Telegram/SourceFiles/tele/tele_links.cpp
++++ b/Telegram/SourceFiles/tele/tele_links.cpp
+@@ -1,6 +1,7 @@
+ #include "tele/tele_links.h"
+ 
+ #include "tele/tele_options.h"
++#include "ui/text/text_entity.h"
+ 
+ #include <QtCore/QRegularExpression>
+ #include <QtCore/QUrl>
+@@ -318,6 +319,89 @@ using Rules = std::vector<const QRegularExpression*>;
+ 	return result;
+ }
+ 
++struct UrlRange {
++	int offset = 0;
++	int length = 0;
++};
++
++[[nodiscard]] QString StripTrackingLoose(const QString &url) {
++	static const auto Scheme = QRegularExpression(
++		u"^[a-z][a-z0-9+.\\-]*:(?!\\d)"_q,
++		kCaseInsensitive);
++	if (Scheme.match(url).hasMatch()) {
++		return StripTracking(url);
++	}
++	const auto scheme = u"http://"_q;
++	const auto prefixed = scheme + url;
++	const auto result = StripTracking(prefixed);
++	return (result == prefixed) ? url : result.mid(scheme.size());
++}
++
++[[nodiscard]] std::vector<UrlRange> CollectUrls(
++		const TextWithEntities &text) {
++	auto result = std::vector<UrlRange>();
++	const auto collect = [&](const EntitiesInText &entities) {
++		for (const auto &entity : entities) {
++			if (entity.type() == EntityType::Url) {
++				result.push_back({ entity.offset(), entity.length() });
++			}
++		}
++	};
++	collect(text.entities);
++	if (result.empty()) {
++		auto parsed = text;
++		TextUtilities::ParseEntities(parsed, TextParseLinks);
++		collect(parsed.entities);
++	}
++	ranges::sort(result, ranges::greater(), &UrlRange::offset);
++	return result;
++}
++
++[[nodiscard]] bool CanReplace(
++		const EntitiesInText &entities,
++		UrlRange range) {
++	const auto end = range.offset + range.length;
++	for (const auto &entity : entities) {
++		const auto from = entity.offset();
++		const auto till = from + entity.length();
++		if (till <= range.offset || from >= end) {
++			continue;
++		} else if (from > range.offset || till < end) {
++			return false;
++		} else if (entity.type() == EntityType::Code
++			|| entity.type() == EntityType::Pre) {
++			return false;
++		}
++	}
++	return true;
++}
++
++void ReplaceRange(
++		TextWithEntities &text,
++		UrlRange range,
++		const QString &value) {
++	const auto end = range.offset + range.length;
++	const auto delta = int(value.size()) - range.length;
++	text.text.replace(range.offset, range.length, value);
++	for (auto &entity : text.entities) {
++		const auto from = entity.offset();
++		const auto length = entity.length();
++		if (from >= end) {
++			entity = EntityInText(
++				entity.type(),
++				from + delta,
++				length,
++				entity.data());
++		} else if (from + length >= end) {
++			entity = EntityInText(
++				entity.type(),
++				from,
++				length + delta,
++				entity.data());
++		}
++	}
++}
++
+ } // namespace
+ 
+ QString StripTracking(const QString &url) {
+@@ -412,4 +496,30 @@ QString PrepareOpenedLink(const QString &url) {
+ 	return CleanOpenedLinks() ? StripTracking(url) : url;
+ }
+ 
++void PrepareSentLinks(TextWithEntities &text) {
++	if (!CleanSentLinks()) {
++		return;
++	}
++	for (const auto &range : CollectUrls(text)) {
++		const auto url = text.text.mid(range.offset, range.length);
++		const auto cleaned = StripTrackingLoose(url);
++		if (cleaned != url && CanReplace(text.entities, range)) {
++			ReplaceRange(text, range, cleaned);
++		}
++	}
++	for (auto &entity : text.entities) {
++		if (entity.type() != EntityType::CustomUrl) {
++			continue;
++		}
++		const auto cleaned = StripTrackingLoose(entity.data());
++		if (cleaned != entity.data()) {
++			entity = EntityInText(
++				entity.type(),
++				entity.offset(),
++				entity.length(),
++				cleaned);
++		}
++	}
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_links.h b/Telegram/SourceFiles/tele/tele_links.h
+index b6e2a81ad803c03ad397341140e91139d632f77d..d8c3267a3425bd10f173588ab20f19ece6948173 100644
+--- a/Telegram/SourceFiles/tele/tele_links.h
++++ b/Telegram/SourceFiles/tele/tele_links.h
+@@ -1,8 +1,11 @@
+ #pragma once
+ 
++struct TextWithEntities;
++
+ namespace Tele {
+ 
+ [[nodiscard]] QString StripTracking(const QString &url);
+ [[nodiscard]] QString PrepareOpenedLink(const QString &url);
++void PrepareSentLinks(TextWithEntities &text);
+ 
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index cecd14a5731ae8c387ebebef448718ddda1f26e2..fa49146f01116c20a626b83c0835b049aa14300b 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -27,6 +27,7 @@ const char kOptionHideProxySponsor[] = "tele-hide-proxy-sponsor";
+ const char kOptionNoLinkWarning[] = "tele-no-link-warning";
+ const char kOptionOpenLinksInApps[] = "tele-open-links-in-apps";
+ const char kOptionCleanOpenedLinks[] = "tele-clean-opened-links";
++const char kOptionCleanSentLinks[] = "tele-clean-sent-links";
+ const char kOptionHideAllChats[] = "tele-hide-all-chats";
+ const char kOptionJumpToFirst[] = "tele-jump-to-first";
+ const char kOptionStaticUserpicsList[] = "tele-static-userpics-list";
+@@ -206,6 +207,12 @@ base::options::toggle CleanOpenedLinksOption({
+ 	.description = "Removes utm, fbclid, si and similar parameters.",
+ });
+ 
++base::options::toggle CleanSentLinksOption({
++	.id = kOptionCleanSentLinks,
++	.name = "Clean tracking from sent links",
++	.description = "Applies to links in new messages and captions.",
++});
++
+ base::options::toggle HideAllChatsOption({
+ 	.id = kOptionHideAllChats,
+ 	.name = "Hide the All chats folder",
+@@ -519,6 +526,10 @@ bool CleanOpenedLinks() {
+ 	return CleanOpenedLinksOption.value();
+ }
+ 
++bool CleanSentLinks() {
++	return CleanSentLinksOption.value();
++}
++
+ bool HideAllChats() {
+ 	return HideAllChatsOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 38e7d4cf19f06398fd48c5a10bb80ca869d66d8e..d6d0b953cfba40e2ba7de844a919bc1d9dc093fa 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -25,6 +25,7 @@ extern const char kOptionHideProxySponsor[];
+ extern const char kOptionNoLinkWarning[];
+ extern const char kOptionOpenLinksInApps[];
+ extern const char kOptionCleanOpenedLinks[];
++extern const char kOptionCleanSentLinks[];
+ extern const char kOptionHideAllChats[];
+ extern const char kOptionJumpToFirst[];
+ extern const char kOptionStaticUserpicsList[];
+@@ -83,6 +84,7 @@ void SetChangelogShown(int build);
+ [[nodiscard]] bool NoLinkWarning();
+ [[nodiscard]] bool OpenLinksInApps();
+ [[nodiscard]] bool CleanOpenedLinks();
++[[nodiscard]] bool CleanSentLinks();
+ [[nodiscard]] bool HideAllChats();
+ [[nodiscard]] rpl::producer<> HideAllChatsChanges();
+ [[nodiscard]] bool JumpToFirst();
