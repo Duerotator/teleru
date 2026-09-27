@@ -632,6 +632,8 @@ jobs:
           test -x "$app/Contents/MacOS/tele"
           lipo -archs "$app/Contents/MacOS/tele"
           strip "$app/Contents/MacOS/tele"
+          find "$app/Contents/Helpers" -type f -perm -u+x -print0 2>/dev/null \
+            | xargs -0 -I{} codesign --force --sign - --timestamp=none "{}"
           codesign --force --sign - --timestamp=none --entitlements tdesktop/Telegram/Telegram/Telegram.entitlements "$app"
           codesign --verify --strict --deep --verbose=2 "$app"
           zip="$GITHUB_WORKSPACE/tele-$RELEASE_TAG-macos.zip"
