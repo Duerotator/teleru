@@ -76,6 +76,8 @@ everything tele adds lives in settings → tele, right below the language row.
 | [48](patches/tdesktop/0048-feat-hide-the-mtproxy-sponsor-channel.patch) | no sponsor channel pinned to the chat list when you connect through an mtproxy | tele → chats, off |
 | [49](patches/tdesktop/0049-feat-lowercase-tele-s-own-texts-too.patch) | lowercase covers tele's own texts too | with 32 |
 | [50](patches/tdesktop/0050-fix-stop-maximized-windows-jittering-on-monitors-wit.patch) | a maximized window no longer jitters on a monitor without a taskbar (windows) | always on |
+| [51](patches/tdesktop/0051-feat-send-crash-reports-to-the-tele-server.patch) | when tele crashed, the next start offers to send the crash report to the tele server instead of telegram. nothing leaves without your click | tele → server, on with the server |
+| [52](patches/tdesktop/0052-feat-send-messages-as-scheduled-in-ghost-mode.patch) | in ghost mode, messages go out as scheduled a few seconds ahead, so sending doesn't put you online | tele → ghost mode, off |
 
 ### title bar template
 
@@ -91,6 +93,8 @@ the default is `TELE {build}`. empty hides the label.
 ### tele server
 
 tele can pull extra account data, like checkmarks, custom verification and scam / fake marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
+
+the same server takes crash reports. after a crash, tele offers to send the report: a short text with the version, platform and the crash reason, plus a minidump of the crashed process. you can look at it first and untick your username. with the server field empty, nothing is offered.
 
 #### running your own server
 
@@ -135,19 +139,9 @@ to keep it that way:
 - keep the costs within the limits above: tele computes one key for every account it shows, and rejects a list that asks for more.
 
 tele also rejects a list over 4 MiB or with more than 100000 entries, and then keeps using the last good one. it sends `If-None-Match` with `"<hex sha256 of the body it has>"`, so answering `304` when that matches the current body saves traffic, and a server can't tag clients with its own etags.
-## how it works
 
-- `UPSTREAM` holds the tdesktop tag the patches target, `patches/` holds the patches (grouped per repo, so submodules get their own folders), and `tele.py` moves a tdesktop checkout to that tag and applies, continues or exports them.
-- every 3 hours [sync](.github/workflows/sync.yml) looks for a new stable tdesktop release. when the patches apply cleanly, it bumps `UPSTREAM` and [build](.github/workflows/build.yml) builds and publishes `<version>-tele.<n>`. when they don't, it opens an issue and the conflict gets fixed by hand.
+crash reports are optional. tele speaks the same protocol as telegram's own crash server, at `<server>/v1/crash.php`:
 
-## building it yourself
-
-clone tdesktop next to this repo (as `../tdesktop`), then:
-
-```
-python tele.py checkout
-```
-
-that puts tdesktop on the `UPSTREAM` tag with the patches applied as commits. from there, build as upstream's [docs](https://github.com/telegramdesktop/tdesktop/tree/dev/docs) say. builds you make yourself show `TELE DEV` and don't update themselves.
-
-to change a patch, commit inside the tdesktop checkout (or inside the submodule that owns the file) and run `python tele.py export`.
+- `GET ?act=query_report&apiid=…&version=…&dmp=0|1&platform=…` answers `Report` as plain text when the server wants the report. anything else makes tele say thanks and send nothing.
+- `POST ?act=report` is `multipart/form-data` with `platform` (like `Windows64Bit`, `Linux`, `MacOS`), `version` (like `7002009`), `report` (the report text) and, when there is one, `dump` (a zip with one `.dmp` minidump, under 20 MiB). answer `Done`.
+- answer `404` to both if you don't collect crashes.
