@@ -1,0 +1,119 @@
+#!/usr/bin/env python3
+"""write the github release notes for a tele release as markdown."""
+
+import argparse
+import re
+
+from announce import git, patches, subject, upstream
+
+ROW = re.compile(r'^\| \[(\d+)\]\((patches/[^)]+\.patch)\) \| (.*) \| (.*) \|$')
+
+PLATFORMS = (
+    ('windows', 'win64', 'unpack anywhere and run `tele.exe`.'),
+    ('linux', 'linux64', 'unpack and run `tele`. it adds itself to the app menu on the first start.'),
+    ('macos', 'macos', 'unpack, move `tele.app` to applications and run `xattr -dr com.apple.quarantine /Applications/tele.app` once: the build is signed ad-hoc.'),
+)
+
+
+def readme_rows(repo, rev):
+    rows = {}
+    for line in git(repo, 'show', f'{rev}:README.md').splitlines():
+        match = ROW.match(line.strip())
+        if match:
+            number, path, what, where = match.groups()
+            rows[path] = (int(number), what, where)
+    return rows
+
+
+def paths_by_subject(repo, rev):
+    result = {}
+    names = git(repo, 'ls-tree', '-r', '--name-only', rev, '--', 'patches').split()
+    for name in names:
+        if name.endswith('.patch'):
+            result[subject(git(repo, 'show', f'{rev}:{name}')) or name] = name
+    return result
+
+
+def absolute(text, url, rev):
+    return re.sub(r'\]\((patches/[^)]+)\)', lambda m: f']({url}/blob/{rev}/{m.group(1)})', text)
+
+
+def entry(rows, path, fallback, url, rev):
+    if path in rows:
+        number, what, where = rows[path]
+        return f'- {absolute(what, url, rev)} ([{number}]({url}/blob/{rev}/{path}), {where})'
+    return f'- {fallback}'
+
+
+def notes(args):
+    rev = args.rev
+    now = patches(args.repo, rev)
+    before = patches(args.repo, args.previous) if args.previous else {}
+    paths = paths_by_subject(args.repo, rev)
+    rows = readme_rows(args.repo, rev)
+    added = [name for name in now if name not in before]
+    changed = [name for name in now if name in before and before[name] != now[name]]
+    dropped = [name for name in before if name not in now]
+
+    tdesktop = f'https://github.com/telegramdesktop/tdesktop/releases/tag/{args.upstream}'
+    lines = [f'telegram desktop [{args.upstream}]({tdesktop}) with {len(now)} patches.']
+    if args.previous:
+        was = upstream(args.repo, args.previous)
+        if was != args.upstream:
+            lines += ['', f'moved from tdesktop {was} to {args.upstream}.']
+    sections = (
+        ('new', [entry(rows, paths.get(name, ''), name, args.url, rev) for name in added]),
+        ('changed', [entry(rows, paths.get(name, ''), name, args.url, rev) for name in changed]),
+        ('dropped', [f'- {name}' for name in dropped]),
+    )
+    for title, items in sections:
+        if items:
+            lines += ['', f'## {title}', '', *items]
+    if args.previous and not (added or changed or dropped):
+        lines += ['', 'same patches as before, rebuilt.']
+
+    download = f'{args.url}/releases/download/{args.tag}'
+    lines += ['', '## download', '', '| system | file | |', '|---|---|---|']
+    for name, platform, how in PLATFORMS:
+        file = f'tele-{args.tag}-{platform}.zip'
+        lines.append(f'| {name} | [{file}]({download}/{file}) | {how} |')
+    lines += [
+        '',
+        'a running tele finds this release within 3 hours and offers a restart, or right away with settings → tele → check for updates.',
+    ]
+
+    table = [
+        f'| [{number}]({args.url}/blob/{rev}/{path}) | {absolute(what, args.url, rev)} | {where} |'
+        for path, (number, what, where) in sorted(rows.items(), key=lambda item: item[1][0])
+    ]
+    if table:
+        lines += [
+            '',
+            '<details>',
+            f'<summary>all {len(now)} patches</summary>',
+            '',
+            '| # | what it does | where to toggle |',
+            '|---|---|---|',
+            *table,
+            '',
+            '</details>',
+        ]
+    return '\n'.join(lines) + '\n'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--repo', required=True, help='tele checkout with history and tags')
+    parser.add_argument('--rev', default='HEAD', help='commit the release is built from')
+    parser.add_argument('--tag', required=True)
+    parser.add_argument('--previous', default='', help='previous release tag, empty for the first one')
+    parser.add_argument('--upstream', required=True)
+    parser.add_argument('--url', required=True, help='github url of the tele repo')
+    parser.add_argument('--out', required=True, help='file to write the markdown to')
+    args = parser.parse_args()
+    with open(args.out, 'w', encoding='utf-8', newline='\n') as file:
+        file.write(notes(args))
+
+
+if __name__ == '__main__':
+    main()
