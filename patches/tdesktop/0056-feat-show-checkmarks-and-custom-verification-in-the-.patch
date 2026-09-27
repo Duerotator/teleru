@@ -1,0 +1,162 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 07:56:07 +0300
+Subject: [PATCH] feat: show checkmarks and custom verification in the settings
+ header
+
+---
+ .../settings/sections/settings_main.cpp       | 19 ++++++++++++++++---
+ .../SourceFiles/tele/tele_account_badges.cpp  | 11 +++++++----
+ .../SourceFiles/tele/tele_account_badges.h    |  5 ++++-
+ 3 files changed, 27 insertions(+), 8 deletions(-)
+
+diff --git a/Telegram/SourceFiles/settings/sections/settings_main.cpp b/Telegram/SourceFiles/settings/sections/settings_main.cpp
+index 049f01bb70447a97b7569d8583bca08f21b67fc6..4770344ab2be6b418eec9097944237e918ebaec8 100644
+--- a/Telegram/SourceFiles/settings/sections/settings_main.cpp
++++ b/Telegram/SourceFiles/settings/sections/settings_main.cpp
+@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "settings/sections/settings_main.h"
+ 
+ #include "settings/settings_common_session.h"
++#include "tele/tele_account_badges.h"
+ 
+ #include "api/api_cloud_password.h"
+ #include "api/api_credits.h"
+@@ -123,6 +124,7 @@ private:
+ 	const not_null<UserData*> _user;
+ 	Info::Profile::EmojiStatusPanel _emojiStatusPanel;
+ 	Info::Profile::Badge _badge;
++	Tele::CoverBadges _teleBadges;
+ 
+ 	object_ptr<Ui::UserpicButton> _userpic;
+ 	object_ptr<Ui::FlatLabel> _name = { nullptr };
+@@ -156,6 +158,9 @@ Cover::Cover(
+ 	},
+ 	0, // customStatusLoopsLimit
+ 	Info::Profile::BadgeType::Premium)
++, _teleBadges(this, user, [=] {
++	return controller->isGifPausedAtLeastFor(Window::GifPauseReason::Layer);
++}, &st::settingsCoverBadge)
+ , _userpic(
+ 	this,
+ 	controller,
+@@ -218,7 +223,7 @@ Cover::Cover(
+ 			_badge.widget(),
+ 			_badge.sizeTag());
+ 	});
+-	_badge.updated() | rpl::on_next([=] {
++	rpl::merge(_badge.updated(), _teleBadges.updated()) | rpl::on_next([=] {
+ 		refreshNameGeometry(width());
+ 	}, _name->lifetime());
+ 
+@@ -302,7 +307,7 @@ void Cover::initViewers() {
+ }
+ 
+ void Cover::refreshNameGeometry(int newWidth) {
+-	const auto nameLeft = st::settingsNameLeft;
++	const auto nameLeft = st::settingsNameLeft + _teleBadges.leftSkip();
+ 	const auto nameTop = st::settingsNameTop;
+ 	const auto qrButtonWidth = (_qrButton && !_qrButton->isHidden())
+ 		? (_qrButton->width() + st::infoProfileCover.rightSkip)
+@@ -310,7 +315,8 @@ void Cover::refreshNameGeometry(int newWidth) {
+ 	auto nameWidth = newWidth
+ 		- nameLeft
+ 		- st::infoProfileCover.rightSkip
+-		- qrButtonWidth;
++		- qrButtonWidth
++		- _teleBadges.rightWidth();
+ 	if (const auto width = _badge.widget() ? _badge.widget()->width() : 0) {
+ 		nameWidth -= st::infoVerifiedCheckPosition.x() + width;
+ 	}
+@@ -320,6 +326,13 @@ void Cover::refreshNameGeometry(int newWidth) {
+ 	const auto badgeTop = nameTop;
+ 	const auto badgeBottom = nameTop + _name->height();
+ 	_badge.move(badgeLeft, badgeTop, badgeBottom);
++	_teleBadges.move(
++		st::settingsNameLeft,
++		badgeLeft + (_badge.widget()
++			? (st::settingsCoverBadge.position.x() + _badge.widget()->width())
++			: 0),
++		badgeTop,
++		badgeBottom);
+ }
+ 
+ void Cover::updatePhoneText() {
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.cpp b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+index 7815b6566bec16a675a979aa157bfbed4c4c49cb..7f0750acf214617f9d46bb712168c8b1325fd20d 100644
+--- a/Telegram/SourceFiles/tele/tele_account_badges.cpp
++++ b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+@@ -5,6 +5,7 @@
+ #include "info/profile/info_profile_badge.h"
+ #include "main/main_session.h"
+ #include "ui/widgets/buttons.h"
++#include "styles/style_info.h"
+ #include "styles/style_settings.h"
+ #include "styles/style_window.h"
+ 
+@@ -55,7 +56,8 @@ void AddAccountBotVerify(
+ CoverBadges::CoverBadges(
+ 	not_null<QWidget*> parent,
+ 	not_null<UserData*> user,
+-	Fn<bool()> paused)
++	Fn<bool()> paused,
++	const style::InfoPeerBadge *verifiedSt)
+ : _botVerify(std::make_unique<Info::Profile::Badge>(
+ 	parent,
+ 	st::settingsInfoPeerBadge,
+@@ -67,13 +69,14 @@ CoverBadges::CoverBadges(
+ 	Info::Profile::BadgeType::BotVerified))
+ , _verified(std::make_unique<Info::Profile::Badge>(
+ 	parent,
+-	st::settingsInfoPeerBadge,
++	verifiedSt ? *verifiedSt : st::settingsInfoPeerBadge,
+ 	&user->session(),
+ 	Info::Profile::VerifiedContentForPeer(user),
+ 	nullptr,
+ 	paused,
+ 	0,
+-	Info::Profile::BadgeType::Verified)) {
++	Info::Profile::BadgeType::Verified))
++, _verifiedSkip(verifiedSt ? verifiedSt->position.x() : 0) {
+ }
+ 
+ CoverBadges::~CoverBadges() = default;
+@@ -89,7 +92,7 @@ int CoverBadges::leftSkip() const {
+ 
+ int CoverBadges::rightWidth() const {
+ 	const auto widget = _verified->widget();
+-	return widget ? widget->width() : 0;
++	return widget ? (widget->width() + _verifiedSkip) : 0;
+ }
+ 
+ void CoverBadges::move(int left, int right, int top, int bottom) {
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.h b/Telegram/SourceFiles/tele/tele_account_badges.h
+index d0e57833ab968a1e95a49395991a437e34034547..91830f6fe2ddb3dbd9c79400c6a9e60183db8af8 100644
+--- a/Telegram/SourceFiles/tele/tele_account_badges.h
++++ b/Telegram/SourceFiles/tele/tele_account_badges.h
+@@ -4,6 +4,7 @@ class UserData;
+ 
+ namespace style {
+ struct SettingsButton;
++struct InfoPeerBadge;
+ } // namespace style
+ 
+ namespace Ui {
+@@ -28,7 +29,8 @@ public:
+ 	CoverBadges(
+ 		not_null<QWidget*> parent,
+ 		not_null<UserData*> user,
+-		Fn<bool()> paused);
++		Fn<bool()> paused,
++		const style::InfoPeerBadge *verifiedSt = nullptr);
+ 	~CoverBadges();
+ 
+ 	[[nodiscard]] rpl::producer<> updated() const;
+@@ -39,6 +41,7 @@ public:
+ private:
+ 	const std::unique_ptr<Info::Profile::Badge> _botVerify;
+ 	const std::unique_ptr<Info::Profile::Badge> _verified;
++	const int _verifiedSkip = 0;
+ 
+ };
+ 

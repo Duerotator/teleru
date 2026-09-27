@@ -1,0 +1,386 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 08:01:46 +0300
+Subject: [PATCH] refactor: shorten tele option descriptions
+
+---
+ Telegram/SourceFiles/tele/tele_options.cpp | 154 ++++++---------------
+ 1 file changed, 43 insertions(+), 111 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee422ff75f 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -52,111 +52,91 @@ namespace {
+ base::options::toggle HideStoriesOption({
+ 	.id = kOptionHideStories,
+ 	.name = "Hide stories",
+-	.description = "No stories anywhere: no stories bar, no rings around "
+-		"userpics, no stories in profiles, story messages show "
+-		"as expired and story links don't open.",
++	.description = "No stories bar, no rings around userpics, no stories in "
++		"profiles.",
+ 	.restartRequired = true,
+ });
+ 
+ base::options::toggle InvisibleStoriesOption({
+ 	.id = kOptionInvisibleStories,
+ 	.name = "Watch stories invisibly",
+-	.description = "Watching a story doesn't tell the server, so you "
+-		"don't appear among its viewers. Seen stories come back "
+-		"as unread after a restart. Reactions and replies still "
+-		"reveal you, and live stories can't be opened.",
++	.description = "Reactions and replies still reveal you, live stories won't "
++		"open.",
+ });
+ 
+ base::options::toggle GhostOption({
+ 	.id = kOptionGhost,
+ 	.name = "Ghost mode",
+-	.description = "Hide your activity from others, the way the switches "
+-		"below say. Flip it quickly from the main menu.",
++	.description = "Applies the switches below, also toggled from the main "
++		"menu.",
+ });
+ 
+ base::options::toggle GhostReadOption({
+ 	.id = kOptionGhostRead,
+ 	.name = "Don't send read receipts",
+-	.description = "Chats you open look read only in tele: the server and "
+-		"the senders still see the messages as unread, and they come back "
+-		"unread after a restart. Played voice and video messages, seen "
+-		"mentions and reactions aren't reported either. Right-click a "
+-		"message to mark the chat read up to it for real.",
++	.description = "Chats look read only in tele, right-click a message to "
++		"read for real.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::toggle GhostReadOnReplyOption({
+ 	.id = kOptionGhostReadOnReply,
+ 	.name = "Mark as read when I reply",
+-	.description = "Sending a message into a chat reads it for real, "
+-		"since replying shows you've seen it anyway.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::toggle GhostTypingOption({
+ 	.id = kOptionGhostTyping,
+ 	.name = "Don't send typing",
+-	.description = "Others don't see you typing, recording, uploading, "
+-		"choosing a sticker or watching animated emoji they sent.",
++	.description = "Also hides recording, uploading and choosing a sticker.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::toggle GhostOnlineOption({
+ 	.id = kOptionGhostOnline,
+ 	.name = "Don't go online",
+-	.description = "Having tele open doesn't show you online. Sending a "
+-		"message still does for a while: the server marks you online "
+-		"by itself, unless messages are sent as scheduled.",
++	.description = "Sending a message still shows you online, unless it's "
++		"scheduled.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::toggle GhostScheduleOption({
+ 	.id = kOptionGhostSchedule,
+ 	.name = "Send messages as scheduled",
+-	.description = "While ghost mode is on for a chat, sending a message "
+-		"schedules it a few seconds ahead in the same chat, so the server "
+-		"delivers it without marking you online. It arrives a few seconds "
+-		"late. Bots, Saved Messages, paid chats and view-once media are "
+-		"sent right away.",
++	.description = "You stay offline, messages arrive a few seconds late.",
+ });
+ 
+ base::options::toggle GhostStoriesOption({
+ 	.id = kOptionGhostStories,
+ 	.name = "Don't mark stories as viewed",
+-	.description = "Watch stories invisibly, like the switch in Stories "
+-		"does, with the same limits.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::option<QString> GhostChatsOption({
+ 	.id = kOptionGhostChats,
+ 	.name = "Ghost mode in chats",
+-	.description = "Chats that are always or never ghosted, whatever the "
+-		"switch above says. This covers read receipts, typing and sending "
+-		"as scheduled, online status stays global. Set it in a chat's menu.",
++	.description = "Chats that are always or never ghosted, set in a chat's "
++		"menu.",
+ });
+ 
+ base::options::toggle ButtonPayloadsOption({
+ 	.id = kOptionButtonPayloads,
+ 	.name = "Show bot button payloads",
+-	.description = "Hovering a bot button shows what it carries: "
+-		"callback data, links, inline queries, web apps and more.",
++	.description = "Hover a bot button to see its callback data or link.",
+ });
+ 
+ base::options::toggle AutoUpdateOption({
+ 	.id = kOptionAutoUpdate,
+ 	.name = "Update automatically",
+-	.description = "Check the tele releases on GitHub every 3 hours, "
+-		"download new builds in the background and offer a restart.",
++	.description = "Checks the GitHub releases every 3 hours.",
+ 	.defaultValue = true,
+ });
+ 
+ base::options::toggle ShowChangelogOption({
+ 	.id = kOptionShowChangelog,
+ 	.name = "Show what's new after updates",
+-	.description = "After tele updates, the Telegram service chat gets "
+-		"a message with what's new in the build. It lives only in this "
+-		"app and is gone after a restart.",
++	.description = "Posted to the Telegram service chat, gone after a "
++		"restart.",
+ 	.defaultValue = true,
+ });
+ 
+@@ -169,217 +149,169 @@ base::options::option<int> ChangelogShownOption({
+ base::options::toggle GroupQuickRepliesOption({
+ 	.id = kOptionGroupQuickReplies,
+ 	.name = "Quick replies in groups and channels",
+-	.description = "Offer your Business quick replies in groups and "
+-		"channels too. Telegram only sends them in private chats, so "
+-		"tele posts the shortcut's messages as ordinary ones: bot "
+-		"keyboards, via-bot labels and message effects are dropped.",
++	.description = "Sent as ordinary messages, without keyboards and effects.",
+ });
+ 
+ base::options::toggle LowercaseOption({
+ 	.id = kOptionLowercase,
+ 	.name = "Lowercase everything",
+-	.description = "Every interface text is shown in lowercase, both "
+-		"the language pack and tele's own texts. Messages and names "
+-		"stay as they are.",
++	.description = "Messages and names stay as they are.",
+ 	.restartRequired = true,
+ });
+ 
+ base::options::toggle HideCallsOption({
+ 	.id = kOptionHideCalls,
+ 	.name = "Hide call buttons",
+-	.description = "No call button in the top bar of private chats "
+-		"and in profiles.",
+ });
+ 
+ base::options::toggle BubbleBadgesOption({
+ 	.id = kOptionBubbleBadges,
+ 	.name = "Badges next to names in messages",
+-	.description = "Show checkmarks and custom verification next to "
+-		"sender names in message bubbles, where emoji statuses are.",
++	.description = "Checkmarks and custom verification next to sender names.",
+ });
+ 
+ base::options::toggle HideSponsoredOption({
+ 	.id = kOptionHideSponsored,
+ 	.name = "Hide sponsored messages",
+-	.description = "Don't load ads: no sponsored messages in channels "
+-		"and bots, no ads in channel videos and no sponsored results "
+-		"in search.",
++	.description = "Also ads in channel videos and sponsored search results.",
+ });
+ 
+ base::options::toggle HideProxySponsorOption({
+ 	.id = kOptionHideProxySponsor,
+ 	.name = "Hide the proxy sponsor channel",
+-	.description = "When you connect through an MTProxy, its sponsor "
+-		"channel isn't pinned at the top of the chat list.",
+ });
+ 
+ base::options::toggle NoLinkWarningOption({
+ 	.id = kOptionNoLinkWarning,
+ 	.name = "Open links without confirmation",
+-	.description = "Open links with custom text and poll option links "
+-		"right away, without asking first. Bot login and permission "
+-		"prompts still ask.",
++	.description = "Bot login and permission prompts still ask.",
+ });
+ 
+ base::options::toggle HideAllChatsOption({
+ 	.id = kOptionHideAllChats,
+ 	.name = "Hide the All chats folder",
+-	.description = "When you have folders, All chats disappears from "
+-		"the folder tabs and the chat list opens on your first folder.",
++	.description = "The chat list opens on your first folder.",
+ });
+ 
+ base::options::toggle JumpToFirstOption({
+ 	.id = kOptionJumpToFirst,
+ 	.name = "Jump to the first message",
+-	.description = "Add Jump to the first message to the chat menu in "
+-		"the top bar. It scrolls the chat or topic to its very start.",
++	.description = "Adds it to the chat menu in the top bar.",
+ });
+ 
+ base::options::toggle StaticUserpicsListOption({
+ 	.id = kOptionStaticUserpicsList,
+ 	.name = "Static userpics in the chat list",
+-	.description = "Animated profile photos in the chat list, folders "
+-		"and search results show as still pictures.",
++	.description = "Also in folders and search results.",
+ });
+ 
+ base::options::toggle StaticUserpicsChatsOption({
+ 	.id = kOptionStaticUserpicsChats,
+ 	.name = "Static userpics in chats and profiles",
+-	.description = "Animated profile photos next to messages, in "
+-		"profiles and profile previews show as still pictures. "
+-		"Opening the photo still plays it.",
++	.description = "Opening the photo still plays it.",
+ });
+ 
+ base::options::toggle ShowGiftIdsOption({
+ 	.id = kOptionShowGiftIds,
+ 	.name = "Show gift IDs",
+-	.description = "Show the ID of a collectible gift in its card. "
+-		"Click it to copy.",
++	.description = "In collectible gift cards, click to copy.",
+ });
+ 
+ base::options::toggle PeerIdsWithoutSpacesOption({
+ 	.id = kOptionPeerIdsWithoutSpaces,
+ 	.name = "IDs without spaces",
+-	.description = "Show peer IDs in profiles as plain digits, without "
+-		"grouping them. Copying gives the same text.",
+ });
+ 
+ base::options::toggle BotApiPeerIdsOption({
+ 	.id = kOptionBotApiPeerIds,
+ 	.name = "Bot API style IDs",
+-	.description = "Show peer IDs in profiles the way the Bot API does: "
+-		"basic groups get a minus in front, channels and supergroups "
+-		"get -100 in front.",
++	.description = "Like -100 in front of channel and supergroup IDs.",
+ });
+ 
+ base::options::toggle ShowDcOption({
+ 	.id = kOptionShowDc,
+ 	.name = "Show data center",
+-	.description = "Show a DC row in profiles with the data center "
+-		"the account or chat lives in, known from its profile photo. "
+-		"Click it to copy.",
++	.description = "A DC row in profiles, known from the profile photo.",
+ });
+ 
+ base::options::toggle MessageIdMenuOption({
+ 	.id = kOptionMessageIdMenu,
+ 	.name = "Show message ID in the message menu",
+-	.description = "The message menu starts with the ID of the message "
+-		"under the cursor. Click it to copy the ID.",
++	.description = "Click it to copy.",
+ });
+ 
+ base::options::toggle HideIgnoredOption({
+ 	.id = kOptionHideIgnored,
+ 	.name = "Hide ignored messages completely",
+-	.description = "Messages from ignored users disappear from chats. "
+-		"When off, they are shown faded.",
++	.description = "When off, they are shown faded.",
+ });
+ 
+ base::options::option<QString> IgnoredUsersOption({
+ 	.id = kOptionIgnoredUsers,
+ 	.name = "Ignored users",
+-	.description = "People whose messages are faded or hidden in chats. "
+-		"Right-click a userpic in a group to ignore someone.",
++	.description = "Right-click a userpic in a group to ignore someone.",
+ });
+ 
+ base::options::toggle MessageSecondsOption({
+ 	.id = kOptionMessageSeconds,
+ 	.name = "Show seconds in message times",
+-	.description = "Times in message bubbles show seconds too, "
+-		"like 14:03:21.",
+ });
+ 
+ base::options::toggle EditHistoryOption({
+ 	.id = kOptionEditHistory,
+ 	.name = "Keep edit history",
+-	.description = "Remember what messages looked like before they were "
+-		"edited while tele is running. Right-click an edited message "
+-		"to see every version. Kept in memory only.",
++	.description = "Right-click an edited message to see old versions, until "
++		"restart.",
+ });
+ 
+ base::options::toggle KeepDeletedOption({
+ 	.id = kOptionKeepDeleted,
+ 	.name = "Keep deleted messages",
+-	.description = "Messages deleted by others or from your other "
+-		"devices stay in the chat, marked as deleted, until tele "
+-		"restarts. Deleting one here removes it from tele only.",
++	.description = "Kept until tele restarts, marked as deleted.",
+ });
+ 
+ base::options::toggle DeletedIconOption({
+ 	.id = kOptionDeletedIcon,
+ 	.name = "Mark with a trash icon instead of fading",
+-	.description = "Show kept deleted messages as usual, with a trash "
+-		"icon next to the time.",
+ });
+ 
+ base::options::toggle KeepSecretMediaOption({
+ 	.id = kOptionKeepSecretMedia,
+ 	.name = "Open disappearing media without burning it",
+-	.description = "View-once and timed photos, videos, voice and video "
+-		"messages you receive stay unopened for the sender and on the "
+-		"server: no timer starts and nothing disappears, so they can be "
+-		"opened again. Right-click one to mark it as viewed.",
++	.description = "No timer starts, right-click one to mark it as viewed.",
+ });
+ 
+ base::options::toggle ScreenshotSecretMediaOption({
+ 	.id = kOptionScreenshotSecretMedia,
+ 	.name = "Allow screenshots of disappearing media",
+-	.description = "The media viewer and the voice and video message "
+-		"player no longer hide view-once and timed media from screen "
+-		"capture. Chats that forbid saving stay protected.",
++	.description = "Chats that forbid saving stay protected.",
+ });
+ 
+ base::options::toggle ViewAsTlOption({
+ 	.id = kOptionViewAsTl,
+ 	.name = "View as TL",
+-	.description = "Adds View as TL to menus of messages, chats, "
+-		"profiles, topics, stickers, gifts, stories and folders: it "
+-		"fetches the object from the server and opens it on "
+-		"schema.jppgr.am in the browser.",
++	.description = "Opens messages, chats and more on schema.jppgr.am.",
+ });
+ 
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+-	.description = "Where tele gets extra account data, like "
+-		"checkmarks and custom verification. Empty turns it off.",
++	.description = "Source of checkmarks and custom verification, empty turns "
++		"it off.",
+ 	.defaultValue = u"https://tele.starkow.dev"_q,
+ });
+ 
+ base::options::option<QString> TitleTemplateOption({
+ 	.id = kOptionTitleTemplate,
+ 	.name = "Title bar label",
+-	.description = "What the label in the title bar shows. Variables in "
+-		"braces are filled in live, parts in square brackets hide when "
+-		"a variable inside is empty or 0. Empty hides the label.",
++	.description = "A live template, empty hides the label.",
+ 	.defaultValue = u"TELE {build}"_q,
+ });
+ 
+ base::options::option<QString> WindowTitleTemplateOption({
+ 	.id = kOptionWindowTitleTemplate,
+ 	.name = "Window title",
+-	.description = "The title the system shows in the taskbar, Alt+Tab "
+-		"and the system window frame, with the same variables as the "
+-		"label and {label} for the label itself. Empty keeps the "
++	.description = "Shown in the taskbar and Alt+Tab, empty keeps the "
+ 		"default title.",
+ });
+ 

@@ -1,0 +1,1078 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 07:58:31 +0300
+Subject: [PATCH] feat: group tele settings into categories
+
+---
+ .../core/deep_links/deep_links_settings.cpp   |  10 +-
+ .../SourceFiles/settings/settings_builder.cpp |   8 +-
+ .../SourceFiles/settings/settings_builder.h   |   3 +-
+ .../SourceFiles/settings/settings_tele.cpp    | 820 ++++++++++++------
+ Telegram/SourceFiles/settings/settings_tele.h |   2 +-
+ 5 files changed, 548 insertions(+), 295 deletions(-)
+
+diff --git a/Telegram/SourceFiles/core/deep_links/deep_links_settings.cpp b/Telegram/SourceFiles/core/deep_links/deep_links_settings.cpp
+index eac57db85c6be9151af8e14b3b9b7ab3da6d897c..9c5a449edccb7770fa02d11e05821fe720ebb043 100644
+--- a/Telegram/SourceFiles/core/deep_links/deep_links_settings.cpp
++++ b/Telegram/SourceFiles/core/deep_links/deep_links_settings.cpp
+@@ -563,10 +563,12 @@ void RegisterSettingsHandlers(Router &router) {
+ 		.action = CodeBlock{ showExperimental },
+ 	});
+ 
+-	router.add(u"settings"_q, {
+-		.path = u"tele"_q,
+-		.action = SettingsSection{ ::Settings::TeleId() },
+-	});
++	for (const auto &[path, section] : ::Settings::TeleSettingsPaths()) {
++		router.add(u"settings"_q, {
++			.path = path,
++			.action = SettingsSection{ section },
++		});
++	}
+ 
+ 	router.add(u"settings"_q, {
+ 		.path = u"privacy"_q,
+diff --git a/Telegram/SourceFiles/settings/settings_builder.cpp b/Telegram/SourceFiles/settings/settings_builder.cpp
+index 20b6e6dad9c927c8267377e0727f2325a607b508..c0f07733ca5902e036504442e09e2ee98063329d 100644
+--- a/Telegram/SourceFiles/settings/settings_builder.cpp
++++ b/Telegram/SourceFiles/settings/settings_builder.cpp
+@@ -101,7 +101,7 @@ std::vector<SearchEntry> SearchRegistry::collectAll(
+ 	for (const auto &[sectionId, meta] : _sections) {
+ 		if (meta->parentId) {
+ 			result.push_back({
+-				.title = (*meta->title)(tr::now),
++				.title = sectionTitle(sectionId),
+ 				.section = sectionId,
+ 				.icon = { meta->icon },
+ 			});
+@@ -116,7 +116,11 @@ std::vector<SearchEntry> SearchRegistry::collectAll(
+ 
+ QString SearchRegistry::sectionTitle(Type sectionId) const {
+ 	const auto it = _sections.find(sectionId);
+-	return (it != _sections.end()) ? (*it->second->title)(tr::now) : QString();
++	return (it == _sections.end())
++		? QString()
++		: it->second->titleText
++		? it->second->titleText()
++		: (*it->second->title)(tr::now);
+ }
+ 
+ QString SearchRegistry::sectionPath(Type sectionId, bool parentsOnly) const {
+diff --git a/Telegram/SourceFiles/settings/settings_builder.h b/Telegram/SourceFiles/settings/settings_builder.h
+index 3ac0a93b0826aae7d9ee82856b991bf8dac49908..68f5b66e0e6906606ee095bf4a9be13cfeee16b3 100644
+--- a/Telegram/SourceFiles/settings/settings_builder.h
++++ b/Telegram/SourceFiles/settings/settings_builder.h
+@@ -84,8 +84,9 @@ struct SearchIndexerEntry {
+ struct SectionMeta {
+ 	Type id;
+ 	Type parentId;
+-	not_null<const tr::phrase<>*> title;
++	const tr::phrase<> *title = nullptr;
+ 	not_null<const style::icon*> icon;
++	Fn<QString()> titleText;
+ };
+ 
+ class SearchRegistry {
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 964ec99163beb94f477f97afcd5b1e4ad64150bf..f2e921d49698185541b5a6d95e81ddf8c4da1c95 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -12,6 +12,7 @@
+ #include "history/history.h"
+ #include "lang/lang_keys.h"
+ #include "main/main_session.h"
++#include "settings/sections/settings_main.h"
+ #include "settings/settings_builder.h"
+ #include "settings/settings_common_session.h"
+ #include "tele/tele_badges.h"
+@@ -43,6 +44,19 @@
+ namespace Settings {
+ namespace {
+ 
++using namespace Builder;
++
++struct Category {
++	QString path;
++	QString title;
++	const style::icon *icon = nullptr;
++	QStringList keywords;
++	Type id;
++	std::unique_ptr<BuildHelper> helper;
++};
++
++[[nodiscard]] const std::vector<Category> &Categories();
++
+ class TeleSection final : public Section<TeleSection> {
+ public:
+ 	TeleSection(
+@@ -50,15 +64,62 @@ public:
+ 		not_null<Window::SessionController*> controller);
+ 
+ 	[[nodiscard]] rpl::producer<QString> title() override;
++	void showFinished() override;
+ 
+ private:
+ 	void setupContent();
+ 
++	Type _redirect;
++
+ };
+ 
+-void SetupCopyLink(
++class CategorySection final : public AbstractSection {
++public:
++	CategorySection(
++		QWidget *parent,
+ 		not_null<Window::SessionController*> controller,
++		int index);
++
++	[[nodiscard]] Type id() const override;
++	[[nodiscard]] rpl::producer<QString> title() override;
++
++private:
++	const int _index = 0;
++
++};
++
++class CategoryFactory final : public AbstractSectionFactory {
++public:
++	explicit CategoryFactory(int index) : _index(index) {
++	}
++
++	object_ptr<AbstractSection> create(
++			not_null<QWidget*> parent,
++			not_null<Window::SessionController*> controller,
++			not_null<Ui::ScrollArea*>,
++			rpl::producer<Container>) const override {
++		return object_ptr<CategorySection>(parent, controller, _index);
++	}
++
++private:
++	const int _index = 0;
++
++};
++
++[[nodiscard]] AbstractSection *FindSection(not_null<QWidget*> widget) {
++	for (auto parent = widget->parentWidget()
++		; parent
++		; parent = parent->parentWidget()) {
++		if (const auto section = dynamic_cast<AbstractSection*>(parent)) {
++			return section;
++		}
++	}
++	return nullptr;
++}
++
++void SetupCopyLink(
+ 		not_null<Ui::RpWidget*> widget,
++		Type section,
+ 		const QString &id) {
+ 	const auto menu = widget->lifetime().make_state<
+ 		base::unique_qptr<Ui::PopupMenu>>();
+@@ -66,12 +127,21 @@ void SetupCopyLink(
+ 		if (e->type() != QEvent::ContextMenu) {
+ 			return base::EventFilterResult::Continue;
+ 		}
++		const auto owner = FindSection(widget);
++		const auto link = owner
++			? Core::DeepLinks::SettingsDeepLink(
++				section ? section : owner->id(),
++				id)
++			: QString();
++		if (link.isEmpty()) {
++			return base::EventFilterResult::Continue;
++		}
++		const auto controller = owner->controller();
+ 		*menu = base::make_unique_q<Ui::PopupMenu>(
+ 			widget,
+ 			st::popupMenuWithIcons);
+ 		(*menu)->addAction(tr::lng_context_copy_link(tr::now), [=] {
+-			TextUtilities::SetClipboardText(TextForMimeData::Simple(
+-				Core::DeepLinks::SettingsDeepLink(TeleSection::Id(), id)));
++			TextUtilities::SetClipboardText(TextForMimeData::Simple(link));
+ 			controller->showToast({
+ 				.text = { tr::lng_channel_public_link_copied(tr::now) },
+ 				.iconLottie = u"toast/voip_invite"_q,
+@@ -84,99 +154,128 @@ void SetupCopyLink(
+ }
+ 
+ void SetupLink(not_null<Ui::RpWidget*> widget, const QString &id) {
+-	for (auto parent = widget->parentWidget()
+-		; parent
+-		; parent = parent->parentWidget()) {
+-		if (const auto section = dynamic_cast<AbstractSection*>(parent)) {
+-			const auto controller = section->controller();
+-			SetupCopyLink(controller, widget, id);
+-			section->showFinishes(
+-			) | rpl::on_next([=] {
+-				controller->checkHighlightControl(id, widget.get());
+-			}, widget->lifetime());
+-			return;
+-		}
+-	}
++	SetupCopyLink(widget, nullptr, id);
+ }
+ 
+-[[nodiscard]] not_null<Button*> AddOptionRow(
+-		not_null<Ui::VerticalLayout*> container,
++struct OptionRow {
++	object_ptr<Ui::RpWidget> widget;
++	not_null<Button*> button;
++};
++
++[[nodiscard]] OptionRow CreateOptionRow(
++		not_null<QWidget*> parent,
+ 		const QString &name,
+-		const QString &description,
+-		const QString &id) {
+-	const auto &titlePadding = st::settingsExperimentalTitlePadding;
+-	const auto &aboutPadding = st::settingsExperimentalAboutPadding;
++		const QString &description) {
++	if (description.isEmpty()) {
++		auto result = object_ptr<Button>(
++			parent,
++			rpl::single(name),
++			st::settingsButtonNoIcon);
++		const auto button = result.data();
++		return { std::move(result), button };
++	}
++	auto result = object_ptr<Ui::VerticalLayout>(parent);
++	const auto raw = result.data();
+ 	const auto button = Ui::CreateChild<Button>(
+-		container.get(),
++		raw,
+ 		rpl::single(QString()),
+ 		st::settingsButtonNoIcon);
+-	const auto title = container->add(
++	const auto title = raw->add(
+ 		object_ptr<Ui::FlatLabel>(
+-			container,
++			raw,
+ 			name,
+ 			st::settingsExperimentalTitle),
+-		titlePadding);
+-	const auto about = container->add(
++		st::settingsExperimentalTitlePadding);
++	const auto about = raw->add(
+ 		object_ptr<Ui::FlatLabel>(
+-			container,
++			raw,
+ 			description,
+ 			st::settingsExperimentalAbout),
+-		aboutPadding);
++		st::settingsExperimentalAboutPadding);
+ 	title->setAttribute(Qt::WA_TransparentForMouseEvents);
+ 	about->setAttribute(Qt::WA_TransparentForMouseEvents);
+-	rpl::combine(
+-		container->widthValue(),
+-		title->heightValue(),
+-		about->heightValue()
+-	) | rpl::on_next([=](int width, int titleHeight, int aboutHeight) {
+-		button->resize(width, titlePadding.top()
+-			+ titleHeight
+-			+ titlePadding.bottom()
+-			+ aboutPadding.top()
+-			+ aboutHeight
+-			+ aboutPadding.bottom());
+-	}, button->lifetime());
+-	title->topValue(
+-	) | rpl::on_next([=](int top) {
+-		button->moveToLeft(0, top - titlePadding.top());
++	raw->sizeValue(
++	) | rpl::on_next([=](QSize size) {
++		button->resize(size);
+ 	}, button->lifetime());
+ 	button->show();
+-	SetupLink(button, id);
+-	return button;
++	return { std::move(result), button };
+ }
+ 
+ void AddOptionToggle(
+-		not_null<Ui::VerticalLayout*> container,
+-		not_null<Window::SessionController*> controller,
+-		const char id[]) {
++		SectionBuilder &builder,
++		const char id[],
++		QStringList keywords = {}) {
+ 	auto &option = base::options::lookup<bool>(id);
+-	const auto button = AddOptionRow(
+-		container,
+-		::Tele::Lower(option.name()),
+-		::Tele::Lower(option.description()),
+-		option.id()
+-	)->toggleOn(rpl::single(option.value()));
+-
+-	const auto restarter = option.restartRequired()
+-		? button->lifetime().make_state<base::Timer>()
+-		: nullptr;
+-	if (restarter) {
+-		restarter->setCallback([=] {
+-			controller->show(Ui::MakeConfirmBox({
+-				.text = tr::lng_settings_need_restart(),
+-				.confirmed = [] { Core::Restart(); },
+-				.confirmText = tr::lng_settings_restart_now(),
+-				.cancelText = tr::lng_settings_restart_later(),
+-			}));
+-		});
+-	}
+-	button->toggledChanges(
+-	) | rpl::on_next([=, &option](bool toggled) {
+-		option.set(toggled);
++	const auto name = ::Tele::Lower(option.name());
++	const auto description = ::Tele::Lower(option.description());
++	builder.add([&](const WidgetContext &ctx) {
++		const auto controller = ctx.controller;
++		auto row = CreateOptionRow(ctx.container, name, description);
++		const auto button = row.button;
++		button->toggleOn(rpl::single(option.value()));
++
++		const auto restarter = option.restartRequired()
++			? button->lifetime().make_state<base::Timer>()
++			: nullptr;
+ 		if (restarter) {
+-			restarter->callOnce(st::settingsButtonNoIcon.toggle.duration);
++			restarter->setCallback([=] {
++				controller->show(Ui::MakeConfirmBox({
++					.text = tr::lng_settings_need_restart(),
++					.confirmed = [] { Core::Restart(); },
++					.confirmText = tr::lng_settings_restart_now(),
++					.cancelText = tr::lng_settings_restart_later(),
++				}));
++			});
+ 		}
+-	}, button->lifetime());
++		button->toggledChanges(
++		) | rpl::on_next([=, &option](bool toggled) {
++			option.set(toggled);
++			if (restarter) {
++				restarter->callOnce(st::settingsButtonNoIcon.toggle.duration);
++			}
++		}, button->lifetime());
++		SetupLink(button, option.id());
++		return SectionBuilder::WidgetToAdd{
++			.widget = std::move(row.widget),
++			.align = style::al_justify,
++		};
++	}, [&] {
++		keywords.push_back(description);
++		return SearchEntry{
++			.id = option.id(),
++			.title = name,
++			.keywords = std::move(keywords),
++		};
++	});
++}
++
++void AddAbout(SectionBuilder &builder, const QString &text) {
++	builder.add([&](const WidgetContext &ctx) {
++		return SectionBuilder::WidgetToAdd{
++			.widget = object_ptr<Ui::FlatLabel>(
++				ctx.container,
++				text,
++				st::settingsExperimentalAbout),
++			.margin = st::settingsExperimentalAboutPadding,
++		};
++	}, nullptr);
++}
++
++void AddGroupTitle(SectionBuilder &builder, const QString &title) {
++	builder.addSubsectionTitle(rpl::single(::Tele::Lower(title)));
++}
++
++void AddGroupDivider(SectionBuilder &builder) {
++	builder.addSkip();
++	builder.addDivider();
++	builder.addSkip();
++}
++
++[[nodiscard]] QString BuildText() {
++	return ::Tele::Lower(u"Telegram Desktop %1 with tele patches, build %2."_q.arg(
++		QString::fromLatin1(AppVersionStr),
++		::Tele::TitleLabel()));
+ }
+ 
+ [[nodiscard]] QString UpdateStatusText(const ::Tele::UpdateStatus &status) {
+@@ -205,21 +304,32 @@ void AddOptionToggle(
+ 	return QString();
+ }
+ 
+-void AddUpdates(not_null<Ui::VerticalLayout*> container) {
+-	const auto button = container->add(object_ptr<Button>(
+-		container,
+-		::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
++void AddUpdates(SectionBuilder &builder) {
++	AddOptionToggle(builder, ::Tele::kOptionAutoUpdate);
++	AddOptionToggle(builder, ::Tele::kOptionShowChangelog);
++	const auto button = builder.addButton({
++		.id = u"tele-check-updates"_q,
++		.title = ::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
+ 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Check for updates"_q);
+ 		}),
+-		st::settingsButtonNoIcon));
+-	button->setClickedCallback([] {
+-		if (::Tele::UpdateReady()) {
+-			::Tele::RestartToUpdate();
+-		} else {
+-			::Tele::CheckForUpdates();
+-		}
++		.st = &st::settingsButtonNoIcon,
++		.onClick = [] {
++			if (::Tele::UpdateReady()) {
++				::Tele::RestartToUpdate();
++			} else {
++				::Tele::CheckForUpdates();
++			}
++		},
++		.keywords = { u"version"_q, u"github"_q },
+ 	});
+-	SetupLink(button, u"tele-check-updates"_q);
++	if (button) {
++		SetupLink(button, u"tele-check-updates"_q);
++	}
++	builder.addSkip();
++	builder.addDividerText(::Tele::UpdateStatusValue(
++	) | rpl::map([](const ::Tele::UpdateStatus &status) {
++		return UpdateStatusText(status) + u"\n\n"_q + BuildText();
++	}));
+ }
+ 
+ void ServerBox(not_null<Ui::GenericBox*> box) {
+@@ -256,38 +366,41 @@ void ServerBox(not_null<Ui::GenericBox*> box) {
+ 	});
+ }
+ 
+-void AddServer(
+-		not_null<Ui::VerticalLayout*> container,
+-		not_null<Window::SessionController*> controller) {
++void AddServer(SectionBuilder &builder) {
+ 	const auto &option = base::options::lookup<QString>(
+ 		::Tele::kOptionServerUrl);
+-	const auto server = AddButtonWithLabel(
+-		container,
+-		rpl::single(::Tele::Lower(u"Server"_q)),
+-		::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
++	const auto controller = builder.controller();
++	const auto description = ::Tele::Lower(option.description());
++	const auto server = builder.addButton({
++		.id = option.id(),
++		.title = rpl::single(::Tele::Lower(u"Server"_q)),
++		.st = &st::settingsButtonNoIcon,
++		.label = ::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
+ 			return url.isEmpty() ? u"off"_q : url;
+ 		}),
+-		st::settingsButtonNoIcon);
+-	server->setClickedCallback([=] {
+-		controller->show(Box(ServerBox));
++		.onClick = [=] {
++			controller->show(Box(ServerBox));
++		},
++		.keywords = { ::Tele::Lower(option.name()), description },
+ 	});
+-	SetupLink(server, option.id());
+-	const auto refresh = container->add(object_ptr<Button>(
+-		container,
+-		rpl::single(::Tele::Lower(u"Refresh now"_q)),
+-		st::settingsButtonNoIcon));
+-	refresh->setClickedCallback([=] {
+-		::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
+-			controller->showToast(text);
+-		}));
++	if (server) {
++		SetupLink(server, option.id());
++	}
++	const auto refresh = builder.addButton({
++		.id = u"tele-refresh-badges"_q,
++		.title = rpl::single(::Tele::Lower(u"Refresh now"_q)),
++		.st = &st::settingsButtonNoIcon,
++		.onClick = [=] {
++			::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
++				controller->showToast(text);
++			}));
++		},
++		.keywords = { u"verification"_q, u"checkmarks"_q, u"badges"_q },
+ 	});
+-	SetupLink(refresh, u"tele-refresh-badges"_q);
+-	container->add(
+-		object_ptr<Ui::FlatLabel>(
+-			container,
+-			::Tele::Lower(option.description()),
+-			st::settingsExperimentalAbout),
+-		st::settingsExperimentalAboutPadding);
++	if (refresh) {
++		SetupLink(refresh, u"tele-refresh-badges"_q);
++	}
++	AddAbout(builder, description);
+ }
+ 
+ void TitleBox(
+@@ -377,48 +490,48 @@ void TitleBox(
+ 	});
+ }
+ 
+-void AddTitle(
+-		not_null<Ui::VerticalLayout*> container,
+-		not_null<Window::SessionController*> controller) {
++void AddTitle(SectionBuilder &builder) {
+ 	const auto &option = base::options::lookup<QString>(
+ 		::Tele::kOptionTitleTemplate);
+-	const auto button = AddButtonWithLabel(
+-		container,
+-		rpl::single(::Tele::Lower(u"Label"_q)),
+-		::Tele::TitleTemplateValue() | rpl::map([](const QString &text) {
++	const auto controller = builder.controller();
++	const auto description = ::Tele::Lower(option.description());
++	const auto button = builder.addButton({
++		.id = option.id(),
++		.title = rpl::single(::Tele::Lower(option.name())),
++		.st = &st::settingsButtonNoIcon,
++		.label = ::Tele::TitleTemplateValue(
++		) | rpl::map([](const QString &text) {
+ 			return text.isEmpty() ? u"off"_q : text;
+ 		}),
+-		st::settingsButtonNoIcon);
+-	button->setClickedCallback([=] {
+-		controller->show(Box(TitleBox, &controller->window(), false));
++		.onClick = [=] {
++			controller->show(Box(TitleBox, &controller->window(), false));
++		},
++		.keywords = { description },
+ 	});
+-	SetupLink(button, option.id());
+-	container->add(
+-		object_ptr<Ui::FlatLabel>(
+-			container,
+-			::Tele::Lower(option.description()),
+-			st::settingsExperimentalAbout),
+-		st::settingsExperimentalAboutPadding);
++	if (button) {
++		SetupLink(button, option.id());
++	}
++	AddAbout(builder, description);
+ 	const auto &windowOption = base::options::lookup<QString>(
+ 		::Tele::kOptionWindowTitleTemplate);
+-	const auto windowButton = AddButtonWithLabel(
+-		container,
+-		rpl::single(::Tele::Lower(u"Window title"_q)),
+-		::Tele::WindowTitleTemplateValue(
++	const auto windowDescription = ::Tele::Lower(windowOption.description());
++	const auto windowButton = builder.addButton({
++		.id = windowOption.id(),
++		.title = rpl::single(::Tele::Lower(windowOption.name())),
++		.st = &st::settingsButtonNoIcon,
++		.label = ::Tele::WindowTitleTemplateValue(
+ 		) | rpl::map([](const QString &text) {
+ 			return text.isEmpty() ? ::Tele::Lower(u"Default"_q) : text;
+ 		}),
+-		st::settingsButtonNoIcon);
+-	windowButton->setClickedCallback([=] {
+-		controller->show(Box(TitleBox, &controller->window(), true));
++		.onClick = [=] {
++			controller->show(Box(TitleBox, &controller->window(), true));
++		},
++		.keywords = { windowDescription, u"taskbar"_q },
+ 	});
+-	SetupLink(windowButton, windowOption.id());
+-	container->add(
+-		object_ptr<Ui::FlatLabel>(
+-			container,
+-			::Tele::Lower(windowOption.description()),
+-			st::settingsExperimentalAbout),
+-		st::settingsExperimentalAboutPadding);
++	if (windowButton) {
++		SetupLink(windowButton, windowOption.id());
++	}
++	AddAbout(builder, windowDescription);
+ }
+ 
+ class IgnoredRow final : public PeerListRowWithLink {
+@@ -612,30 +725,29 @@ void ShowIgnoredBox(not_null<Window::SessionController*> window) {
+ 		std::move(initBox)));
+ }
+ 
+-void AddIgnoredUsers(
+-		not_null<Ui::VerticalLayout*> container,
+-		not_null<Window::SessionController*> controller) {
++void AddIgnoredUsers(SectionBuilder &builder) {
+ 	const auto &option = base::options::lookup<QString>(
+ 		::Tele::kOptionIgnoredUsers);
+-	const auto button = AddButtonWithLabel(
+-		container,
+-		rpl::single(::Tele::Lower(u"Ignored users"_q)),
+-		::Tele::IgnoredCountValue(
+-			&controller->session()
++	const auto controller = builder.controller();
++	const auto description = ::Tele::Lower(option.description());
++	const auto button = builder.addButton({
++		.id = u"tele-ignored-users"_q,
++		.title = rpl::single(::Tele::Lower(u"Ignored users"_q)),
++		.st = &st::settingsButtonNoIcon,
++		.label = ::Tele::IgnoredCountValue(
++			builder.session()
+ 		) | rpl::map([](int count) {
+ 			return count ? QString::number(count) : u"none"_q;
+ 		}),
+-		st::settingsButtonNoIcon);
+-	button->setClickedCallback([=] {
+-		ShowIgnoredBox(controller);
++		.onClick = [=] {
++			ShowIgnoredBox(controller);
++		},
++		.keywords = { description },
+ 	});
+-	SetupLink(button, u"tele-ignored-users"_q);
+-	container->add(
+-		object_ptr<Ui::FlatLabel>(
+-			container,
+-			::Tele::Lower(option.description()),
+-			st::settingsExperimentalAbout),
+-		st::settingsExperimentalAboutPadding);
++	if (button) {
++		SetupLink(button, u"tele-ignored-users"_q);
++	}
++	AddAbout(builder, description);
+ }
+ 
+ class GhostChatRow final : public PeerListRowWithLink {
+@@ -750,36 +862,259 @@ void ShowGhostChatsBox(not_null<Window::SessionController*> window) {
+ 		std::move(initBox)));
+ }
+ 
+-void AddGhostChats(
+-		not_null<Ui::VerticalLayout*> container,
+-		not_null<Window::SessionController*> controller) {
++void AddGhostChats(SectionBuilder &builder) {
+ 	const auto &option = base::options::lookup<QString>(
+ 		::Tele::kOptionGhostChats);
+-	const auto button = AddButtonWithLabel(
+-		container,
+-		rpl::single(::Tele::Lower(option.name())),
+-		::Tele::GhostChatsCountValue(
+-			&controller->session()
++	const auto controller = builder.controller();
++	const auto description = ::Tele::Lower(option.description());
++	const auto button = builder.addButton({
++		.id = option.id(),
++		.title = rpl::single(::Tele::Lower(option.name())),
++		.st = &st::settingsButtonNoIcon,
++		.label = ::Tele::GhostChatsCountValue(
++			builder.session()
+ 		) | rpl::map([](int count) {
+ 			return count ? QString::number(count) : u"none"_q;
+ 		}),
+-		st::settingsButtonNoIcon);
+-	button->setClickedCallback([=] {
+-		ShowGhostChatsBox(controller);
++		.onClick = [=] {
++			ShowGhostChatsBox(controller);
++		},
++		.keywords = { description },
+ 	});
+-	SetupLink(button, option.id());
+-	container->add(
+-		object_ptr<Ui::FlatLabel>(
+-			container,
+-			::Tele::Lower(option.description()),
+-			st::settingsExperimentalAbout),
+-		st::settingsExperimentalAboutPadding);
++	if (button) {
++		SetupLink(button, option.id());
++	}
++	AddAbout(builder, description);
++}
++
++void FillInterface(SectionBuilder &builder) {
++	builder.addSkip();
++	AddTitle(builder);
++	AddOptionToggle(builder, ::Tele::kOptionLowercase);
++	AddOptionToggle(builder, ::Tele::kOptionBubbleBadges);
++	AddOptionToggle(builder, ::Tele::kOptionHideCalls);
++	AddOptionToggle(builder, ::Tele::kOptionHideAllChats);
++	AddOptionToggle(builder, ::Tele::kOptionStaticUserpicsList);
++	AddOptionToggle(builder, ::Tele::kOptionStaticUserpicsChats);
++	builder.addSkip();
++}
++
++void FillChats(SectionBuilder &builder) {
++	builder.addSkip();
++	AddGroupTitle(builder, u"Messages"_q);
++	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
++	AddOptionToggle(builder, ::Tele::kOptionEditHistory);
++	AddOptionToggle(builder, ::Tele::kOptionKeepDeleted);
++	AddOptionToggle(builder, ::Tele::kOptionDeletedIcon);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Disappearing media"_q);
++	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
++	AddOptionToggle(builder, ::Tele::kOptionScreenshotSecretMedia);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Menus"_q);
++	AddOptionToggle(builder, ::Tele::kOptionJumpToFirst);
++	AddOptionToggle(builder, ::Tele::kOptionMessageIdMenu);
++	AddOptionToggle(builder, ::Tele::kOptionViewAsTl);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Chats"_q);
++	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
++	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
++	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
++	AddOptionToggle(builder, ::Tele::kOptionHideProxySponsor);
++	builder.addSkip();
++}
++
++void FillPrivacy(SectionBuilder &builder) {
++	builder.addSkip();
++	AddGroupTitle(builder, u"Ghost mode"_q);
++	AddOptionToggle(builder, ::Tele::kOptionGhost);
++	AddOptionToggle(builder, ::Tele::kOptionGhostRead);
++	AddOptionToggle(builder, ::Tele::kOptionGhostReadOnReply);
++	AddOptionToggle(builder, ::Tele::kOptionGhostTyping);
++	AddOptionToggle(builder, ::Tele::kOptionGhostOnline);
++	AddOptionToggle(builder, ::Tele::kOptionGhostSchedule);
++	AddOptionToggle(builder, ::Tele::kOptionGhostStories);
++	AddGhostChats(builder);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Stories"_q);
++	AddOptionToggle(builder, ::Tele::kOptionHideStories);
++	AddOptionToggle(builder, ::Tele::kOptionInvisibleStories);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Ignoring"_q);
++	AddIgnoredUsers(builder);
++	AddOptionToggle(builder, ::Tele::kOptionHideIgnored);
++	builder.addSkip();
++}
++
++void FillProfiles(SectionBuilder &builder) {
++	builder.addSkip();
++	AddOptionToggle(builder, ::Tele::kOptionPeerIdsWithoutSpaces);
++	AddOptionToggle(builder, ::Tele::kOptionBotApiPeerIds);
++	AddOptionToggle(builder, ::Tele::kOptionShowDc);
++	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
++	builder.addSkip();
++}
++
++void FillBots(SectionBuilder &builder) {
++	builder.addSkip();
++	AddOptionToggle(builder, ::Tele::kOptionButtonPayloads);
++	builder.addSkip();
++}
++
++void FillServer(SectionBuilder &builder) {
++	builder.addSkip();
++	AddServer(builder);
++	builder.addSkip();
++}
++
++void FillUpdates(SectionBuilder &builder) {
++	builder.addSkip();
++	AddUpdates(builder);
++}
++
++void FillRoot(SectionBuilder &builder) {
++	builder.addSkip();
++	for (const auto &category : Categories()) {
++		const auto button = builder.addSectionButton({
++			.title = rpl::single(::Tele::Lower(category.title)),
++			.targetSection = category.id,
++			.icon = { category.icon },
++			.keywords = category.keywords,
++		});
++		if (button) {
++			SetupCopyLink(button, category.id, QString());
++		}
++	}
++	builder.addSkip();
++	builder.addDividerText(rpl::single(BuildText()));
++}
++
++[[nodiscard]] std::vector<Category> MakeCategories() {
++	auto result = std::vector<Category>();
++	const auto add = [&](
++			QString path,
++			QString title,
++			const style::icon &icon,
++			QStringList keywords,
++			void (*fill)(SectionBuilder&)) {
++		const auto id = Type(std::make_shared<CategoryFactory>(
++			int(result.size())));
++		auto meta = SectionMeta{
++			.id = id,
++			.parentId = TeleSection::Id(),
++			.icon = &icon,
++			.titleText = [=] { return ::Tele::Lower(title); },
++		};
++		result.push_back({
++			.path = std::move(path),
++			.title = std::move(title),
++			.icon = &icon,
++			.keywords = std::move(keywords),
++			.id = id,
++			.helper = std::make_unique<BuildHelper>(std::move(meta), fill),
++		});
++	};
++	add(
++		u"interface"_q,
++		u"Interface"_q,
++		st::menuIconPalette,
++		{ u"title"_q, u"lowercase"_q, u"badges"_q, u"userpics"_q },
++		FillInterface);
++	add(
++		u"chats"_q,
++		u"Chats and messages"_q,
++		st::menuIconChatBubble,
++		{ u"deleted"_q, u"edited"_q, u"links"_q, u"sponsored"_q },
++		FillChats);
++	add(
++		u"privacy"_q,
++		u"Privacy"_q,
++		st::menuIconStealth,
++		{ u"ghost"_q, u"stories"_q, u"ignore"_q, u"online"_q },
++		FillPrivacy);
++	add(
++		u"profiles"_q,
++		u"Profiles and IDs"_q,
++		st::menuIconProfile,
++		{ u"id"_q, u"dc"_q, u"gifts"_q },
++		FillProfiles);
++	add(
++		u"bots"_q,
++		u"Bots"_q,
++		st::menuIconBot,
++		{ u"buttons"_q, u"callback"_q },
++		FillBots);
++	add(
++		u"server"_q,
++		u"Server"_q,
++		st::menuIconNetwork,
++		{ u"verification"_q, u"checkmarks"_q },
++		FillServer);
++	add(
++		u"updates"_q,
++		u"Updates"_q,
++		st::menuIconDownload,
++		{ u"version"_q, u"github"_q },
++		FillUpdates);
++	return result;
++}
++
++const std::vector<Category> &Categories() {
++	static const auto result = MakeCategories();
++	return result;
++}
++
++[[nodiscard]] Type CategoryOf(
++		not_null<::Main::Session*> session,
++		const QString &id) {
++	if (id.isEmpty()) {
++		return nullptr;
++	}
++	for (const auto &category : Categories()) {
++		for (const auto &entry : category.helper->index(session)) {
++			if (entry.id == id) {
++				return category.id;
++			}
++		}
++	}
++	return nullptr;
++}
++
++const auto kMeta = BuildHelper({
++	.id = TeleSection::Id(),
++	.parentId = MainId(),
++	.icon = &st::menuIconCustomize,
++	.titleText = [] { return u"tele"_q; },
++}, FillRoot);
++
++[[maybe_unused]] const auto kCategoriesCount = Categories().size();
++
++CategorySection::CategorySection(
++	QWidget *parent,
++	not_null<Window::SessionController*> controller,
++	int index)
++: AbstractSection(parent, controller)
++, _index(index) {
++	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
++	build(content, Categories()[_index].helper->build);
++	Ui::ResizeFitChild(this, content);
++}
++
++Type CategorySection::id() const {
++	return Categories()[_index].id;
++}
++
++rpl::producer<QString> CategorySection::title() {
++	return rpl::single(::Tele::Lower(Categories()[_index].title));
+ }
+ 
+ TeleSection::TeleSection(
+ 	QWidget *parent,
+ 	not_null<Window::SessionController*> controller)
+-: Section(parent, controller) {
++: Section(parent, controller)
++, _redirect(CategoryOf(
++	&controller->session(),
++	controller->highlightControlId())) {
+ 	setupContent();
+ }
+ 
+@@ -787,118 +1122,29 @@ rpl::producer<QString> TeleSection::title() {
+ 	return rpl::single(u"tele"_q);
+ }
+ 
++void TeleSection::showFinished() {
++	Section<TeleSection>::showFinished();
++	if (const auto target = base::take(_redirect)) {
++		showOther(target);
++	}
++}
++
+ void TeleSection::setupContent() {
+ 	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
+-
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Title bar"_q)));
+-	AddTitle(content, controller());
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Interface"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionLowercase);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Stories"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionInvisibleStories);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Ghost mode"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhost);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostRead);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostReadOnReply);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostTyping);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostOnline);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostSchedule);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGhostStories);
+-	AddGhostChats(content, controller());
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Bots"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Chats"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideCalls);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideSponsored);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideProxySponsor);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionNoLinkWarning);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideAllChats);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionJumpToFirst);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionStaticUserpicsList);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionStaticUserpicsChats);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Ignoring"_q)));
+-	AddIgnoredUsers(content, controller());
+-	AddOptionToggle(content, controller(), ::Tele::kOptionHideIgnored);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Messages"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionKeepDeleted);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionDeletedIcon);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionKeepSecretMedia);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionScreenshotSecretMedia);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Gifts"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"IDs"_q)));
+-	AddOptionToggle(
+-		content,
+-		controller(),
+-		::Tele::kOptionPeerIdsWithoutSpaces);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionBotApiPeerIds);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionShowDc);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionMessageIdMenu);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionViewAsTl);
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Server"_q)));
+-	AddServer(content, controller());
+-	Ui::AddSkip(content);
+-	Ui::AddDivider(content);
+-	Ui::AddSkip(content);
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Updates"_q)));
+-	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
+-	AddOptionToggle(content, controller(), ::Tele::kOptionShowChangelog);
+-	AddUpdates(content);
+-	Ui::AddSkip(content);
+-
+-	const auto build = ::Tele::Lower(u"Telegram Desktop %1 with tele patches, build %2."_q.arg(
+-		QString::fromLatin1(AppVersionStr),
+-		::Tele::TitleLabel()));
+-	Ui::AddDividerText(
+-		content,
+-		::Tele::UpdateStatusValue(
+-		) | rpl::map([=](const ::Tele::UpdateStatus &status) {
+-			return UpdateStatusText(status) + u"\n\n"_q + build;
+-		}));
+-
++	build(content, kMeta.build);
+ 	Ui::ResizeFitChild(this, content);
+ }
+ 
+ } // namespace
+ 
+-Type TeleId() {
+-	return TeleSection::Id();
++std::vector<std::pair<QString, Type>> TeleSettingsPaths() {
++	auto result = std::vector<std::pair<QString, Type>>{
++		{ u"tele"_q, TeleSection::Id() },
++	};
++	for (const auto &category : Categories()) {
++		result.emplace_back(u"tele/"_q + category.path, category.id);
++	}
++	return result;
+ }
+ 
+ void AddTeleSectionButton(Builder::SectionBuilder &builder) {
+@@ -907,12 +1153,12 @@ void AddTeleSectionButton(Builder::SectionBuilder &builder) {
+ 	builder.addSkip();
+ 	const auto button = builder.addSectionButton({
+ 		.title = rpl::single(u"tele"_q),
+-		.targetSection = TeleId(),
++		.targetSection = TeleSection::Id(),
+ 		.icon = { &st::menuIconCustomize },
+ 		.keywords = { u"tele"_q, u"fork"_q },
+ 	});
+ 	if (button) {
+-		SetupCopyLink(builder.controller(), button, QString());
++		SetupCopyLink(button, TeleSection::Id(), QString());
+ 	}
+ }
+ 
+diff --git a/Telegram/SourceFiles/settings/settings_tele.h b/Telegram/SourceFiles/settings/settings_tele.h
+index 729bad1f2234157137cc69718f23b0f7ca97bd0c..5c8bd2d49852c9bfa5e80385c31db3692420650a 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.h
++++ b/Telegram/SourceFiles/settings/settings_tele.h
+@@ -8,7 +8,7 @@ class SectionBuilder;
+ 
+ namespace Settings {
+ 
+-[[nodiscard]] Type TeleId();
++[[nodiscard]] std::vector<std::pair<QString, Type>> TeleSettingsPaths();
+ void AddTeleSectionButton(Builder::SectionBuilder &builder);
+ 
+ } // namespace Settings

@@ -1,0 +1,25 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 08:17:39 +0300
+Subject: [PATCH] fix: open tele categories from old settings links after the
+ page shows
+
+---
+ Telegram/SourceFiles/settings/settings_tele.cpp | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 3a6bff1b30ac35620126e0016193795336c7adf2..46b917be98d627067c1cbec9cc41c47b5a4a3d7e 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -1174,7 +1174,9 @@ rpl::producer<QString> TeleSection::title() {
+ void TeleSection::showFinished() {
+ 	Section<TeleSection>::showFinished();
+ 	if (const auto target = base::take(_redirect)) {
+-		showOther(target);
++		crl::on_main(this, [=] {
++			showOther(target);
++		});
+ 	}
+ }
+ 

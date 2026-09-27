@@ -1,0 +1,154 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 07:46:50 +0300
+Subject: [PATCH] feat: apply support marks from the tele server
+
+---
+ .../SourceFiles/data/data_peer_values.cpp     |  5 +++
+ Telegram/SourceFiles/tele/tele_badges.cpp     | 34 ++++++++++++++++++-
+ Telegram/SourceFiles/tele/tele_badges.h       |  2 ++
+ 3 files changed, 40 insertions(+), 1 deletion(-)
+
+diff --git a/Telegram/SourceFiles/data/data_peer_values.cpp b/Telegram/SourceFiles/data/data_peer_values.cpp
+index fe008ba767f0990b747c5fd24e14f52ec366030f..994987f25f94bdb1da213a9cb2d62f54cc9d3d14 100644
+--- a/Telegram/SourceFiles/data/data_peer_values.cpp
++++ b/Telegram/SourceFiles/data/data_peer_values.cpp
+@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "main/main_app_config.h"
+ #include "ui/image/image_prepare.h"
+ #include "base/unixtime.h"
++#include "tele/tele_badges.h"
+ 
+ namespace Data {
+ namespace {
+@@ -52,6 +53,9 @@ int OnlinePhraseChangeInSeconds(LastseenStatus status, TimeId now) {
+ }
+ 
+ std::optional<QString> OnlineTextSpecial(not_null<UserData*> user) {
++	if (const auto text = Tele::SupportText(user)) {
++		return text;
++	}
+ 	if (user->isNotificationsUser()) {
+ 		return tr::lng_status_service_notifications(tr::now);
+ 	} else if (user->isSupport()) {
+@@ -529,6 +533,7 @@ QString OnlineTextFull(not_null<UserData*> user, TimeId now) {
+ bool OnlineTextActive(not_null<UserData*> user, TimeId now) {
+ 	return !user->isServiceUser()
+ 		&& !user->isBot()
++		&& !Tele::SupportText(user)
+ 		&& user->lastseen().isOnline(now);
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
+index f5039de13a27adf0a48a91bb9eff2f3da46fedcb..f1995c405d074b6e774c851ef9d97136a4ef1ba7 100644
+--- a/Telegram/SourceFiles/tele/tele_badges.cpp
++++ b/Telegram/SourceFiles/tele/tele_badges.cpp
+@@ -9,6 +9,7 @@
+ #include "data/data_channel.h"
+ #include "data/data_session.h"
+ #include "data/data_user.h"
++#include "lang/lang_keys.h"
+ #include "main/main_account.h"
+ #include "main/main_domain.h"
+ #include "main/main_session.h"
+@@ -50,6 +51,7 @@ constexpr auto kMaxArgon2Work = 65536;
+ constexpr auto kMaxCacheSize = 2 * kMaxFeedSize;
+ constexpr auto kBatchSize = 64;
+ constexpr auto kTagSize = 16;
++constexpr auto kMaxSupportText = 64;
+ constexpr auto kArgon2Version = uint32_t(0x13);
+ constexpr auto kChannelShift = int64(1000000000000LL);
+ constexpr auto kTestBit = BareId(1) << 63;
+@@ -70,6 +72,8 @@ struct Entry {
+ 	bool checkmark = false;
+ 	bool scam = false;
+ 	bool fake = false;
++	bool support = false;
++	QString supportText;
+ 	Ui::BotVerifyDetails details;
+ 
+ 	friend inline bool operator==(const Entry &, const Entry &) = default;
+@@ -205,11 +209,15 @@ struct Feed {
+ 	const auto checkmark = fields.value(u"checkmark"_q);
+ 	const auto scam = fields.value(u"scam"_q);
+ 	const auto fake = fields.value(u"fake"_q);
++	const auto support = fields.value(u"support"_q);
++	const auto supportText = fields.value(u"supportText"_q);
+ 	const auto icon = fields.value(u"icon"_q);
+ 	const auto description = fields.value(u"description"_q);
+ 	if ((Present(checkmark) && !checkmark.isBool())
+ 		|| (Present(scam) && !scam.isBool())
+ 		|| (Present(fake) && !fake.isBool())
++		|| (Present(support) && !support.isBool())
++		|| (Present(supportText) && !supportText.isString())
+ 		|| (Present(icon) && !icon.isString())
+ 		|| (Present(description) && !description.isString())) {
+ 		return std::nullopt;
+@@ -218,7 +226,14 @@ struct Feed {
+ 		.checkmark = checkmark.toBool(),
+ 		.scam = scam.toBool(),
+ 		.fake = fake.toBool(),
++		.support = support.toBool(),
++		.supportText = supportText.toString().trimmed(),
+ 	};
++	if (Present(supportText)
++		&& (result.supportText.isEmpty()
++			|| result.supportText.toUcs4().size() > kMaxSupportText)) {
++		return std::nullopt;
++	}
+ 	if (!Present(icon)) {
+ 		return result;
+ 	}
+@@ -765,7 +780,8 @@ void Badges::push(PeerKey key, const Entry &was, const Entry &now) const {
+ 		session->changes().peerUpdated(
+ 			peer,
+ 			Data::PeerUpdate::Flag::EmojiStatus
+-				| Data::PeerUpdate::Flag::VerifyInfo);
++				| Data::PeerUpdate::Flag::VerifyInfo
++				| Data::PeerUpdate::Flag::OnlineStatus);
+ 	});
+ }
+ 
+@@ -808,6 +824,22 @@ bool Fake(not_null<PeerData*> peer) {
+ 	return entry && entry->fake;
+ }
+ 
++std::optional<QString> SupportText(not_null<UserData*> user) {
++	const auto entry = user->isNotificationsUser() ? nullptr : Lookup(user);
++	if (!entry) {
++		return std::nullopt;
++	} else if (entry->support) {
++		return entry->supportText.isEmpty()
++			? tr::lng_status_support(tr::now)
++			: entry->supportText;
++	} else if (!entry->supportText.isEmpty()
++		&& (user->isSupport()
++			|| (user->isServiceUser() && !user->isBot()))) {
++		return entry->supportText;
++	}
++	return std::nullopt;
++}
++
+ void OverrideVerifyDetails(
+ 		not_null<PeerData*> peer,
+ 		Ui::BotVerifyDetails &details) {
+diff --git a/Telegram/SourceFiles/tele/tele_badges.h b/Telegram/SourceFiles/tele/tele_badges.h
+index a694255a26d82e9b62e24fc8643a4d5fa2b28516..fb9fd198c80850ccbeb1b3640558f647d902016a 100644
+--- a/Telegram/SourceFiles/tele/tele_badges.h
++++ b/Telegram/SourceFiles/tele/tele_badges.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ class PeerData;
++class UserData;
+ 
+ namespace Ui {
+ struct BotVerifyDetails;
+@@ -14,6 +15,7 @@ void RefreshBadges(Fn<void(QString)> done);
+ [[nodiscard]] bool Verified(not_null<PeerData*> peer);
+ [[nodiscard]] bool Scam(not_null<PeerData*> peer);
+ [[nodiscard]] bool Fake(not_null<PeerData*> peer);
++[[nodiscard]] std::optional<QString> SupportText(not_null<UserData*> user);
+ void OverrideVerifyDetails(
+ 	not_null<PeerData*> peer,
+ 	Ui::BotVerifyDetails &details);

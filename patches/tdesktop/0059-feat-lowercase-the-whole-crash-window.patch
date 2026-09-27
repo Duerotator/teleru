@@ -1,0 +1,40 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 08:07:19 +0300
+Subject: [PATCH] feat: lowercase the whole crash window
+
+---
+ Telegram/SourceFiles/core/crash_report_window.cpp | 6 +++---
+ 1 file changed, 3 insertions(+), 3 deletions(-)
+
+diff --git a/Telegram/SourceFiles/core/crash_report_window.cpp b/Telegram/SourceFiles/core/crash_report_window.cpp
+index 647d8fb862833455d960dfaa0e50a00f32767d96..2c8f97b42226866491a654ee60538a3116248e6b 100644
+--- a/Telegram/SourceFiles/core/crash_report_window.cpp
++++ b/Telegram/SourceFiles/core/crash_report_window.cpp
+@@ -116,7 +116,7 @@ PreLaunchLabel::PreLaunchLabel(QWidget *parent) : QLabel(parent) {
+ };
+ 
+ void PreLaunchLabel::setText(const QString &text) {
+-	QLabel::setText(text);
++	QLabel::setText(Tele::Lower(text));
+ 	updateGeometry();
+ 	resize(sizeHint());
+ }
+@@ -214,7 +214,7 @@ PreLaunchButton::PreLaunchButton(QWidget *parent, bool confirm) : QPushButton(pa
+ };
+ 
+ void PreLaunchButton::setText(const QString &text) {
+-	QPushButton::setText(text);
++	QPushButton::setText(Tele::Lower(text));
+ 	updateGeometry();
+ 	resize(sizeHint());
+ }
+@@ -238,7 +238,7 @@ PreLaunchCheckbox::PreLaunchCheckbox(QWidget *parent) : QCheckBox(parent) {
+ };
+ 
+ void PreLaunchCheckbox::setText(const QString &text) {
+-	QCheckBox::setText(text);
++	QCheckBox::setText(Tele::Lower(text));
+ 	updateGeometry();
+ 	resize(sizeHint());
+ }
