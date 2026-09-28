@@ -51,6 +51,15 @@ def patches(repo, rev):
     return result
 
 
+def previous_patches(repo, rev, tag):
+    # a folded queue compares against the previous release folded the same way, so merged patches don't show as dropped
+    try:
+        baselines = json.loads(git(repo, 'show', f'{rev}:ci/baselines.json'))
+    except subprocess.CalledProcessError:
+        baselines = {}
+    return baselines.get(tag) or patches(repo, tag)
+
+
 def upstream(repo, rev):
     return git(repo, 'show', f'{rev}:UPSTREAM').strip()
 
@@ -62,7 +71,7 @@ def escape(text):
 
 def message(args):
     now = patches(args.repo, 'HEAD')
-    before = patches(args.repo, args.previous) if args.previous else {}
+    before = previous_patches(args.repo, 'HEAD', args.previous) if args.previous else {}
     added = [name for name in now if name not in before]
     changed = [name for name in now if name in before and before[name] != now[name]]
     dropped = [name for name in before if name not in now]

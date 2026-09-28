@@ -5,7 +5,7 @@ import argparse
 import json
 import re
 
-from announce import git, patches, subject, upstream
+from announce import git, patches, previous_patches, subject, upstream
 
 ROW = re.compile(r'^\| \[(\d+)\]\((patches/[^)]+\.patch)\) \| (.*) \| (.*) \|$')
 
@@ -52,7 +52,7 @@ def plain(text):
 
 def changes(args):
     now = patches(args.repo, args.rev)
-    before = patches(args.repo, args.previous) if args.previous else {}
+    before = previous_patches(args.repo, args.rev, args.previous) if args.previous else {}
     paths = paths_by_subject(args.repo, args.rev)
     rows = readme_rows(args.repo, args.rev)
     added = [name for name in now if name not in before]
