@@ -62,7 +62,7 @@ def changes(args):
 
 
 CATEGORIES = ('interface', 'chats and messages', 'privacy', 'profiles and ids', 'bots', 'server', 'updates',
-              'everywhere', 'other')
+              'debug', 'everywhere', 'other')
 
 
 def category(where, wheres, seen=()):
