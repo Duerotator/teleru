@@ -36,6 +36,7 @@ def paths_by_subject(repo, rev):
 
 
 def absolute(text, url, rev):
+    text = re.sub(r'\]\((#[^)]+)\)', lambda m: f']({url}/blob/{rev}/README.md{m.group(1)})', text)
     return re.sub(r'\]\((patches/[^)]+)\)', lambda m: f']({url}/blob/{rev}/{m.group(1)})', text)
 
 
