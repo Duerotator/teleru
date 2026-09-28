@@ -14,14 +14,14 @@ Subject: [PATCH] feat: debug logs and an mtproto inspector
  Telegram/SourceFiles/tele/tele_debug_logs.h   |   19 +
  Telegram/SourceFiles/tele/tele_menu_order.cpp |    5 +
  .../SourceFiles/tele/tele_message_menu.cpp    |   22 +
- Telegram/SourceFiles/tele/tele_mtp_dump.cpp   | 1377 +++++++++++++++++
+ Telegram/SourceFiles/tele/tele_mtp_dump.cpp   | 1375 +++++++++++++++++
  Telegram/SourceFiles/tele/tele_mtp_dump.h     |   80 +
  .../SourceFiles/tele/tele_mtp_inspector.cpp   |  525 +++++++
  .../SourceFiles/tele/tele_mtp_inspector.h     |   35 +
  Telegram/SourceFiles/tele/tele_mtp_log.cpp    |  302 ++++
  Telegram/SourceFiles/tele/tele_mtp_log.h      |   69 +
  .../SourceFiles/window/window_peer_menu.cpp   |    3 +
- 17 files changed, 4409 insertions(+)
+ 17 files changed, 4407 insertions(+)
  create mode 100644 Telegram/Resources/tele_html/mtp_inspector.css
  create mode 100644 Telegram/Resources/tele_html/mtp_inspector.html
  create mode 100644 Telegram/Resources/tele_html/mtp_inspector.js
@@ -2195,10 +2195,10 @@ index 7174b26e68dd2b102d41d6f133761468c0930c0d..d8c97188e1fe52abab109bec6af94d0d
  			tools.push_back(MakeEmojiIdAction(menu, show, id));
 diff --git a/Telegram/SourceFiles/tele/tele_mtp_dump.cpp b/Telegram/SourceFiles/tele/tele_mtp_dump.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..5cbc300a4459bdfead07afc2a281905ff8158a8e
+index 0000000000000000000000000000000000000000..7fc59998e3ebc53f9b1bf2cb0fb9ab1145367776
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_mtp_dump.cpp
-@@ -0,0 +1,1377 @@
+@@ -0,0 +1,1375 @@
 +#include "tele/tele_mtp_dump.h"
 +
 +#include <algorithm>
@@ -3204,11 +3204,9 @@ index 0000000000000000000000000000000000000000..5cbc300a4459bdfead07afc2a281905f
 +	} else if (type == "long") {
 +		Put64(out, std::uint64_t(ToNumber(node.value)));
 +	} else if (type == "double") {
-+		auto value = 0.;
-+		std::from_chars(
++		const auto value = QByteArray(
 +			node.value.data(),
-+			node.value.data() + node.value.size(),
-+			value);
++			int(node.value.size())).toDouble();
 +		auto bits = std::uint64_t();
 +		std::memcpy(&bits, &value, sizeof(bits));
 +		Put64(out, bits);
