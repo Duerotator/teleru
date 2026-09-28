@@ -17,7 +17,7 @@ Subject: [PATCH] feat: make the title bar label a live template
  create mode 100644 Telegram/SourceFiles/tele/tele_title.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index f4a76208f8849be2ca41fecb15e60c43412354a5..47aed8a1e032aaaaca5809ee9ff65f3cb8861b79 100644
+index 1c66697f8307b78a9312e49762f4c0d039ccb8ad..2dcbba89e7690a8c04995468eb6119e24129309a 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
 @@ -2223,6 +2223,8 @@ PRIVATE
@@ -30,7 +30,7 @@ index f4a76208f8849be2ca41fecb15e60c43412354a5..47aed8a1e032aaaaca5809ee9ff65f3c
      tele/tele_updater.h
  )
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index d28c71477fcd1a9235aa8bb29f1c41d6d880b832..ef4033d6d69047068f8b29a825391108ea52d423 100644
+index c8ed5d1d7f5784edf07963c96531dec817c134e3..32652a620bb4683b031b85dc5ef8a6235e00717a 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -10,6 +10,7 @@
@@ -49,7 +49,7 @@ index d28c71477fcd1a9235aa8bb29f1c41d6d880b832..ef4033d6d69047068f8b29a825391108
  #include "window/window_session_controller.h"
  #include "styles/style_menu_icons.h"
  #include "styles/style_layers.h"
-@@ -214,6 +216,85 @@ void AddServer(
+@@ -225,6 +227,85 @@ void AddServer(
  		st::settingsExperimentalAboutPadding);
  }
  
@@ -135,7 +135,7 @@ index d28c71477fcd1a9235aa8bb29f1c41d6d880b832..ef4033d6d69047068f8b29a825391108
  TeleSection::TeleSection(
  	QWidget *parent,
  	not_null<Window::SessionController*> controller)
-@@ -228,6 +309,11 @@ rpl::producer<QString> TeleSection::title() {
+@@ -239,6 +320,11 @@ rpl::producer<QString> TeleSection::title() {
  void TeleSection::setupContent() {
  	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
  

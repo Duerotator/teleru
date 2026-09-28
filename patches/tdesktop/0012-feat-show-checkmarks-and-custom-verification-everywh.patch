@@ -1,0 +1,1004 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sat, 26 Sep 2026 22:09:27 +0300
+Subject: [PATCH] feat: show checkmarks and custom verification everywhere
+
+---
+ Telegram/CMakeLists.txt                       |   4 +
+ .../view/history_view_chat_preview.cpp        |  39 ++++---
+ .../history/view/history_view_message.cpp     |  51 +++++++--
+ .../history/view/history_view_message.h       |   1 +
+ .../info/profile/info_profile_badge.cpp       |   5 +-
+ .../sections/settings_information.cpp         |  37 ++++++-
+ .../settings/sections/settings_main.cpp       |  19 +++-
+ .../SourceFiles/settings/settings_tele.cpp    |   1 +
+ .../SourceFiles/tele/tele_account_badges.cpp  | 103 ++++++++++++++++++
+ .../SourceFiles/tele/tele_account_badges.h    |  48 ++++++++
+ .../SourceFiles/tele/tele_bubble_badges.cpp   |  95 ++++++++++++++++
+ .../SourceFiles/tele/tele_bubble_badges.h     |  20 ++++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  12 ++
+ Telegram/SourceFiles/tele/tele_options.h      |   2 +
+ Telegram/SourceFiles/ui/unread_badge.cpp      |  29 ++---
+ .../SourceFiles/window/window_main_menu.cpp   |  32 ++++--
+ .../SourceFiles/window/window_main_menu.h     |   5 +
+ 17 files changed, 447 insertions(+), 56 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_account_badges.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_account_badges.h
+ create mode 100644 Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_bubble_badges.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 2dcbba89e7690a8c04995468eb6119e24129309a..64a056c3963670d986afad364fbad1fe6b49c337 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2213,10 +2213,14 @@ nice_target_sources(Telegram ${src_loc}
+ PRIVATE
+     settings/settings_tele.cpp
+     settings/settings_tele.h
++    tele/tele_account_badges.cpp
++    tele/tele_account_badges.h
+     tele/tele_badges.cpp
+     tele/tele_badges.h
+     tele/tele_build.cpp
+     tele/tele_build.h
++    tele/tele_bubble_badges.cpp
++    tele/tele_bubble_badges.h
+     tele/tele_button_payload.cpp
+     tele/tele_button_payload.h
+     tele/tele_options.cpp
+diff --git a/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp b/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
+index 7abf143eac7ce338874d15709a51fed965d96935..2478f1df6ed06d4cf3220eb895b41d25c85252cb 100644
+--- a/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
+@@ -204,6 +204,7 @@ private:
+ 	const std::unique_ptr<Ui::FlatButton> _markRead;
+ 
+ 	Info::Profile::Badge _badge;
++	Info::Profile::Badge _verified;
+ 
+ 	QPointer<ListWidget> _inner;
+ 	std::unique_ptr<AboutView> _aboutView;
+@@ -264,22 +265,17 @@ struct StatusFields {
+ }
+ 
+ [[nodiscard]] rpl::producer<Info::Profile::Badge::Content> ContentForPeer(
+-		not_null<PeerData*> peer) {
++		not_null<PeerData*> peer,
++		bool verified) {
+ 	using namespace Info::Profile;
+ 	if (peer->isSelf()
+ 		|| peer->isRepliesChat()
+ 		|| peer->isSavedHiddenAuthor()) {
+ 		return rpl::single(Badge::Content{});
+ 	}
+-	return rpl::combine(
+-		BadgeContentForPeer(peer),
+-		VerifiedContentForPeer(peer)
+-	) | rpl::map([](Badge::Content &&content, Badge::Content &&verified) {
+-		if (verified.badge == BadgeType::Verified) {
+-			content.badge = BadgeType::Verified;
+-		}
+-		return content;
+-	});
++	return verified
++		? VerifiedContentForPeer(peer)
++		: BadgeContentForPeer(peer);
+ }
+ 
+ Item::Item(not_null<Ui::Menu::Menu*> parent, not_null<Data::Thread*> thread)
+@@ -304,7 +300,15 @@ Item::Item(not_null<Ui::Menu::Menu*> parent, not_null<Data::Thread*> thread)
+ 		_top.get(),
+ 		st::settingsInfoPeerBadge,
+ 		_session,
+-		ContentForPeer(_peer),
++		ContentForPeer(_peer, false),
++		nullptr,
++		nullptr,
++		1)
++, _verified(
++		_top.get(),
++		st::settingsInfoPeerBadge,
++		_session,
++		ContentForPeer(_peer, true),
+ 		nullptr,
+ 		nullptr,
+ 		1) {
+@@ -403,13 +407,18 @@ void Item::setupTop() {
+ 	rpl::combine(
+ 		_top->widthValue(),
+ 		std::move(nameValue),
+-		rpl::single(rpl::empty) | rpl::then(_badge.updated())
++		rpl::single(rpl::empty) | rpl::then(
++			rpl::merge(_badge.updated(), _verified.updated()))
+ 	) | rpl::on_next([=](int width, const auto &, const auto &) {
+ 		const auto &st = st::previewTop;
++		const auto badgeWidth = _badge.widget()
++			? _badge.widget()->width()
++			: 0;
+ 		name->resizeToNaturalWidth(width
+ 			- st.namePosition.x()
+ 			- st.photoPosition.x()
+-			- (_badge.widget() ? _badge.widget()->width() : 0));
++			- badgeWidth
++			- (_verified.widget() ? _verified.widget()->width() : 0));
+ 		if (status) {
+ 			name->move(st::previewTop.namePosition);
+ 		} else {
+@@ -421,6 +430,10 @@ void Item::setupTop() {
+ 			name->x() + name->width() + st::normalFont->spacew,
+ 			name->y(),
+ 			name->y() + name->height());
++		_verified.move(
++			name->x() + name->width() + st::normalFont->spacew + badgeWidth,
++			name->y(),
++			name->y() + name->height());
+ 	}, name->lifetime());
+ 
+ 	_top->geometryValue() | rpl::on_next([=](QRect geometry) {
+diff --git a/Telegram/SourceFiles/history/view/history_view_message.cpp b/Telegram/SourceFiles/history/view/history_view_message.cpp
+index a1d94427aaf9a3bf60ecf7eaa29be99bb08411b5..db6ca0d6350ca844a3fe9d82d108b6fabe03e7bc 100644
+--- a/Telegram/SourceFiles/history/view/history_view_message.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_message.cpp
+@@ -65,6 +65,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "window/window_session_controller.h"
+ #include "apiwrap.h"
+ #include "api/api_rich_tasks.h"
++#include "tele/tele_bubble_badges.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_chat_style.h"
+@@ -1529,6 +1530,7 @@ QSize Message::performCountOptimalSize() {
+ 					+ (_fromNameStatus
+ 						? st::dialogsPremiumIcon.icon.width()
+ 						: 0)
++					+ (from ? Tele::BubbleCheckWidth(_fromNameBadges) : 0)
+ 					+ st::msgPadding.right();
+ 				if (via && !displayForwardedFrom()) {
+ 					namew += st::msgServiceFont->spacew + via->maxWidth
+@@ -2526,6 +2528,9 @@ void Message::paintFromName(
+ 	const auto statusWidth = _fromNameStatus
+ 		? st::dialogsPremiumIcon.icon.width()
+ 		: 0;
++	const auto checkWidth = from
++		? Tele::BubbleCheckWidth(_fromNameBadges)
++		: 0;
+ 	const auto via = item->Get<HistoryMessageVia>();
+ 	const auto viaShown = via && !displayForwardedFrom() && via->width;
+ 	const auto viaSkipWidth = viaShown
+@@ -2534,7 +2539,7 @@ void Message::paintFromName(
+ 	const auto nameAvailableWidth = std::max(
+ 		((statusWidth && availableWidth > statusWidth)
+ 			? (availableWidth - statusWidth)
+-			: availableWidth) - viaSkipWidth,
++			: availableWidth) - viaSkipWidth - checkWidth,
+ 		0);
+ 	if (statusWidth && availableWidth > statusWidth) {
+ 		const auto x = availableLeft
+@@ -2573,6 +2578,17 @@ void Message::paintFromName(
+ 			st::dialogsPremiumIcon.icon.paint(p, x, y, width(), color);
+ 		}
+ 	}
++	if (checkWidth) {
++		Tele::PaintBubbleCheck(
++			p,
++			(availableLeft
++				+ std::min(nameAvailableWidth, nameText->maxWidth())
++				+ ((statusWidth && availableWidth > statusWidth)
++					? statusWidth
++					: 0)),
++			trect.top(),
++			nameFg);
++	}
+ 	p.setFont(st::msgNameFont);
+ 	p.setPen(nameFg);
+ 	const auto nameLinkHandler = fromLink();
+@@ -2593,9 +2609,12 @@ void Message::paintFromName(
+ 		nameLinkHandler,
+ 		QRect(availableLeft, trect.top(), nameWidth, st::msgNameFont->height),
+ 		trect.topLeft());
++	prepareCustomEmojiPaint(p, context, *nameText);
+ 	nameText->draw(p, {
+ 		.position = { availableLeft, trect.top() },
+ 		.availableWidth = nameAvailableWidth,
++		.now = context.now,
++		.pausedEmoji = context.paused || On(PowerSaving::kEmojiChat),
+ 		.elisionLines = 1,
+ 	});
+ 	const auto skipWidth = nameWidth
+@@ -2603,6 +2622,7 @@ void Message::paintFromName(
+ 			? (st::dialogsPremiumIcon.icon.width()
+ 				+ st::msgServiceFont->spacew)
+ 			: 0)
++		+ checkWidth
+ 		+ st::msgServiceFont->spacew;
+ 	availableLeft += skipWidth;
+ 	availableWidth -= skipWidth;
+@@ -3821,6 +3841,7 @@ bool Message::hasHeavyPart() const {
+ void Message::unloadHeavyPart() {
+ 	Element::unloadHeavyPart();
+ 	_comments = nullptr;
++	_fromName.unloadPersistentAnimation();
+ 	if (_fromNameStatus) {
+ 		_fromNameStatus->custom = nullptr;
+ 		_fromNameStatus->id = EmojiStatusId();
+@@ -4238,6 +4259,9 @@ bool Message::getStateFromName(
+ 		const auto statusWidth = (from && _fromNameStatus)
+ 			? st::dialogsPremiumIcon.icon.width()
+ 			: 0;
++		const auto checkWidth = from
++			? Tele::BubbleCheckWidth(_fromNameBadges)
++			: 0;
+ 		const auto via = item->Get<HistoryMessageVia>();
+ 		const auto viaShown = via && !displayForwardedFrom() && via->width;
+ 		const auto viaSkipWidth = viaShown
+@@ -4246,7 +4270,7 @@ bool Message::getStateFromName(
+ 		const auto nameAvailableWidth = std::max(
+ 			((statusWidth && availableWidth > statusWidth)
+ 				? (availableWidth - statusWidth)
+-				: availableWidth) - viaSkipWidth,
++				: availableWidth) - viaSkipWidth - checkWidth,
+ 			0);
+ 		const auto nameWidth = std::min(
+ 			nameText->maxWidth(),
+@@ -4278,6 +4302,7 @@ bool Message::getStateFromName(
+ 				? (st::dialogsPremiumIcon.icon.width()
+ 					+ st::msgServiceFont->spacew)
+ 				: 0)
++			+ checkWidth
+ 			+ st::msgServiceFont->spacew;
+ 		availableLeft += skipWidth;
+ 		availableWidth -= skipWidth;
+@@ -5485,12 +5510,21 @@ void Message::validateFromNameText(PeerData *from) const {
+ 		return;
+ 	}
+ 	const auto version = from->nameVersion();
+-	if (_fromNameVersion < version) {
++	const auto badges = Tele::BubbleBadgesKey(from);
++	if (_fromNameVersion < version || _fromNameBadges != badges) {
++		const auto that = const_cast<Message*>(this);
++		const auto relayout = _fromNameVersion
++			&& (_fromNameBadges != badges);
+ 		_fromNameVersion = version;
+-		_fromName.setText(
+-			st::msgNameStyle,
+-			from->name(),
+-			Ui::NameTextOptions());
++		_fromNameBadges = badges;
++		Tele::SetBubbleName(_fromName, from, badges, [=] {
++			that->customEmojiRepaint();
++		});
++		if (relayout) {
++			crl::on_main(that, [=] {
++				that->history()->owner().requestViewResize(that);
++			});
++		}
+ 	}
+ 	if (from->isPremium()
+ 		|| (from->isChannel()
+@@ -6359,7 +6393,8 @@ void Message::fromNameUpdated(int width) const {
+ 		- (_fromNameStatus
+ 			? (st::dialogsPremiumIcon.icon.width()
+ 				+ st::msgServiceFont->spacew)
+-			: 0);
++			: 0)
++		- (from ? Tele::BubbleCheckWidth(_fromNameBadges) : 0);
+ 	auto viaWidth = 0;
+ 	if (via && !displayForwardedFrom()) {
+ 		via->resize(available - st::msgServiceFont->spacew);
+diff --git a/Telegram/SourceFiles/history/view/history_view_message.h b/Telegram/SourceFiles/history/view/history_view_message.h
+index bcffee1190496e5e495aa1434432bdc48ca6c18c..fc22360cdc8aee5d95999e47ec60106d3c62b505 100644
+--- a/Telegram/SourceFiles/history/view/history_view_message.h
++++ b/Telegram/SourceFiles/history/view/history_view_message.h
+@@ -538,6 +538,7 @@ private:
+ 
+ 	mutable Ui::Text::String _fromName;
+ 	mutable std::unique_ptr<FromNameStatus> _fromNameStatus;
++	mutable uint64 _fromNameBadges = 0;
+ 	mutable std::unique_ptr<Ui::RoundCheckbox> _selectionRoundCheckbox;
+ 	mutable uint32 _fromNameVersion : 16 = 0;
+ 	uint32 _nonTextMaxWidth : 16 = 0;
+diff --git a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+index 78acde4d2b78d1c3c331598082513585d944af96..fcebcc983f76506e4fc496dea6ee80d440750f5b 100644
+--- a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
++++ b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+@@ -282,7 +282,10 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
+ 			return Badge::Content{ BadgeType::Premium, emojiStatusId };
+ 		}
+ 		if (badge == BadgeType::Verified) {
+-			badge = BadgeType::None;
++			badge = (peer->isPremium()
++					|| (emojiStatusId && !statusOnlyForPremium))
++				? BadgeType::Premium
++				: BadgeType::None;
+ 		}
+ 		if (statusOnlyForPremium && badge != BadgeType::Premium) {
+ 			emojiStatusId = EmojiStatusId();
+diff --git a/Telegram/SourceFiles/settings/sections/settings_information.cpp b/Telegram/SourceFiles/settings/sections/settings_information.cpp
+index 8ae0612a868e775ce245a34048c23fa9beb6f9f5..d6db3b07b1b53f91da14b86a53ad72a2bac3f610 100644
+--- a/Telegram/SourceFiles/settings/sections/settings_information.cpp
++++ b/Telegram/SourceFiles/settings/sections/settings_information.cpp
+@@ -49,6 +49,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "info/profile/info_profile_values.h"
+ #include "info/profile/info_profile_badge.h"
+ #include "info/profile/info_profile_phone_menu.h"
++#include "tele/tele_account_badges.h"
+ #include "lang/lang_keys.h"
+ #include "menu/menu_mark_as_read.h"
+ #include "main/main_account.h"
+@@ -110,9 +111,11 @@ public:
+ private:
+ 	rpl::variable<QString> _text;
+ 	rpl::event_stream<int> _unreadWidth;
++	rpl::event_stream<int> _verifiedWidth;
+ 	rpl::event_stream<int> _premiumWidth;
+ 
+ 	QPointer<Ui::RpWidget> _unread;
++	Info::Profile::Badge _verified;
+ 	Info::Profile::Badge _badge;
+ 
+ };
+@@ -126,6 +129,15 @@ ComposedBadge::ComposedBadge(
+ 	Fn<bool()> animationPaused)
+ : Ui::RpWidget(parent)
+ , _text(std::move(text))
++, _verified(
++		this,
++		st::settingsInfoPeerBadge,
++		session,
++		Info::Profile::VerifiedContentForPeer(session->user()),
++		nullptr,
++		animationPaused,
++		kPlayStatusLimit,
++		Info::Profile::BadgeType::Verified)
+ , _badge(
+ 		this,
+ 		st::settingsInfoPeerBadge,
+@@ -155,6 +167,16 @@ ComposedBadge::ComposedBadge(
+ 		}) | rpl::start_to_stream(_unreadWidth, _unread->lifetime());
+ 	}
+ 
++	_verified.updated(
++	) | rpl::on_next([=] {
++		if (const auto button = _verified.widget()) {
++			button->widthValue(
++			) | rpl::start_to_stream(_verifiedWidth, button->lifetime());
++		} else {
++			_verifiedWidth.fire(0);
++		}
++	}, lifetime());
++
+ 	_badge.updated(
+ 	) | rpl::on_next([=] {
+ 		if (const auto button = _badge.widget()) {
+@@ -170,6 +192,9 @@ ComposedBadge::ComposedBadge(
+ 	});
+ 	rpl::combine(
+ 		_unreadWidth.events_starting_with(_unread ? _unread->width() : 0),
++		_verifiedWidth.events_starting_with(_verified.widget()
++			? _verified.widget()->width()
++			: 0),
+ 		_premiumWidth.events_starting_with(_badge.widget()
+ 			? _badge.widget()->width()
+ 			: 0),
+@@ -177,6 +202,7 @@ ComposedBadge::ComposedBadge(
+ 		button->sizeValue()
+ 	) | rpl::on_next([=](
+ 			int unreadWidth,
++			int verifiedWidth,
+ 			int premiumWidth,
+ 			int textWidth,
+ 			const QSize &buttonSize) {
+@@ -185,7 +211,7 @@ ComposedBadge::ComposedBadge(
+ 		const auto textRightPosition = st.padding.left()
+ 			+ textWidth
+ 			+ skip;
+-		const auto minWidth = unreadWidth + premiumWidth + skip;
++		const auto minWidth = unreadWidth + verifiedWidth + premiumWidth + skip;
+ 		const auto maxTextWidth = buttonSize.width()
+ 			- minWidth
+ 			- st.padding.right();
+@@ -200,6 +226,10 @@ ComposedBadge::ComposedBadge(
+ 			0,
+ 			st.padding.top(),
+ 			buttonSize.height() - st.padding.top());
++		_verified.move(
++			premiumWidth,
++			st.padding.top(),
++			buttonSize.height() - st.padding.top());
+ 		if (_unread) {
+ 			_unread->moveToRight(
+ 				0,
+@@ -844,8 +874,11 @@ void SetupAccountsWrap(
+ 	auto result = object_ptr<Ui::SettingsButton>(
+ 		parent,
+ 		rpl::duplicate(text),
+-		st::mainMenuAddAccountButton);
++		Tele::AccountButtonStyle(user));
+ 	const auto raw = result.data();
++	Tele::AddAccountBotVerify(raw, user, [=] {
++		return window->isGifPausedAtLeastFor(Window::GifPauseReason::Layer);
++	});
+ 
+ 	{
+ 		const auto container = Badge::AddRight(raw, st::mainMenuAccountLine);
+diff --git a/Telegram/SourceFiles/settings/sections/settings_main.cpp b/Telegram/SourceFiles/settings/sections/settings_main.cpp
+index 049f01bb70447a97b7569d8583bca08f21b67fc6..4770344ab2be6b418eec9097944237e918ebaec8 100644
+--- a/Telegram/SourceFiles/settings/sections/settings_main.cpp
++++ b/Telegram/SourceFiles/settings/sections/settings_main.cpp
+@@ -8,6 +8,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "settings/sections/settings_main.h"
+ 
+ #include "settings/settings_common_session.h"
++#include "tele/tele_account_badges.h"
+ 
+ #include "api/api_cloud_password.h"
+ #include "api/api_credits.h"
+@@ -123,6 +124,7 @@ private:
+ 	const not_null<UserData*> _user;
+ 	Info::Profile::EmojiStatusPanel _emojiStatusPanel;
+ 	Info::Profile::Badge _badge;
++	Tele::CoverBadges _teleBadges;
+ 
+ 	object_ptr<Ui::UserpicButton> _userpic;
+ 	object_ptr<Ui::FlatLabel> _name = { nullptr };
+@@ -156,6 +158,9 @@ Cover::Cover(
+ 	},
+ 	0, // customStatusLoopsLimit
+ 	Info::Profile::BadgeType::Premium)
++, _teleBadges(this, user, [=] {
++	return controller->isGifPausedAtLeastFor(Window::GifPauseReason::Layer);
++}, &st::settingsCoverBadge)
+ , _userpic(
+ 	this,
+ 	controller,
+@@ -218,7 +223,7 @@ Cover::Cover(
+ 			_badge.widget(),
+ 			_badge.sizeTag());
+ 	});
+-	_badge.updated() | rpl::on_next([=] {
++	rpl::merge(_badge.updated(), _teleBadges.updated()) | rpl::on_next([=] {
+ 		refreshNameGeometry(width());
+ 	}, _name->lifetime());
+ 
+@@ -302,7 +307,7 @@ void Cover::initViewers() {
+ }
+ 
+ void Cover::refreshNameGeometry(int newWidth) {
+-	const auto nameLeft = st::settingsNameLeft;
++	const auto nameLeft = st::settingsNameLeft + _teleBadges.leftSkip();
+ 	const auto nameTop = st::settingsNameTop;
+ 	const auto qrButtonWidth = (_qrButton && !_qrButton->isHidden())
+ 		? (_qrButton->width() + st::infoProfileCover.rightSkip)
+@@ -310,7 +315,8 @@ void Cover::refreshNameGeometry(int newWidth) {
+ 	auto nameWidth = newWidth
+ 		- nameLeft
+ 		- st::infoProfileCover.rightSkip
+-		- qrButtonWidth;
++		- qrButtonWidth
++		- _teleBadges.rightWidth();
+ 	if (const auto width = _badge.widget() ? _badge.widget()->width() : 0) {
+ 		nameWidth -= st::infoVerifiedCheckPosition.x() + width;
+ 	}
+@@ -320,6 +326,13 @@ void Cover::refreshNameGeometry(int newWidth) {
+ 	const auto badgeTop = nameTop;
+ 	const auto badgeBottom = nameTop + _name->height();
+ 	_badge.move(badgeLeft, badgeTop, badgeBottom);
++	_teleBadges.move(
++		st::settingsNameLeft,
++		badgeLeft + (_badge.widget()
++			? (st::settingsCoverBadge.position.x() + _badge.widget()->width())
++			: 0),
++		badgeTop,
++		badgeBottom);
+ }
+ 
+ void Cover::updatePhoneText() {
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 32652a620bb4683b031b85dc5ef8a6235e00717a..574166f99cd311622adf41d7d98bca5eaea286dc 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -339,6 +339,7 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
++	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.cpp b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..7f0750acf214617f9d46bb712168c8b1325fd20d
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_account_badges.cpp
+@@ -0,0 +1,103 @@
++#include "tele/tele_account_badges.h"
++
++#include "data/data_user.h"
++#include "data/stickers/data_custom_emoji.h"
++#include "info/profile/info_profile_badge.h"
++#include "main/main_session.h"
++#include "ui/widgets/buttons.h"
++#include "styles/style_info.h"
++#include "styles/style_settings.h"
++#include "styles/style_window.h"
++
++namespace Tele {
++
++const style::SettingsButton &AccountButtonStyle(not_null<UserData*> user) {
++	if (!user->botVerifyDetails()) {
++		return st::mainMenuAddAccountButton;
++	}
++	static const auto result = [] {
++		auto copy = st::mainMenuAddAccountButton;
++		const auto emoji = Data::FrameSizeFromTag(
++			Data::CustomEmojiSizeTag::Normal) / style::DevicePixelRatio();
++		copy.padding.setLeft(copy.padding.left()
++			+ emoji
++			+ copy.style.font->spacew);
++		return copy;
++	}();
++	return result;
++}
++
++void AddAccountBotVerify(
++		not_null<Ui::SettingsButton*> button,
++		not_null<UserData*> user,
++		Fn<bool()> paused) {
++	if (!user->botVerifyDetails()) {
++		return;
++	}
++	const auto badge = button->lifetime().make_state<Info::Profile::Badge>(
++		button,
++		st::settingsInfoPeerBadge,
++		&user->session(),
++		Info::Profile::BotVerifyBadgeForPeer(user),
++		nullptr,
++		std::move(paused),
++		0,
++		Info::Profile::BadgeType::BotVerified);
++	button->heightValue(
++	) | rpl::on_next([=](int height) {
++		const auto &st = st::mainMenuAddAccountButton;
++		badge->move(
++			st.padding.left(),
++			st.padding.top(),
++			height - st.padding.top());
++	}, button->lifetime());
++}
++
++CoverBadges::CoverBadges(
++	not_null<QWidget*> parent,
++	not_null<UserData*> user,
++	Fn<bool()> paused,
++	const style::InfoPeerBadge *verifiedSt)
++: _botVerify(std::make_unique<Info::Profile::Badge>(
++	parent,
++	st::settingsInfoPeerBadge,
++	&user->session(),
++	Info::Profile::BotVerifyBadgeForPeer(user),
++	nullptr,
++	paused,
++	0,
++	Info::Profile::BadgeType::BotVerified))
++, _verified(std::make_unique<Info::Profile::Badge>(
++	parent,
++	verifiedSt ? *verifiedSt : st::settingsInfoPeerBadge,
++	&user->session(),
++	Info::Profile::VerifiedContentForPeer(user),
++	nullptr,
++	paused,
++	0,
++	Info::Profile::BadgeType::Verified))
++, _verifiedSkip(verifiedSt ? verifiedSt->position.x() : 0) {
++}
++
++CoverBadges::~CoverBadges() = default;
++
++rpl::producer<> CoverBadges::updated() const {
++	return rpl::merge(_botVerify->updated(), _verified->updated());
++}
++
++int CoverBadges::leftSkip() const {
++	const auto widget = _botVerify->widget();
++	return widget ? (widget->width() + st::semiboldFont->spacew) : 0;
++}
++
++int CoverBadges::rightWidth() const {
++	const auto widget = _verified->widget();
++	return widget ? (widget->width() + _verifiedSkip) : 0;
++}
++
++void CoverBadges::move(int left, int right, int top, int bottom) {
++	_botVerify->move(left, top, bottom);
++	_verified->move(right, top, bottom);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_account_badges.h b/Telegram/SourceFiles/tele/tele_account_badges.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..91830f6fe2ddb3dbd9c79400c6a9e60183db8af8
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_account_badges.h
+@@ -0,0 +1,48 @@
++#pragma once
++
++class UserData;
++
++namespace style {
++struct SettingsButton;
++struct InfoPeerBadge;
++} // namespace style
++
++namespace Ui {
++class SettingsButton;
++} // namespace Ui
++
++namespace Info::Profile {
++class Badge;
++} // namespace Info::Profile
++
++namespace Tele {
++
++[[nodiscard]] const style::SettingsButton &AccountButtonStyle(
++	not_null<UserData*> user);
++void AddAccountBotVerify(
++	not_null<Ui::SettingsButton*> button,
++	not_null<UserData*> user,
++	Fn<bool()> paused);
++
++class CoverBadges final {
++public:
++	CoverBadges(
++		not_null<QWidget*> parent,
++		not_null<UserData*> user,
++		Fn<bool()> paused,
++		const style::InfoPeerBadge *verifiedSt = nullptr);
++	~CoverBadges();
++
++	[[nodiscard]] rpl::producer<> updated() const;
++	[[nodiscard]] int leftSkip() const;
++	[[nodiscard]] int rightWidth() const;
++	void move(int left, int right, int top, int bottom);
++
++private:
++	const std::unique_ptr<Info::Profile::Badge> _botVerify;
++	const std::unique_ptr<Info::Profile::Badge> _verified;
++	const int _verifiedSkip = 0;
++
++};
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_bubble_badges.cpp b/Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..e89de87be5eedecc5b5606d5aae30d6de115ac2c
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_bubble_badges.cpp
+@@ -0,0 +1,95 @@
++#include "tele/tele_bubble_badges.h"
++
++#include "data/data_peer.h"
++#include "data/data_session.h"
++#include "data/stickers/data_custom_emoji.h"
++#include "main/main_session.h"
++#include "tele/tele_options.h"
++#include "ui/text/text.h"
++#include "ui/text/text_custom_emoji.h"
++#include "ui/text/text_options.h"
++#include "ui/text/text_utilities.h"
++#include "ui/unread_badge.h"
++#include "styles/style_chat.h"
++#include "styles/style_info.h"
++
++namespace Tele {
++namespace {
++
++constexpr auto kVerifiedBit = uint64(1);
++
++[[nodiscard]] DocumentId VerifyIcon(not_null<PeerData*> peer) {
++	const auto details = peer->botVerifyDetails();
++	return details ? details->iconId : DocumentId();
++}
++
++} // namespace
++
++uint64 BubbleBadgesKey(not_null<PeerData*> peer) {
++	if (!BubbleBadges()) {
++		return 0;
++	}
++	return (uint64(VerifyIcon(peer)) << 1)
++		| (peer->isVerified() ? kVerifiedBit : 0);
++}
++
++int BubbleCheckWidth(uint64 badges) {
++	return (badges & kVerifiedBit)
++		? (st::msgNameFont->spacew + st::infoVerifiedStar.width())
++		: 0;
++}
++
++void PaintBubbleCheck(QPainter &p, int left, int top, const QColor &color) {
++	static auto frames = base::flat_map<QRgb, QImage>();
++	const auto &star = st::infoVerifiedStar;
++	if (frames.size() > 32) {
++		frames.clear();
++	}
++	auto &frame = frames[color.rgba()];
++	if (frame.isNull()) {
++		const auto ratio = style::DevicePixelRatio();
++		frame = QImage(
++			star.size() * ratio,
++			QImage::Format_ARGB32_Premultiplied);
++		frame.setDevicePixelRatio(ratio);
++		frame.fill(Qt::transparent);
++		auto q = QPainter(&frame);
++		star.paint(q, 0, 0, star.width(), color);
++		q.setCompositionMode(QPainter::CompositionMode_DestinationOut);
++		st::infoVerifiedCheck.paint(q, 0, 0, star.width(), QColor(0, 0, 0));
++	}
++	p.drawImage(
++		left + st::msgNameFont->spacew,
++		top + (st::msgNameFont->height - star.height()) / 2,
++		frame);
++}
++
++void SetBubbleName(
++		Ui::Text::String &name,
++		not_null<PeerData*> peer,
++		uint64 badges,
++		Fn<void()> repaint) {
++	if (!badges) {
++		name.setText(st::msgNameStyle, peer->name(), Ui::NameTextOptions());
++		return;
++	}
++	auto text = TextWithEntities{ peer->name() };
++	if (const auto icon = VerifyIcon(peer)) {
++		text = Data::SingleCustomEmoji(icon).append(' ').append(
++			std::move(text));
++	}
++	const auto session = &peer->session();
++	name.setMarkedText(st::msgNameStyle, text, Ui::NameTextOptions(), {
++		.repaint = std::move(repaint),
++		.customEmojiFactory = [=](
++				QStringView data,
++				const Ui::Text::MarkedContext &context)
++		-> std::unique_ptr<Ui::Text::CustomEmoji> {
++			return session->data().customEmojiManager().create(
++				data,
++				context.repaint);
++		},
++	});
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_bubble_badges.h b/Telegram/SourceFiles/tele/tele_bubble_badges.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..013b718ecdcf2795ac1bbf35287ade44aa8db18e
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_bubble_badges.h
+@@ -0,0 +1,20 @@
++#pragma once
++
++class PeerData;
++
++namespace Ui::Text {
++class String;
++} // namespace Ui::Text
++
++namespace Tele {
++
++[[nodiscard]] uint64 BubbleBadgesKey(not_null<PeerData*> peer);
++[[nodiscard]] int BubbleCheckWidth(uint64 badges);
++void PaintBubbleCheck(QPainter &p, int left, int top, const QColor &color);
++void SetBubbleName(
++	Ui::Text::String &name,
++	not_null<PeerData*> peer,
++	uint64 badges,
++	Fn<void()> repaint);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index d0370bbca5569ae652b0317fe755d64f087f7def..b62c54c70128dd5483a27d28558ed7a5fceec31e 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -9,6 +9,7 @@ const char kOptionInvisibleStories[] = "tele-invisible-stories";
+ const char kOptionButtonPayloads[] = "tele-button-payloads";
+ const char kOptionAutoUpdate[] = "tele-auto-update";
+ const char kOptionGroupQuickReplies[] = "tele-group-quick-replies";
++const char kOptionBubbleBadges[] = "tele-bubble-badges";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -56,6 +57,13 @@ base::options::toggle GroupQuickRepliesOption({
+ 		"keyboards, via-bot labels and message effects are dropped.",
+ });
+ 
++base::options::toggle BubbleBadgesOption({
++	.id = kOptionBubbleBadges,
++	.name = "Badges next to names in messages",
++	.description = "Show checkmarks and custom verification next to "
++		"sender names in message bubbles, where emoji statuses are.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -105,6 +113,10 @@ bool GroupQuickReplies() {
+ 	return GroupQuickRepliesOption.value();
+ }
+ 
++bool BubbleBadges() {
++	return BubbleBadgesOption.value();
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index e9c02d9d15db82825e0f07d17908db92e7fa0ed6..f331dae73618b0814fed9f6c9cce9f7454a693dd 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -7,6 +7,7 @@ extern const char kOptionInvisibleStories[];
+ extern const char kOptionButtonPayloads[];
+ extern const char kOptionAutoUpdate[];
+ extern const char kOptionGroupQuickReplies[];
++extern const char kOptionBubbleBadges[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -16,6 +17,7 @@ extern const char kOptionTitleTemplate[];
+ [[nodiscard]] bool AutoUpdate();
+ [[nodiscard]] rpl::producer<bool> AutoUpdateValue();
+ [[nodiscard]] bool GroupQuickReplies();
++[[nodiscard]] bool BubbleBadges();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();
+diff --git a/Telegram/SourceFiles/ui/unread_badge.cpp b/Telegram/SourceFiles/ui/unread_badge.cpp
+index 37bb050311647243b88629f3b9e10ad4adf55ad8..3a6a441e897e8128a79a6d52ce0443cd91c1ff3d 100644
+--- a/Telegram/SourceFiles/ui/unread_badge.cpp
++++ b/Telegram/SourceFiles/ui/unread_badge.cpp
+@@ -250,22 +250,20 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
+ 		&& !emojiStatus
+ 		&& peer->isPremium();
+ 
+-	const auto paintVerify = verifyCheck
+-		&& (descriptor.prioritizeVerification
+-			|| descriptor.bothVerifyAndStatus
+-			|| !emojiStatus);
+-	const auto paintEmoji = emojiStatus
+-		&& (!paintVerify || descriptor.bothVerifyAndStatus);
+-	const auto paintStar = premiumStar && !paintVerify;
++	const auto paintVerify = verifyCheck;
++	const auto paintEmoji = emojiStatus;
++	const auto paintStar = premiumStar;
+ 
+ 	auto result = 0;
+-	if (paintEmoji) {
++	if (paintEmoji || paintStar) {
+ 		auto &rectForName = descriptor.rectForName;
+-		const auto verifyWidth = descriptor.verified->width();
+-		if (paintVerify) {
+-			rectForName.setWidth(rectForName.width() - verifyWidth);
+-		}
+-		result += drawPremiumEmojiStatus(p, descriptor);
++		const auto verifyWidth = paintVerify
++			? descriptor.verified->width()
++			: 0;
++		rectForName.setWidth(rectForName.width() - verifyWidth);
++		result += paintEmoji
++			? drawPremiumEmojiStatus(p, descriptor)
++			: drawPremiumStar(p, descriptor);
+ 		if (!paintVerify) {
+ 			return result;
+ 		}
+@@ -276,11 +274,8 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
+ 	}
+ 	if (paintVerify) {
+ 		result += drawVerifyCheck(p, descriptor);
+-		return result;
+-	} else if (paintStar) {
+-		return drawPremiumStar(p, descriptor);
+ 	}
+-	return 0;
++	return result;
+ }
+ 
+ int PeerBadge::drawTextBadge(Painter &p, const Descriptor &descriptor) {
+diff --git a/Telegram/SourceFiles/window/window_main_menu.cpp b/Telegram/SourceFiles/window/window_main_menu.cpp
+index 0782599d4394bd544b26f24c919537de53ca6d5d..f5d50a012e5ff47eb4a8a1feb14db5dc4e7cd30a 100644
+--- a/Telegram/SourceFiles/window/window_main_menu.cpp
++++ b/Telegram/SourceFiles/window/window_main_menu.cpp
+@@ -28,6 +28,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_user.h"
+ #include "info/info_memento.h"
+ #include "info/profile/info_profile_badge.h"
++#include "tele/tele_account_badges.h"
+ #include "settings/settings_common.h"
+ #include "info/profile/info_profile_emoji_status_panel.h"
+ #include "info/profile/info_profile_icon.h"
+@@ -324,6 +325,10 @@ MainMenu::MainMenu(
+ 	[=] { return controller->isGifPausedAtLeastFor(GifPauseReason::Layer); },
+ 	kPlayStatusLimit,
+ 	Info::Profile::BadgeType::Premium))
++, _teleBadges(std::make_unique<Tele::CoverBadges>(
++	this,
++	controller->session().user(),
++	[=] { return controller->isGifPausedAtLeastFor(GifPauseReason::Layer); }))
+ , _scroll(this, st::defaultSolidScroll)
+ , _inner(_scroll->setOwnedWidget(
+ 	object_ptr<Ui::VerticalLayout>(_scroll.data())))
+@@ -412,7 +417,8 @@ MainMenu::MainMenu(
+ 
+ 	rpl::combine(
+ 		_toggleAccounts->rightSkipValue(),
+-		rpl::single(rpl::empty) | rpl::then(_badge->updated())
++		rpl::single(rpl::empty) | rpl::then(
++			rpl::merge(_badge->updated(), _teleBadges->updated()))
+ 	) | rpl::on_next([=] {
+ 		moveBadge();
+ 	}, lifetime());
+@@ -469,19 +475,19 @@ MainMenu::MainMenu(
+ MainMenu::~MainMenu() = default;
+ 
+ void MainMenu::moveBadge() {
+-	if (!_badge->widget()) {
+-		return;
+-	}
++	const auto nameLeft = st::mainMenuCoverNameLeft + _teleBadges->leftSkip();
++	const auto badge = _badge->widget() ? _badge->widget()->width() : 0;
+ 	const auto available = width()
+-		- st::mainMenuCoverNameLeft
++		- nameLeft
+ 		- _toggleAccounts->rightSkip()
+-		- _badge->widget()->width();
+-	const auto left = st::mainMenuCoverNameLeft
++		- badge
++		- _teleBadges->rightWidth();
++	const auto left = nameLeft
+ 		+ std::min(_name.maxWidth() + st::semiboldFont->spacew, available);
+-	_badge->move(
+-		left,
+-		st::mainMenuCoverNameTop,
+-		st::mainMenuCoverNameTop + st::semiboldFont->height);
++	const auto top = st::mainMenuCoverNameTop;
++	const auto bottom = top + st::semiboldFont->height;
++	_badge->move(left, top, bottom);
++	_teleBadges->move(st::mainMenuCoverNameLeft, left + badge, top, bottom);
+ }
+ 
+ void MainMenu::setupArchive() {
+@@ -900,9 +906,11 @@ void MainMenu::drawName(Painter &p) {
+ 	p.setPen(st::windowBoldFg);
+ 	_name.drawLeftElided(
+ 		p,
+-		st::mainMenuCoverNameLeft,
++		st::mainMenuCoverNameLeft + _teleBadges->leftSkip(),
+ 		st::mainMenuCoverNameTop,
+ 		(widthText
++			- _teleBadges->leftSkip()
++			- _teleBadges->rightWidth()
+ 			- (_badge->widget()
+ 				? (st::semiboldFont->spacew + _badge->widget()->width())
+ 				: 0)),
+diff --git a/Telegram/SourceFiles/window/window_main_menu.h b/Telegram/SourceFiles/window/window_main_menu.h
+index 5975e0e60d089e31bdd2858b60b7b031d928ba9a..2ca25fad0bb941041fbb296965f65926b5abbd3c 100644
+--- a/Telegram/SourceFiles/window/window_main_menu.h
++++ b/Telegram/SourceFiles/window/window_main_menu.h
+@@ -33,6 +33,10 @@ template <typename Widget>
+ class SlideWrap;
+ } // namespace Ui
+ 
++namespace Tele {
++class CoverBadges;
++} // namespace Tele
++
+ namespace Info::Profile {
+ class Badge;
+ class EmojiStatusPanel;
+@@ -95,6 +99,7 @@ private:
+ 	object_ptr<Ui::FlatLabel> _setEmojiStatus;
+ 	std::unique_ptr<Info::Profile::EmojiStatusPanel> _emojiStatusPanel;
+ 	std::unique_ptr<Info::Profile::Badge> _badge;
++	std::unique_ptr<Tele::CoverBadges> _teleBadges;
+ 	object_ptr<ResetScaleButton> _resetScaleButton = { nullptr };
+ 	object_ptr<Ui::ScrollArea> _scroll;
+ 	not_null<Ui::VerticalLayout*> _inner;

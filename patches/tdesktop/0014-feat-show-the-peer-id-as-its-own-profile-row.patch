@@ -1,0 +1,399 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 02:07:31 +0300
+Subject: [PATCH] feat: show the peer id as its own profile row
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../info/profile/info_profile_actions.cpp     |  66 +++--------
+ .../SourceFiles/settings/settings_tele.cpp    |   9 ++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  31 ++++++
+ Telegram/SourceFiles/tele/tele_options.h      |   5 +
+ Telegram/SourceFiles/tele/tele_peer_id.cpp    | 103 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_peer_id.h      |  23 ++++
+ 7 files changed, 186 insertions(+), 53 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_peer_id.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_peer_id.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 88aac149e1cd31ea70cd1aa991ffa9e7d57f1829..2ffbd114902574378add4b5a2baa531fba0e6645 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2227,6 +2227,8 @@ PRIVATE
+     tele/tele_gifts.h
+     tele/tele_options.cpp
+     tele/tele_options.h
++    tele/tele_peer_id.cpp
++    tele/tele_peer_id.h
+     tele/tele_shortcuts.cpp
+     tele/tele_shortcuts.h
+     tele/tele_title.cpp
+diff --git a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
+index 01b277f29aeee5908a5990a06a8c6d70d9ac646b..848721839bfc8d25284a2d19197e335e6bb5457a 100644
+--- a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
++++ b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
+@@ -76,6 +76,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "menu/menu_mute.h"
+ #include "settings/settings_common.h"
+ #include "support/support_helper.h"
++#include "tele/tele_peer_id.h"
+ #include "ui/boxes/peer_qr_box.h"
+ #include "ui/boxes/report_box_graphics.h"
+ #include "ui/controls/userpic_button.h"
+@@ -122,7 +123,6 @@ namespace Profile {
+ namespace {
+ 
+ constexpr auto kDay = Data::WorkingInterval::kDay;
+-constexpr auto kPeerIdLinkIndex = uint16(1);
+ 
+ class DraggableUrlClickHandler final : public UrlClickHandler {
+ public:
+@@ -142,8 +142,8 @@ private:
+ base::options::toggle ShowPeerIdBelowAbout({
+ 	.id = kOptionShowPeerIdBelowAbout,
+ 	.name = "Show Peer IDs in Profile",
+-	.description = "Show peer IDs from API below their Bio / Description."
+-		" Add contact IDs to exported data.",
++	.description = "Show peer IDs from API as a separate row in their"
++		" profile. Add contact IDs to exported data.",
+ });
+ 
+ base::options::toggle ShowChannelJoinedBelowAbout({
+@@ -234,26 +234,11 @@ base::options::toggle ShowChannelJoinedBelowAbout({
+ 	return AboutValue(
+ 		peer
+ 	) | rpl::map([=](TextWithEntities &&value) {
+-		if (ShowPeerIdBelowAbout.value()) {
+-			using namespace Ui::Text;
+-			if (!value.empty()) {
+-				value.append("\n\n");
+-			}
+-			value.append(Italic(u"id: "_q));
+-			const auto raw = peer->id.value & PeerId::kChatTypeMask;
+-			value.append(Link(
+-				Italic(Lang::FormatCountDecimal(raw)),
+-				kPeerIdLinkIndex));
+-		}
+ 		if (ShowChannelJoinedBelowAbout.value()) {
+ 			if (const auto channel = peer->asChannel()) {
+ 				if (!channel->amCreator() && channel->inviteDate) {
+ 					if (!value.empty()) {
+-						if (ShowPeerIdBelowAbout.value()) {
+-							value.append("\n");
+-						} else {
+-							value.append("\n\n");
+-						}
++						value.append("\n\n");
+ 					}
+ 					using namespace Ui::Text;
+ 					value.append((channel->isMegagroup()
+@@ -273,24 +258,6 @@ base::options::toggle ShowChannelJoinedBelowAbout({
+ 	});
+ }
+ 
+-void SetupAboutPeerIdDrag(
+-		not_null<Ui::FlatLabel*> label,
+-		not_null<PeerData*> peer) {
+-	if (!ShowPeerIdBelowAbout.value()) {
+-		return;
+-	}
+-	const auto id = QString::number(peer->id.value & PeerId::kChatTypeMask);
+-	AboutValue(
+-		peer
+-	) | rpl::on_next([=] {
+-		label->setLink(
+-			kPeerIdLinkIndex,
+-			std::make_shared<DraggableUrlClickHandler>(
+-				u"internal:~peer_id~:copy:"_q + id,
+-				id));
+-	}, label->lifetime());
+-}
+-
+ [[nodiscard]] bool AreNonTrivialHours(const Data::WorkingHours &hours) {
+ 	if (!hours) {
+ 		return false;
+@@ -1472,20 +1439,6 @@ Section DetailsFiller::makeInfo() {
+ 		state->aboutText = AboutValue(peer);
+ 		label->setContextMenuHook([=](
+ 				Ui::FlatLabel::ContextMenuRequest request) {
+-			if (request.link) {
+-				const auto &url = request.link->url();
+-				if (url.startsWith(u"internal:~peer_id~:"_q)) {
+-					const auto weak = base::make_weak(controller);
+-					request.menu->addAction(u"Copy ID"_q, [=] {
+-						Core::App().openInternalUrl(
+-							url,
+-							QVariant::fromValue(ClickHandlerContext{
+-								.sessionWindow = weak,
+-							}));
+-					});
+-					return;
+-				}
+-			}
+ 			const auto selected = !request.selection.empty();
+ 			const auto full = state->labelText.current();
+ 			const auto about = state->aboutText.current();
+@@ -1709,7 +1662,6 @@ Section DetailsFiller::makeInfo() {
+ 			std::move(label),
+ 			AboutWithAdvancedValue(user));
+ 		setupAboutContextMenu(about.text, AboutWithAdvancedValue(user));
+-		SetupAboutPeerIdDrag(about.text, user);
+ 
+ 		const auto usernameLine = addInfoOneLine(
+ 			UsernamesSubtext(_peer, tr::lng_info_username_label()),
+@@ -1874,9 +1826,17 @@ Section DetailsFiller::makeInfo() {
+ 			: AboutWithAdvancedValue(_peer));
+ 		if (!_topic) {
+ 			setupAboutContextMenu(about.text, AboutWithAdvancedValue(_peer));
+-			SetupAboutPeerIdDrag(about.text, _peer);
+ 		}
+ 	}
++	if (!_topic && ShowPeerIdBelowAbout.value()) {
++		Tele::SetupPeerIdLabel(
++			addInfoOneLine(
++				u"ID"_q,
++				Tele::PeerIdTextValue(_peer),
++				QString()).text,
++			_peer,
++			controller);
++	}
+ 	raw->toggleOn(tracker.atLeastOneShownValue());
+ 	raw->finishAnimating();
+ 
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index ebb93d4bb8699b6fd0f2a56697f37157f92baeb2..d6e87da8a35a3c983c39174b251d03231d7a3090 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -348,6 +348,15 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
++	Ui::AddSubsectionTitle(content, rpl::single(u"IDs"_q));
++	AddOptionToggle(
++		content,
++		controller(),
++		::Tele::kOptionPeerIdsWithoutSpaces);
++	AddOptionToggle(content, controller(), ::Tele::kOptionBotApiPeerIds);
++	Ui::AddSkip(content);
++	Ui::AddDivider(content);
++	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Server"_q));
+ 	AddServer(content, controller());
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 292f053600b34a2fb1495571271a756071e0ad73..b34c5a7d33ad1aef8b9672299c843a7afe766281 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -11,6 +11,8 @@ const char kOptionAutoUpdate[] = "tele-auto-update";
+ const char kOptionGroupQuickReplies[] = "tele-group-quick-replies";
+ const char kOptionBubbleBadges[] = "tele-bubble-badges";
+ const char kOptionShowGiftIds[] = "tele-show-gift-ids";
++const char kOptionPeerIdsWithoutSpaces[] = "tele-peer-ids-without-spaces";
++const char kOptionBotApiPeerIds[] = "tele-bot-api-peer-ids";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -72,6 +74,21 @@ base::options::toggle ShowGiftIdsOption({
+ 		"Click it to copy.",
+ });
+ 
++base::options::toggle PeerIdsWithoutSpacesOption({
++	.id = kOptionPeerIdsWithoutSpaces,
++	.name = "IDs without spaces",
++	.description = "Show peer IDs in profiles as plain digits, without "
++		"grouping them. Copying gives the same text.",
++});
++
++base::options::toggle BotApiPeerIdsOption({
++	.id = kOptionBotApiPeerIds,
++	.name = "Bot API style IDs",
++	.description = "Show peer IDs in profiles the way the Bot API does: "
++		"basic groups get a minus in front, channels and supergroups "
++		"get -100 in front.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -129,6 +146,20 @@ bool ShowGiftIds() {
+ 	return ShowGiftIdsOption.value();
+ }
+ 
++bool PeerIdsWithoutSpaces() {
++	return PeerIdsWithoutSpacesOption.value();
++}
++
++bool BotApiPeerIds() {
++	return BotApiPeerIdsOption.value();
++}
++
++rpl::producer<> PeerIdFormatChanges() {
++	return rpl::merge(
++		PeerIdsWithoutSpacesOption.changes(),
++		BotApiPeerIdsOption.changes());
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 72c4d78b20b936509f551cd43b68be865e9d5424..d1bebdec494e8825ae4e325ff3eb1060651c091f 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -9,6 +9,8 @@ extern const char kOptionAutoUpdate[];
+ extern const char kOptionGroupQuickReplies[];
+ extern const char kOptionBubbleBadges[];
+ extern const char kOptionShowGiftIds[];
++extern const char kOptionPeerIdsWithoutSpaces[];
++extern const char kOptionBotApiPeerIds[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -20,6 +22,9 @@ extern const char kOptionTitleTemplate[];
+ [[nodiscard]] bool GroupQuickReplies();
+ [[nodiscard]] bool BubbleBadges();
+ [[nodiscard]] bool ShowGiftIds();
++[[nodiscard]] bool PeerIdsWithoutSpaces();
++[[nodiscard]] bool BotApiPeerIds();
++[[nodiscard]] rpl::producer<> PeerIdFormatChanges();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();
+diff --git a/Telegram/SourceFiles/tele/tele_peer_id.cpp b/Telegram/SourceFiles/tele/tele_peer_id.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..bceff86574c906665766197febbcc10019224135
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_peer_id.cpp
+@@ -0,0 +1,103 @@
++#include "tele/tele_peer_id.h"
++
++#include "data/data_peer.h"
++#include "lang/lang_tag.h"
++#include "tele/tele_options.h"
++#include "ui/text/text_utilities.h"
++#include "ui/toast/toast.h"
++#include "ui/widgets/labels.h"
++#include "ui/widgets/popup_menu.h"
++#include "window/window_session_controller.h"
++#include "styles/style_chat_helpers.h"
++
++namespace Tele {
++namespace {
++
++constexpr auto kLinkIndex = uint16(1);
++constexpr auto kChannelShift = int64(1000000000000LL);
++
++class PeerIdClickHandler final : public ClickHandler {
++public:
++	PeerIdClickHandler(QString id, Fn<void()> copy)
++	: _id(std::move(id))
++	, _copy(std::move(copy)) {
++	}
++
++	void onClick(ClickContext context) const override {
++		if (context.button == Qt::LeftButton) {
++			_copy();
++		}
++	}
++	QString dragText() const override {
++		return _id;
++	}
++
++private:
++	const QString _id;
++	const Fn<void()> _copy;
++
++};
++
++[[nodiscard]] rpl::producer<QString> PeerIdValue(not_null<PeerData*> peer) {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		PeerIdFormatChanges()
++	) | rpl::map([=] {
++		return FormatPeerId(peer);
++	});
++}
++
++} // namespace
++
++QString FormatPeerId(not_null<PeerData*> peer) {
++	const auto bare = int64(peer->id.value & PeerId::kChatTypeMask);
++	const auto id = !BotApiPeerIds()
++		? bare
++		: peer->isChat()
++		? -bare
++		: peer->isChannel()
++		? -(kChannelShift + bare)
++		: bare;
++	return PeerIdsWithoutSpaces()
++		? QString::number(id)
++		: Lang::FormatCountDecimal(id);
++}
++
++rpl::producer<TextWithEntities> PeerIdTextValue(not_null<PeerData*> peer) {
++	return PeerIdValue(peer) | rpl::map([](const QString &id) {
++		return Ui::Text::Link(id, kLinkIndex);
++	});
++}
++
++void SetupPeerIdLabel(
++		not_null<Ui::FlatLabel*> label,
++		not_null<PeerData*> peer,
++		not_null<Window::SessionController*> controller) {
++	const auto weak = base::make_weak(controller);
++	const auto copy = [=] {
++		TextUtilities::SetClipboardText({ FormatPeerId(peer) });
++		if (const auto strong = weak.get()) {
++			strong->showToast({
++				.text = { u"ID copied to clipboard."_q },
++				.iconLottie = u"toast/copy"_q,
++				.iconLottieSize = st::toastLottieIconSize,
++			});
++		}
++	};
++	PeerIdValue(peer) | rpl::on_next([=](const QString &id) {
++		label->setLink(
++			kLinkIndex,
++			std::make_shared<PeerIdClickHandler>(id, copy));
++	}, label->lifetime());
++	label->setContextMenuHook([=](
++			Ui::FlatLabel::ContextMenuRequest request) {
++		if (request.selection.empty()) {
++			request.menu->addAction(u"Copy ID"_q, copy);
++		} else {
++			label->fillContextMenu(request);
++		}
++	});
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_peer_id.h b/Telegram/SourceFiles/tele/tele_peer_id.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0694ee4e0a33c8985887473a8b697394654d3bdd
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_peer_id.h
+@@ -0,0 +1,23 @@
++#pragma once
++
++class PeerData;
++
++namespace Ui {
++class FlatLabel;
++} // namespace Ui
++
++namespace Window {
++class SessionController;
++} // namespace Window
++
++namespace Tele {
++
++[[nodiscard]] QString FormatPeerId(not_null<PeerData*> peer);
++[[nodiscard]] rpl::producer<TextWithEntities> PeerIdTextValue(
++	not_null<PeerData*> peer);
++void SetupPeerIdLabel(
++	not_null<Ui::FlatLabel*> label,
++	not_null<PeerData*> peer,
++	not_null<Window::SessionController*> controller);
++
++} // namespace Tele

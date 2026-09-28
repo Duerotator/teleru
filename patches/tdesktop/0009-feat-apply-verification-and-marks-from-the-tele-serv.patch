@@ -1,0 +1,1383 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sat, 26 Sep 2026 21:10:53 +0300
+Subject: [PATCH] feat: apply verification and marks from the tele server
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ Telegram/SourceFiles/boxes/peer_list_box.cpp  |   7 +-
+ Telegram/SourceFiles/core/application.cpp     |   2 +
+ Telegram/SourceFiles/data/data_channel.cpp    |   2 +
+ .../SourceFiles/data/data_peer_values.cpp     |   5 +
+ Telegram/SourceFiles/data/data_session.cpp    |  13 +-
+ Telegram/SourceFiles/data/data_user.cpp       |   2 +
+ .../info/profile/info_profile_badge.cpp       |   6 +-
+ .../SourceFiles/settings/settings_tele.cpp    |  76 ++
+ Telegram/SourceFiles/tele/tele_badges.cpp     | 882 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_badges.h       |  25 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |  27 +
+ Telegram/SourceFiles/tele/tele_options.h      |   4 +
+ Telegram/SourceFiles/ui/unread_badge.cpp      |  43 +-
+ 14 files changed, 1061 insertions(+), 35 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_badges.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_badges.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index fd283c59cae2dedf4393c4848152bb07752dddfd..1c66697f8307b78a9312e49762f4c0d039ccb8ad 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2213,6 +2213,8 @@ nice_target_sources(Telegram ${src_loc}
+ PRIVATE
+     settings/settings_tele.cpp
+     settings/settings_tele.h
++    tele/tele_badges.cpp
++    tele/tele_badges.h
+     tele/tele_build.cpp
+     tele/tele_build.h
+     tele/tele_button_payload.cpp
+diff --git a/Telegram/SourceFiles/boxes/peer_list_box.cpp b/Telegram/SourceFiles/boxes/peer_list_box.cpp
+index d3c1df50d87802d96d5b2a78abc1f3ddd8b04777..c040923da3bd7c98b9649cab76312a7e5b6c02a6 100644
+--- a/Telegram/SourceFiles/boxes/peer_list_box.cpp
++++ b/Telegram/SourceFiles/boxes/peer_list_box.cpp
+@@ -1201,7 +1201,10 @@ PeerListContent::PeerListContent(
+ 
+ 	using UpdateFlag = Data::PeerUpdate::Flag;
+ 	_controller->session().changes().peerUpdates(
+-		UpdateFlag::Name | UpdateFlag::Photo | UpdateFlag::EmojiStatus
++		UpdateFlag::Name
++			| UpdateFlag::Photo
++			| UpdateFlag::EmojiStatus
++			| UpdateFlag::VerifyInfo
+ 	) | rpl::on_next([=](const Data::PeerUpdate &update) {
+ 		if (update.flags & UpdateFlag::Name) {
+ 			handleNameChanged(update.peer);
+@@ -1209,6 +1212,8 @@ PeerListContent::PeerListContent(
+ 		if (update.flags & UpdateFlag::Photo) {
+ 			invalidateLoadedUserpics();
+ 			this->update();
++		} else if (update.flags & UpdateFlag::VerifyInfo) {
++			this->update();
+ 		}
+ 	}, lifetime());
+ 
+diff --git a/Telegram/SourceFiles/core/application.cpp b/Telegram/SourceFiles/core/application.cpp
+index c1fffa359d39b5d7d0eee936f277c97c1cdcebf3..523596b434022c500d01f9953109bcb110e341f3 100644
+--- a/Telegram/SourceFiles/core/application.cpp
++++ b/Telegram/SourceFiles/core/application.cpp
+@@ -101,6 +101,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "core/cached_webview_availability.h"
+ #include "test/test_agent.h"
+ #include "tele/tele_updater.h"
++#include "tele/tele_badges.h"
+ 
+ #include <QtCore/QStandardPaths>
+ #include <QtCore/QMimeDatabase>
+@@ -351,6 +352,7 @@ void Application::run() {
+ 	Media::Encode::ClearStaleTempFiles();
+ 	Storage::ClearStaleArchiveFiles();
+ 	Tele::StartUpdater();
++	Tele::StartBadges();
+ 
+ 	if (MediaControlsManager::Supported()) {
+ 		_mediaControlsManager = std::make_unique<MediaControlsManager>();
+diff --git a/Telegram/SourceFiles/data/data_channel.cpp b/Telegram/SourceFiles/data/data_channel.cpp
+index caf4932cc588b2bfa0af5e49cebdd7b7179be455..7354482435b0c7009dc61a8e03a5d6b038027c1f 100644
+--- a/Telegram/SourceFiles/data/data_channel.cpp
++++ b/Telegram/SourceFiles/data/data_channel.cpp
+@@ -37,6 +37,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "api/api_invite_links.h"
+ #include "apiwrap.h"
+ #include "storage/storage_account.h"
++#include "tele/tele_badges.h"
+ #include "ui/unread_badge.h"
+ #include "window/notifications_manager.h"
+ 
+@@ -872,6 +873,7 @@ bool ChannelData::canRestrictParticipant(
+ }
+ 
+ void ChannelData::setBotVerifyDetails(Ui::BotVerifyDetails details) {
++	Tele::OverrideVerifyDetails(this, details);
+ 	if (!details) {
+ 		if (_botVerifyDetails) {
+ 			_botVerifyDetails = nullptr;
+diff --git a/Telegram/SourceFiles/data/data_peer_values.cpp b/Telegram/SourceFiles/data/data_peer_values.cpp
+index fe008ba767f0990b747c5fd24e14f52ec366030f..994987f25f94bdb1da213a9cb2d62f54cc9d3d14 100644
+--- a/Telegram/SourceFiles/data/data_peer_values.cpp
++++ b/Telegram/SourceFiles/data/data_peer_values.cpp
+@@ -19,6 +19,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "main/main_app_config.h"
+ #include "ui/image/image_prepare.h"
+ #include "base/unixtime.h"
++#include "tele/tele_badges.h"
+ 
+ namespace Data {
+ namespace {
+@@ -52,6 +53,9 @@ int OnlinePhraseChangeInSeconds(LastseenStatus status, TimeId now) {
+ }
+ 
+ std::optional<QString> OnlineTextSpecial(not_null<UserData*> user) {
++	if (const auto text = Tele::SupportText(user)) {
++		return text;
++	}
+ 	if (user->isNotificationsUser()) {
+ 		return tr::lng_status_service_notifications(tr::now);
+ 	} else if (user->isSupport()) {
+@@ -529,6 +533,7 @@ QString OnlineTextFull(not_null<UserData*> user, TimeId now) {
+ bool OnlineTextActive(not_null<UserData*> user, TimeId now) {
+ 	return !user->isServiceUser()
+ 		&& !user->isBot()
++		&& !Tele::SupportText(user)
+ 		&& user->lastseen().isOnline(now);
+ }
+ 
+diff --git a/Telegram/SourceFiles/data/data_session.cpp b/Telegram/SourceFiles/data/data_session.cpp
+index 49a6a033398c4a12eea57a022fd70c7ce8ddc7e0..edd9837e97a525f5ea7d9b498ca70e78513340cb 100644
+--- a/Telegram/SourceFiles/data/data_session.cpp
++++ b/Telegram/SourceFiles/data/data_session.cpp
+@@ -92,6 +92,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "base/call_delayed.h"
+ #include "base/random.h"
+ #include "spellcheck/spellcheck_highlight_syntax.h"
++#include "tele/tele_badges.h"
+ 
+ namespace Data {
+ namespace {
+@@ -738,9 +739,9 @@ not_null<UserData*> Session::processUser(const MTPUser &data) {
+ 			? std::optional<Data::Stories::PeerSourceState>()
+ 			: stories().peerSourceState(result, *data.vstories_max_id());
+ 		const auto flagsSet = (data.is_deleted() ? Flag::Deleted : Flag())
+-			| (data.is_verified() ? Flag::Verified : Flag())
+-			| (data.is_scam() ? Flag::Scam : Flag())
+-			| (data.is_fake() ? Flag::Fake : Flag())
++			| ((Tele::Verified(result) || data.is_verified()) ? Flag::Verified : Flag())
++			| ((Tele::Scam(result) || data.is_scam()) ? Flag::Scam : Flag())
++			| ((Tele::Fake(result) || data.is_fake()) ? Flag::Fake : Flag())
+ 			| (data.is_bot_inline_geo() ? Flag::BotInlineGeo : Flag())
+ 			| (data.is_bot_forum_view() ? Flag::Forum : Flag())
+ 			| (data.is_premium() ? Flag::Premium : Flag())
+@@ -1149,9 +1150,9 @@ not_null<PeerData*> Session::processChat(const MTPChat &data) {
+ 			? std::optional<Data::Stories::PeerSourceState>()
+ 			: stories().peerSourceState(channel, *data.vstories_max_id());
+ 		const auto flagsSet = (data.is_broadcast() ? Flag::Broadcast : Flag())
+-			| (data.is_verified() ? Flag::Verified : Flag())
+-			| (data.is_scam() ? Flag::Scam : Flag())
+-			| (data.is_fake() ? Flag::Fake : Flag())
++			| ((Tele::Verified(channel) || data.is_verified()) ? Flag::Verified : Flag())
++			| ((Tele::Scam(channel) || data.is_scam()) ? Flag::Scam : Flag())
++			| ((Tele::Fake(channel) || data.is_fake()) ? Flag::Fake : Flag())
+ 			| (data.is_megagroup() ? Flag::Megagroup : Flag())
+ 			| (data.is_gigagroup() ? Flag::Gigagroup : Flag())
+ 			| (hasUsername ? Flag::Username : Flag())
+diff --git a/Telegram/SourceFiles/data/data_user.cpp b/Telegram/SourceFiles/data/data_user.cpp
+index 74fb183636d1a9cdaef801d9304f2f4583f733b2..77fc630c57400ae5b15a7ed3c4ea8e0828d28fcf 100644
+--- a/Telegram/SourceFiles/data/data_user.cpp
++++ b/Telegram/SourceFiles/data/data_user.cpp
+@@ -37,6 +37,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "api/api_peer_photo.h"
+ #include "apiwrap.h"
+ #include "lang/lang_keys.h"
++#include "tele/tele_badges.h"
+ #include "window/notifications_manager.h"
+ 
+ namespace {
+@@ -739,6 +740,7 @@ bool UserData::isUsernameEditable(QString username) const {
+ }
+ 
+ void UserData::setBotVerifyDetails(Ui::BotVerifyDetails details) {
++	Tele::OverrideVerifyDetails(this, details);
+ 	if (!details) {
+ 		if (_botVerifyDetails) {
+ 			_botVerifyDetails = nullptr;
+diff --git a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+index 1b058ae69f4a956c8b6d48a10771c7fb039e4676..78acde4d2b78d1c3c331598082513585d944af96 100644
+--- a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
++++ b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+@@ -126,10 +126,8 @@ void Badge::setContent(Content content) {
+ 				Data::EmojiStatusCustomId(id),
+ 				[raw = _view.data()] { raw->update(); },
+ 				sizeTag());
+-			if (_content.badge == BadgeType::BotVerified) {
+-				_emojiStatus = MakeWrappedEmoji<Ui::Text::FirstFrameEmoji>(
+-					std::move(_emojiStatus));
+-			} else if (_customStatusLoopsLimit > 0) {
++			if (_content.badge != BadgeType::BotVerified
++				&& _customStatusLoopsLimit > 0) {
+ 				_emojiStatus = MakeWrappedEmoji<Ui::Text::LimitedLoopsEmoji>(
+ 					std::move(_emojiStatus),
+ 					_customStatusLoopsLimit);
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index aeb35a708bc86dc25614026e7d8b9758842a7716..c8ed5d1d7f5784edf07963c96531dec817c134e3 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -7,17 +7,22 @@
+ #include "lang/lang_keys.h"
+ #include "settings/settings_builder.h"
+ #include "settings/settings_common_session.h"
++#include "tele/tele_badges.h"
+ #include "tele/tele_build.h"
+ #include "tele/tele_options.h"
+ #include "tele/tele_updater.h"
+ #include "ui/boxes/confirm_box.h"
++#include "ui/layers/generic_box.h"
+ #include "ui/vertical_list.h"
+ #include "ui/widgets/buttons.h"
++#include "ui/widgets/fields/input_field.h"
+ #include "ui/widgets/labels.h"
+ #include "ui/wrap/vertical_layout.h"
+ #include "window/window_session_controller.h"
+ #include "styles/style_menu_icons.h"
++#include "styles/style_layers.h"
+ #include "styles/style_settings.h"
++#include "styles/style_widgets.h"
+ 
+ namespace Settings {
+ namespace {
+@@ -154,6 +159,72 @@ void AddUpdates(not_null<Ui::VerticalLayout*> container) {
+ 	});
+ }
+ 
++void ServerBox(not_null<Ui::GenericBox*> box) {
++	box->setTitle(rpl::single(u"tele server"_q));
++	const auto field = box->addRow(object_ptr<Ui::InputField>(
++		box,
++		st::defaultInputField,
++		rpl::single(u"Server URL"_q),
++		::Tele::ServerUrl()));
++	const auto save = [=] {
++		const auto url = ::Tele::NormalizeServerUrl(field->getLastText());
++		if (!url) {
++			field->showError();
++			return;
++		}
++		::Tele::SetServerUrl(*url);
++		box->closeBox();
++	};
++	field->submits(
++	) | rpl::on_next([=](Qt::KeyboardModifiers) {
++		save();
++	}, field->lifetime());
++	box->setFocusCallback([=] {
++		field->setFocusFast();
++	});
++	box->addButton(tr::lng_settings_save(), save);
++	box->addButton(tr::lng_cancel(), [=] {
++		box->closeBox();
++	});
++	box->addLeftButton(rpl::single(u"Reset"_q), [=] {
++		::Tele::SetServerUrl(base::options::lookup<QString>(
++			::Tele::kOptionServerUrl).defaultValue());
++		box->closeBox();
++	});
++}
++
++void AddServer(
++		not_null<Ui::VerticalLayout*> container,
++		not_null<Window::SessionController*> controller) {
++	const auto &option = base::options::lookup<QString>(
++		::Tele::kOptionServerUrl);
++	AddButtonWithLabel(
++		container,
++		rpl::single(u"Server"_q),
++		::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
++			return url.isEmpty() ? u"off"_q : url;
++		}),
++		st::settingsButtonNoIcon
++	)->setClickedCallback([=] {
++		controller->show(Box(ServerBox));
++	});
++	container->add(object_ptr<Button>(
++		container,
++		rpl::single(u"Refresh now"_q),
++		st::settingsButtonNoIcon
++	))->setClickedCallback([=] {
++		::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
++			controller->showToast(text);
++		}));
++	});
++	container->add(
++		object_ptr<Ui::FlatLabel>(
++			container,
++			option.description(),
++			st::settingsExperimentalAbout),
++		st::settingsExperimentalAboutPadding);
++}
++
+ TeleSection::TeleSection(
+ 	QWidget *parent,
+ 	not_null<Window::SessionController*> controller)
+@@ -185,6 +256,11 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
++	Ui::AddSubsectionTitle(content, rpl::single(u"Server"_q));
++	AddServer(content, controller());
++	Ui::AddSkip(content);
++	Ui::AddDivider(content);
++	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Updates"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
+ 	AddUpdates(content);
+diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..f1995c405d074b6e774c851ef9d97136a4ef1ba7
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_badges.cpp
+@@ -0,0 +1,882 @@
++#include "tele/tele_badges.h"
++
++#include "apiwrap.h"
++#include "base/timer.h"
++#include "base/weak_ptr.h"
++#include "core/application.h"
++#include "core/version.h"
++#include "data/data_changes.h"
++#include "data/data_channel.h"
++#include "data/data_session.h"
++#include "data/data_user.h"
++#include "lang/lang_keys.h"
++#include "main/main_account.h"
++#include "main/main_domain.h"
++#include "main/main_session.h"
++#include "settings.h"
++#include "tele/tele_build.h"
++#include "tele/tele_options.h"
++#include "ui/text/text_entity.h"
++#include "ui/unread_badge.h"
++
++#include <QtCore/QCoreApplication>
++#include <QtCore/QCryptographicHash>
++#include <QtCore/QJsonDocument>
++#include <QtCore/QJsonObject>
++#include <QtCore/QPointer>
++#include <QtCore/QSaveFile>
++#include <QtCore/QUrl>
++#include <QtNetwork/QNetworkAccessManager>
++#include <QtNetwork/QNetworkReply>
++#include <QtNetwork/QNetworkRequest>
++
++#include <openssl/core_names.h>
++#include <openssl/kdf.h>
++#include <openssl/params.h>
++
++#include <cstring>
++#include <deque>
++#include <unordered_map>
++#include <unordered_set>
++
++namespace Tele {
++namespace {
++
++constexpr auto kFirstFetchDelay = 10 * crl::time(1000);
++constexpr auto kFetchInterval = 10 * 60 * crl::time(1000);
++constexpr auto kTransferTimeout = 60 * 1000;
++constexpr auto kMaxFeedSize = qint64(4 * 1024 * 1024);
++constexpr auto kMaxEntries = 100000;
++constexpr auto kMaxArgon2Work = 65536;
++constexpr auto kMaxCacheSize = 2 * kMaxFeedSize;
++constexpr auto kBatchSize = 64;
++constexpr auto kTagSize = 16;
++constexpr auto kMaxSupportText = 64;
++constexpr auto kArgon2Version = uint32_t(0x13);
++constexpr auto kChannelShift = int64(1000000000000LL);
++constexpr auto kTestBit = BareId(1) << 63;
++
++using Tag = std::array<uchar, kTagSize>;
++using PeerKey = BareId;
++
++struct Params {
++	QByteArray salt;
++	int memory = 0;
++	int passes = 0;
++	int lanes = 0;
++
++	friend inline bool operator==(const Params &, const Params &) = default;
++};
++
++struct Entry {
++	bool checkmark = false;
++	bool scam = false;
++	bool fake = false;
++	bool support = false;
++	QString supportText;
++	Ui::BotVerifyDetails details;
++
++	friend inline bool operator==(const Entry &, const Entry &) = default;
++};
++
++struct Feed {
++	Params params;
++	std::vector<std::pair<Tag, Entry>> entries;
++
++	[[nodiscard]] const Entry *find(const Tag &tag) const {
++		const auto i = ranges::lower_bound(
++			entries,
++			tag,
++			ranges::less(),
++			&std::pair<Tag, Entry>::first);
++		return (i != end(entries) && i->first == tag) ? &i->second : nullptr;
++	}
++};
++
++[[nodiscard]] QString CachePath() {
++	return cWorkingDir() + u"tdata/tele_badges.json"_q;
++}
++
++[[nodiscard]] QByteArray UserAgent() {
++	return u"tele/%1-tele.%2"_q.arg(
++		QString::fromLatin1(AppVersionStr)).arg(BuildNumber()).toLatin1();
++}
++
++[[nodiscard]] PeerKey Key(not_null<PeerData*> peer) {
++	if (!peer->isUser() && !peer->isChannel()) {
++		return 0;
++	}
++	return peer->id.value
++		| (peer->session().isTestMode() ? kTestBit : PeerKey());
++}
++
++[[nodiscard]] QByteArray Password(PeerKey key) {
++	const auto id = PeerId(key & ~kTestBit);
++	const auto botApiId = peerIsUser(id)
++		? int64(peerToUser(id).bare)
++		: -(kChannelShift + int64(peerToChannel(id).bare));
++	return ((key & kTestBit) ? "test:"_q : "prod:"_q)
++		+ QByteArray::number(botApiId);
++}
++
++[[nodiscard]] std::optional<Tag> Derive(
++		EVP_KDF *kdf,
++		const Params &params,
++		const QByteArray &password) {
++	const auto ctx = EVP_KDF_CTX_new(kdf);
++	if (!ctx) {
++		return std::nullopt;
++	}
++	auto iter = uint32_t(params.passes);
++	auto memcost = uint32_t(params.memory);
++	auto lanes = uint32_t(params.lanes);
++	auto threads = uint32_t(1);
++	auto version = kArgon2Version;
++	auto size = size_t(kTagSize);
++	const OSSL_PARAM list[] = {
++		OSSL_PARAM_construct_octet_string(
++			OSSL_KDF_PARAM_PASSWORD,
++			const_cast<char*>(password.constData()),
++			size_t(password.size())),
++		OSSL_PARAM_construct_octet_string(
++			OSSL_KDF_PARAM_SALT,
++			const_cast<char*>(params.salt.constData()),
++			size_t(params.salt.size())),
++		OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ITER, &iter),
++		OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_MEMCOST, &memcost),
++		OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_LANES, &lanes),
++		OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_THREADS, &threads),
++		OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_VERSION, &version),
++		OSSL_PARAM_construct_size_t(OSSL_KDF_PARAM_SIZE, &size),
++		OSSL_PARAM_construct_end(),
++	};
++	auto result = Tag();
++	const auto ok = EVP_KDF_derive(ctx, result.data(), result.size(), list);
++	EVP_KDF_CTX_free(ctx);
++	return (ok == 1) ? std::make_optional(result) : std::nullopt;
++}
++
++[[nodiscard]] std::vector<std::optional<Tag>> DeriveAll(
++		const Params &params,
++		const std::vector<QByteArray> &passwords) {
++	auto result = std::vector<std::optional<Tag>>(passwords.size());
++	const auto kdf = EVP_KDF_fetch(nullptr, "ARGON2ID", nullptr);
++	if (!kdf) {
++		return result;
++	}
++	for (auto i = 0; i != int(passwords.size()); ++i) {
++		result[i] = Derive(kdf, params, passwords[i]);
++	}
++	EVP_KDF_free(kdf);
++	return result;
++}
++
++[[nodiscard]] std::optional<QByteArray> DecodeBase64(
++		const QString &text,
++		QByteArray::Base64Options options) {
++	const auto decoded = QByteArray::fromBase64Encoding(
++		text.toLatin1(),
++		options | QByteArray::AbortOnBase64DecodingErrors);
++	if (!decoded) {
++		return std::nullopt;
++	}
++	return decoded.decoded;
++}
++
++[[nodiscard]] std::optional<int> ParseInt(
++		const QJsonValue &value,
++		int min,
++		int max) {
++	if (!value.isDouble()) {
++		return std::nullopt;
++	}
++	const auto number = value.toDouble();
++	if (number < min || number > max || number != std::floor(number)) {
++		return std::nullopt;
++	}
++	return int(number);
++}
++
++[[nodiscard]] bool Present(const QJsonValue &value) {
++	return !value.isUndefined() && !value.isNull();
++}
++
++[[nodiscard]] std::optional<Entry> ParseEntry(const QJsonValue &value) {
++	if (!value.isObject()) {
++		return std::nullopt;
++	}
++	const auto fields = value.toObject();
++	const auto checkmark = fields.value(u"checkmark"_q);
++	const auto scam = fields.value(u"scam"_q);
++	const auto fake = fields.value(u"fake"_q);
++	const auto support = fields.value(u"support"_q);
++	const auto supportText = fields.value(u"supportText"_q);
++	const auto icon = fields.value(u"icon"_q);
++	const auto description = fields.value(u"description"_q);
++	if ((Present(checkmark) && !checkmark.isBool())
++		|| (Present(scam) && !scam.isBool())
++		|| (Present(fake) && !fake.isBool())
++		|| (Present(support) && !support.isBool())
++		|| (Present(supportText) && !supportText.isString())
++		|| (Present(icon) && !icon.isString())
++		|| (Present(description) && !description.isString())) {
++		return std::nullopt;
++	}
++	auto result = Entry{
++		.checkmark = checkmark.toBool(),
++		.scam = scam.toBool(),
++		.fake = fake.toBool(),
++		.support = support.toBool(),
++		.supportText = supportText.toString().trimmed(),
++	};
++	if (Present(supportText)
++		&& (result.supportText.isEmpty()
++			|| result.supportText.toUcs4().size() > kMaxSupportText)) {
++		return std::nullopt;
++	}
++	if (!Present(icon)) {
++		return result;
++	}
++	const auto text = icon.toString();
++	auto ok = false;
++	const auto iconId = text.toULongLong(&ok);
++	if (!ok || text.isEmpty() || !text.front().isDigit()) {
++		return std::nullopt;
++	} else if (iconId) {
++		result.details = Ui::BotVerifyDetails{
++			.iconId = DocumentId(iconId),
++			.description = TextUtilities::ParseEntities(
++				description.toString(),
++				TextParseLinks),
++		};
++	}
++	return result;
++}
++
++[[nodiscard]] std::optional<Feed> ParseFeed(
++		const QJsonObject &object,
++		QString &error) {
++	const auto fail = [&](const QString &what) {
++		error = what;
++		return std::optional<Feed>();
++	};
++	const auto salt = DecodeBase64(
++		object.value(u"salt"_q).toString(),
++		QByteArray::Base64Encoding);
++	if (!salt || salt->size() < 8 || salt->size() > 64) {
++		return fail(u"bad salt"_q);
++	}
++	const auto argon2 = object.value(u"argon2"_q).toObject();
++	const auto memory = ParseInt(argon2.value(u"memory"_q), 1024, 65536);
++	const auto passes = ParseInt(argon2.value(u"passes"_q), 1, 8);
++	const auto lanes = ParseInt(argon2.value(u"lanes"_q), 1, 8);
++	if (!memory || !passes || !lanes || *memory * *passes > kMaxArgon2Work) {
++		return fail(u"bad argon2 params"_q);
++	}
++	const auto peers = object.value(u"peers"_q);
++	if (!peers.isObject()) {
++		return fail(u"bad peers"_q);
++	}
++	const auto list = peers.toObject();
++	if (list.size() > kMaxEntries) {
++		return fail(u"too many peers"_q);
++	}
++	auto result = Feed{
++		.params = Params{
++			.salt = *salt,
++			.memory = *memory,
++			.passes = *passes,
++			.lanes = *lanes,
++		},
++	};
++	result.entries.reserve(size_t(list.size()));
++	for (auto i = list.begin(); i != list.end(); ++i) {
++		const auto key = DecodeBase64(
++			i.key(),
++			QByteArray::Base64UrlEncoding | QByteArray::OmitTrailingEquals);
++		if (!key || key->size() != kTagSize) {
++			return fail(u"bad key %1"_q.arg(i.key()));
++		}
++		const auto entry = ParseEntry(i.value());
++		if (!entry) {
++			return fail(u"bad entry %1"_q.arg(i.key()));
++		}
++		auto tag = Tag();
++		std::memcpy(tag.data(), key->constData(), kTagSize);
++		result.entries.emplace_back(tag, *entry);
++	}
++	ranges::sort(result.entries, ranges::less(), &std::pair<Tag, Entry>::first);
++	return result;
++}
++
++template <typename Callback>
++void EnumerateSessions(Callback &&callback) {
++	if (!Core::IsAppLaunched()) {
++		return;
++	}
++	for (const auto &[index, account] : Core::App().domain().accounts()) {
++		if (const auto session = account->maybeSession()) {
++			callback(not_null<Main::Session*>(session));
++		}
++	}
++}
++
++template <typename Peer, typename Flag>
++void Apply(
++		not_null<Peer*> peer,
++		Flag verified,
++		Flag scam,
++		Flag fake,
++		const Entry &was,
++		const Entry &now) {
++	const auto flag = [&](Flag value, bool wasOn, bool nowOn) {
++		if (nowOn) {
++			peer->addFlags(value);
++		} else if (wasOn) {
++			peer->removeFlags(value);
++		}
++	};
++	flag(verified, was.checkmark, now.checkmark);
++	flag(scam, was.scam, now.scam);
++	flag(fake, was.fake, now.fake);
++	if (now.details) {
++		peer->setBotVerifyDetails(now.details);
++	} else if (was.details) {
++		peer->setBotVerifyDetails({});
++	}
++	if ((was.checkmark && !now.checkmark)
++		|| (was.scam && !now.scam)
++		|| (was.fake && !now.fake)
++		|| (was.details && !now.details)) {
++		peer->session().api().requestFullPeer(peer);
++	}
++}
++
++class Badges final : public QObject, public base::has_weak_ptr {
++public:
++	Badges();
++
++	[[nodiscard]] bool active() const;
++	[[nodiscard]] const Entry *lookup(PeerKey key);
++	[[nodiscard]] const Entry *applied(PeerKey key) const;
++	void refreshNow(Fn<void(QString)> done);
++
++private:
++	void answer(const QString &text);
++	void loadCache();
++	void writeCache(const QJsonObject &feed) const;
++	void fetch();
++	void fetched(
++		not_null<QNetworkReply*> reply,
++		const QByteArray &body,
++		bool tooLarge);
++	void fail(const QString &error);
++	void setFeed(std::optional<Feed> feed);
++	void reset();
++	void rehash();
++	void queue(PeerKey key);
++	void scheduleBatch();
++	void runBatch();
++	void hashed(
++		uint64 generation,
++		const std::vector<PeerKey> &keys,
++		const std::vector<std::optional<Tag>> &tags);
++	void refresh(PeerKey key);
++	void push(PeerKey key, const Entry &was, const Entry &now) const;
++
++	QNetworkAccessManager _manager;
++	QPointer<QNetworkReply> _reply;
++	base::Timer _timer;
++	QString _url;
++	QString _etag;
++	std::optional<Feed> _feed;
++	std::unordered_map<PeerKey, Tag> _tags;
++	std::unordered_map<PeerKey, Entry> _applied;
++	std::unordered_set<PeerKey> _queued;
++	std::unordered_set<PeerKey> _failed;
++	std::deque<PeerKey> _queue;
++	std::vector<PeerKey> _inFlight;
++	std::vector<Fn<void(QString)>> _waiting;
++	uint64 _generation = 0;
++	bool _hashing = false;
++	bool _batchScheduled = false;
++	rpl::lifetime _lifetime;
++
++};
++
++QPointer<Badges> Instance;
++
++Badges::Badges()
++: QObject(QCoreApplication::instance())
++, _timer([=] { fetch(); }) {
++	loadCache();
++	_timer.callOnce(kFirstFetchDelay);
++	ServerUrlValue(
++	) | rpl::skip(1) | rpl::on_next([=](const QString &) {
++		fetch();
++	}, _lifetime);
++}
++
++void Badges::refreshNow(Fn<void(QString)> done) {
++	_waiting.push_back(std::move(done));
++	fetch();
++}
++
++void Badges::answer(const QString &text) {
++	for (const auto &callback : base::take(_waiting)) {
++		callback(text);
++	}
++}
++
++bool Badges::active() const {
++	return _feed && !_feed->entries.empty();
++}
++
++const Entry *Badges::lookup(PeerKey key) {
++	if (const auto i = _applied.find(key); i != end(_applied)) {
++		return &i->second;
++	} else if (!_tags.contains(key) && !_failed.contains(key)) {
++		queue(key);
++	}
++	return nullptr;
++}
++
++const Entry *Badges::applied(PeerKey key) const {
++	const auto i = _applied.find(key);
++	return (i != end(_applied)) ? &i->second : nullptr;
++}
++
++void Badges::loadCache() {
++	const auto url = NormalizeServerUrl(ServerUrl()).value_or(QString());
++	if (url.isEmpty()) {
++		return;
++	}
++	auto file = QFile(CachePath());
++	if (!file.open(QIODevice::ReadOnly) || file.size() > kMaxCacheSize) {
++		return;
++	}
++	const auto object = QJsonDocument::fromJson(file.readAll()).object();
++	if (object.value(u"url"_q).toString() != url) {
++		return;
++	}
++	auto error = QString();
++	auto feed = ParseFeed(object.value(u"feed"_q).toObject(), error);
++	if (!feed) {
++		LOG(("Tele Badges Error: bad cache, %1").arg(error));
++		return;
++	}
++	_url = url;
++	_etag = object.value(u"etag"_q).toString();
++	setFeed(std::move(feed));
++}
++
++void Badges::writeCache(const QJsonObject &feed) const {
++	QDir().mkpath(cWorkingDir() + u"tdata"_q);
++	auto object = QJsonObject();
++	object.insert(u"url"_q, _url);
++	object.insert(u"etag"_q, _etag);
++	object.insert(u"feed"_q, feed);
++	auto file = QSaveFile(CachePath());
++	if (!file.open(QIODevice::WriteOnly)
++		|| file.write(QJsonDocument(object).toJson(QJsonDocument::Compact))
++			< 0
++		|| !file.commit()) {
++		LOG(("Tele Badges Error: can't write %1").arg(CachePath()));
++	}
++}
++
++void Badges::fetch() {
++	_timer.cancel();
++	if (const auto reply = base::take(_reply).data()) {
++		reply->disconnect(this);
++		reply->abort();
++		reply->deleteLater();
++	}
++	const auto url = NormalizeServerUrl(ServerUrl());
++	if (!url || url->isEmpty()) {
++		if (!url) {
++			LOG(("Tele Badges Error: bad server url %1").arg(ServerUrl()));
++		}
++		_url = _etag = QString();
++		setFeed(std::nullopt);
++		QFile::remove(CachePath());
++		answer(url
++			? u"the tele server is off"_q
++			: u"the tele server url is invalid"_q);
++		return;
++	} else if (*url != _url) {
++		_url = *url;
++		_etag = QString();
++		setFeed(std::nullopt);
++	}
++	auto request = QNetworkRequest(QUrl(_url + u"/v1/badges"_q));
++	request.setAttribute(
++		QNetworkRequest::RedirectPolicyAttribute,
++		QNetworkRequest::SameOriginRedirectPolicy);
++	request.setTransferTimeout(kTransferTimeout);
++	request.setRawHeader("User-Agent", UserAgent());
++	if (!_etag.isEmpty()) {
++		request.setRawHeader("If-None-Match", _etag.toLatin1());
++	}
++	const auto reply = _manager.get(request);
++	_reply = reply;
++	const auto body = std::make_shared<QByteArray>();
++	const auto tooLarge = std::make_shared<bool>(false);
++	const auto take = [=] {
++		if (!*tooLarge) {
++			body->append(reply->read(kMaxFeedSize + 1 - body->size()));
++			*tooLarge = (body->size() > kMaxFeedSize);
++		}
++	};
++	connect(reply, &QNetworkReply::readyRead, this, [=] {
++		take();
++		if (*tooLarge) {
++			reply->abort();
++		}
++	});
++	connect(reply, &QNetworkReply::finished, this, [=] {
++		reply->deleteLater();
++		if (_reply == reply) {
++			_reply = nullptr;
++		}
++		take();
++		fetched(reply, *body, *tooLarge);
++	});
++}
++
++void Badges::fetched(
++		not_null<QNetworkReply*> reply,
++		const QByteArray &body,
++		bool tooLarge) {
++	const auto code = reply->attribute(
++		QNetworkRequest::HttpStatusCodeAttribute).toInt();
++	if (tooLarge) {
++		fail(u"response is too large"_q);
++		return;
++	} else if (reply->error() != QNetworkReply::NoError) {
++		fail(u"network error: %1"_q.arg(reply->errorString()));
++		return;
++	} else if (code == 304) {
++		_timer.callOnce(kFetchInterval);
++		answer(u"server data is up to date"_q);
++		return;
++	} else if (code != 200) {
++		fail(u"unexpected http status %1"_q.arg(code));
++		return;
++	}
++	auto parseError = QJsonParseError();
++	const auto document = QJsonDocument::fromJson(body, &parseError);
++	if (parseError.error != QJsonParseError::NoError
++		|| !document.isObject()) {
++		fail(u"bad json"_q);
++		return;
++	}
++	auto error = QString();
++	auto feed = ParseFeed(document.object(), error);
++	if (!feed) {
++		fail(u"bad feed, %1"_q.arg(error));
++		return;
++	}
++	_etag = u"\"%1\""_q.arg(QString::fromLatin1(
++		QCryptographicHash::hash(body, QCryptographicHash::Sha256).toHex()));
++	writeCache(document.object());
++	setFeed(std::move(feed));
++	_timer.callOnce(kFetchInterval);
++	answer(u"server data updated"_q);
++}
++
++void Badges::fail(const QString &error) {
++	LOG(("Tele Badges Error: %1").arg(error));
++	_timer.callOnce(kFetchInterval);
++	answer(u"couldn't refresh the server data: %1"_q.arg(error));
++}
++
++void Badges::setFeed(std::optional<Feed> feed) {
++	const auto wasActive = active();
++	const auto was = _feed ? _feed->params : Params();
++	_feed = std::move(feed);
++	if (!active()) {
++		reset();
++		return;
++	} else if (!wasActive || _feed->params != was) {
++		rehash();
++	} else {
++		for (const auto &[key, tag] : _tags) {
++			refresh(key);
++		}
++	}
++	runBatch();
++}
++
++void Badges::reset() {
++	++_generation;
++	_tags.clear();
++	_queued.clear();
++	_failed.clear();
++	_queue.clear();
++	_inFlight.clear();
++	const auto applied = base::take(_applied);
++	for (const auto &[key, entry] : applied) {
++		push(key, entry, Entry());
++	}
++}
++
++void Badges::rehash() {
++	++_generation;
++	auto keys = std::vector<PeerKey>();
++	keys.reserve(_tags.size() + _inFlight.size() + _queue.size());
++	for (const auto &[key, tag] : _tags) {
++		keys.push_back(key);
++	}
++	for (const auto &[key, entry] : _applied) {
++		keys.push_back(key);
++	}
++	keys.insert(end(keys), begin(_inFlight), end(_inFlight));
++	keys.insert(end(keys), begin(_queue), end(_queue));
++	_tags.clear();
++	_queued.clear();
++	_failed.clear();
++	_queue.clear();
++	_inFlight.clear();
++	for (const auto key : keys) {
++		queue(key);
++	}
++	const auto add = [&](not_null<PeerData*> peer) {
++		if (peer->isMinimalLoaded()) {
++			if (const auto key = Key(peer)) {
++				queue(key);
++			}
++		}
++	};
++	EnumerateSessions([&](not_null<Main::Session*> session) {
++		session->data().enumerateUsers(add);
++		session->data().enumerateGroups(add);
++		session->data().enumerateBroadcasts(add);
++	});
++}
++
++void Badges::queue(PeerKey key) {
++	if (_queued.emplace(key).second) {
++		_queue.push_back(key);
++		scheduleBatch();
++	}
++}
++
++void Badges::scheduleBatch() {
++	if (_batchScheduled) {
++		return;
++	}
++	_batchScheduled = true;
++	crl::on_main(base::make_weak(this), [=] {
++		_batchScheduled = false;
++		runBatch();
++	});
++}
++
++void Badges::runBatch() {
++	if (_hashing || _queue.empty() || !active()) {
++		return;
++	}
++	const auto count = std::min(int(_queue.size()), kBatchSize);
++	_inFlight.assign(begin(_queue), begin(_queue) + count);
++	_queue.erase(begin(_queue), begin(_queue) + count);
++	auto passwords = std::vector<QByteArray>();
++	passwords.reserve(count);
++	for (const auto key : _inFlight) {
++		passwords.push_back(Password(key));
++	}
++	_hashing = true;
++	crl::async([
++		=,
++		weak = base::make_weak(this),
++		keys = _inFlight,
++		params = _feed->params,
++		generation = _generation,
++		passwords = std::move(passwords)
++	] {
++		auto tags = DeriveAll(params, passwords);
++		crl::on_main(weak, [=, tags = std::move(tags)] {
++			hashed(generation, keys, tags);
++		});
++	});
++}
++
++void Badges::hashed(
++		uint64 generation,
++		const std::vector<PeerKey> &keys,
++		const std::vector<std::optional<Tag>> &tags) {
++	_hashing = false;
++	if (generation != _generation) {
++		runBatch();
++		return;
++	}
++	_inFlight.clear();
++	auto failed = 0;
++	for (auto i = 0; i != int(keys.size()); ++i) {
++		const auto key = keys[i];
++		_queued.erase(key);
++		if (const auto &tag = tags[i]) {
++			_tags[key] = *tag;
++			refresh(key);
++		} else {
++			_failed.emplace(key);
++			++failed;
++		}
++	}
++	if (failed) {
++		LOG(("Tele Badges Error: argon2id failed for %1 peers").arg(failed));
++	}
++	runBatch();
++}
++
++void Badges::refresh(PeerKey key) {
++	auto now = Entry();
++	if (const auto tag = _tags.find(key); tag != end(_tags) && _feed) {
++		if (const auto entry = _feed->find(tag->second)) {
++			now = *entry;
++		}
++	}
++	const auto i = _applied.find(key);
++	const auto was = (i != end(_applied)) ? i->second : Entry();
++	if (now == was) {
++		return;
++	} else if (now == Entry()) {
++		_applied.erase(i);
++	} else {
++		_applied[key] = now;
++	}
++	push(key, was, now);
++}
++
++void Badges::push(PeerKey key, const Entry &was, const Entry &now) const {
++	const auto test = (key & kTestBit) != 0;
++	const auto id = PeerId(key & ~kTestBit);
++	EnumerateSessions([&](not_null<Main::Session*> session) {
++		if (session->isTestMode() != test) {
++			return;
++		}
++		const auto peer = session->data().peerLoaded(id);
++		if (!peer) {
++			return;
++		} else if (const auto user = peer->asUser()) {
++			using Flag = UserDataFlag;
++			Apply<UserData>(
++				user,
++				Flag::Verified,
++				Flag::Scam,
++				Flag::Fake,
++				was,
++				now);
++		} else if (const auto channel = peer->asChannel()) {
++			using Flag = ChannelDataFlag;
++			Apply<ChannelData>(
++				channel,
++				Flag::Verified,
++				Flag::Scam,
++				Flag::Fake,
++				was,
++				now);
++		}
++		session->changes().peerUpdated(
++			peer,
++			Data::PeerUpdate::Flag::EmojiStatus
++				| Data::PeerUpdate::Flag::VerifyInfo
++				| Data::PeerUpdate::Flag::OnlineStatus);
++	});
++}
++
++[[nodiscard]] const Entry *Lookup(not_null<PeerData*> peer) {
++	if (!Instance || !Instance->active()) {
++		return nullptr;
++	}
++	const auto key = Key(peer);
++	return key ? Instance->lookup(key) : nullptr;
++}
++
++} // namespace
++
++void StartBadges() {
++	if (!Instance) {
++		Instance = new Badges();
++	}
++}
++
++void RefreshBadges(Fn<void(QString)> done) {
++	if (Instance) {
++		Instance->refreshNow(std::move(done));
++	} else {
++		done(u"the tele server isn't running yet"_q);
++	}
++}
++
++bool Verified(not_null<PeerData*> peer) {
++	const auto entry = Lookup(peer);
++	return entry && entry->checkmark;
++}
++
++bool Scam(not_null<PeerData*> peer) {
++	const auto entry = Lookup(peer);
++	return entry && entry->scam;
++}
++
++bool Fake(not_null<PeerData*> peer) {
++	const auto entry = Lookup(peer);
++	return entry && entry->fake;
++}
++
++std::optional<QString> SupportText(not_null<UserData*> user) {
++	const auto entry = user->isNotificationsUser() ? nullptr : Lookup(user);
++	if (!entry) {
++		return std::nullopt;
++	} else if (entry->support) {
++		return entry->supportText.isEmpty()
++			? tr::lng_status_support(tr::now)
++			: entry->supportText;
++	} else if (!entry->supportText.isEmpty()
++		&& (user->isSupport()
++			|| (user->isServiceUser() && !user->isBot()))) {
++		return entry->supportText;
++	}
++	return std::nullopt;
++}
++
++void OverrideVerifyDetails(
++		not_null<PeerData*> peer,
++		Ui::BotVerifyDetails &details) {
++	if (!Instance || !Instance->active()) {
++		return;
++	}
++	const auto key = Key(peer);
++	const auto entry = key ? Instance->applied(key) : nullptr;
++	if (entry && entry->details) {
++		details = entry->details;
++	}
++}
++
++std::optional<QString> NormalizeServerUrl(const QString &url) {
++	auto result = url.trimmed();
++	while (result.endsWith('/')) {
++		result.chop(1);
++	}
++	if (result.isEmpty()) {
++		return QString();
++	}
++	const auto parsed = QUrl(result, QUrl::StrictMode);
++	const auto scheme = parsed.scheme();
++	const auto host = parsed.host();
++	if (!parsed.isValid()
++		|| host.isEmpty()
++		|| parsed.hasQuery()
++		|| parsed.hasFragment()
++		|| !parsed.userInfo().isEmpty()) {
++		return std::nullopt;
++	} else if (scheme == u"https"_q) {
++		return result;
++	} else if (scheme == u"http"_q
++		&& (host == u"127.0.0.1"_q || host == u"localhost"_q)) {
++		return result;
++	}
++	return std::nullopt;
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_badges.h b/Telegram/SourceFiles/tele/tele_badges.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..fb9fd198c80850ccbeb1b3640558f647d902016a
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_badges.h
+@@ -0,0 +1,25 @@
++#pragma once
++
++class PeerData;
++class UserData;
++
++namespace Ui {
++struct BotVerifyDetails;
++} // namespace Ui
++
++namespace Tele {
++
++void StartBadges();
++void RefreshBadges(Fn<void(QString)> done);
++
++[[nodiscard]] bool Verified(not_null<PeerData*> peer);
++[[nodiscard]] bool Scam(not_null<PeerData*> peer);
++[[nodiscard]] bool Fake(not_null<PeerData*> peer);
++[[nodiscard]] std::optional<QString> SupportText(not_null<UserData*> user);
++void OverrideVerifyDetails(
++	not_null<PeerData*> peer,
++	Ui::BotVerifyDetails &details);
++
++[[nodiscard]] std::optional<QString> NormalizeServerUrl(const QString &url);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index fb4c3431cf9265c13c9ba7b118144be462466190..2100ac4f7eb5ea69ef0561b91a581ff93c53021e 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -9,6 +9,7 @@ const char kOptionInvisibleStories[] = "tele-invisible-stories";
+ const char kOptionButtonPayloads[] = "tele-button-payloads";
+ const char kOptionAutoUpdate[] = "tele-auto-update";
+ const char kOptionGroupQuickReplies[] = "tele-group-quick-replies";
++const char kOptionServerUrl[] = "tele-server-url";
+ 
+ namespace {
+ 
+@@ -54,6 +55,14 @@ base::options::toggle GroupQuickRepliesOption({
+ 		"keyboards, via-bot labels and message effects are dropped.",
+ });
+ 
++base::options::option<QString> ServerUrlOption({
++	.id = kOptionServerUrl,
++	.name = "tele server",
++	.description = "Where tele gets extra account data, like "
++		"checkmarks and custom verification. Empty turns it off.",
++	.defaultValue = u"https://tele.starkow.dev"_q,
++});
++
+ } // namespace
+ 
+ bool HideStories() {
+@@ -86,4 +95,22 @@ bool GroupQuickReplies() {
+ 	return GroupQuickRepliesOption.value();
+ }
+ 
++QString ServerUrl() {
++	return ServerUrlOption.value();
++}
++
++void SetServerUrl(const QString &url) {
++	ServerUrlOption.set(url);
++}
++
++rpl::producer<QString> ServerUrlValue() {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		ServerUrlOption.changes()
++	) | rpl::map([] {
++		return ServerUrlOption.value();
++	});
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index f26f4c43d836e20b3190a6432e52c3209a38e5a9..9fcfcd4a00d5ea22082f6e214ad8b4b68a309fa8 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -7,6 +7,7 @@ extern const char kOptionInvisibleStories[];
+ extern const char kOptionButtonPayloads[];
+ extern const char kOptionAutoUpdate[];
+ extern const char kOptionGroupQuickReplies[];
++extern const char kOptionServerUrl[];
+ 
+ [[nodiscard]] bool HideStories();
+ [[nodiscard]] bool InvisibleStories();
+@@ -14,5 +15,8 @@ extern const char kOptionGroupQuickReplies[];
+ [[nodiscard]] bool AutoUpdate();
+ [[nodiscard]] rpl::producer<bool> AutoUpdateValue();
+ [[nodiscard]] bool GroupQuickReplies();
++[[nodiscard]] QString ServerUrl();
++void SetServerUrl(const QString &url);
++[[nodiscard]] rpl::producer<QString> ServerUrlValue();
+ 
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/ui/unread_badge.cpp b/Telegram/SourceFiles/ui/unread_badge.cpp
+index 4c417cb2ebceed208d2f05ee17033566721ac9d4..37bb050311647243b88629f3b9e10ad4adf55ad8 100644
+--- a/Telegram/SourceFiles/ui/unread_badge.cpp
++++ b/Telegram/SourceFiles/ui/unread_badge.cpp
+@@ -46,7 +46,6 @@ private:
+ 	const int _innerSize = 0;
+ 	const int _outerSize = 0;
+ 	QImage _frame;
+-	QColor _frameColor;
+ 
+ };
+ 
+@@ -68,35 +67,30 @@ QString ScaledBotVerifiedEmoji::entityData() {
+ }
+ 
+ void ScaledBotVerifiedEmoji::paint(QPainter &p, const Context &context) {
+-	if (_frame.isNull() || _frameColor != context.textColor) {
+-		if (!_wrapped->ready()) {
+-			return;
+-		}
+-		const auto ratio = style::DevicePixelRatio();
+-		const auto sourcePx = Data::FrameSizeFromTag(
+-			Data::CustomEmojiSizeTag::Isolated);
++	if (!_wrapped->ready()) {
++		return;
++	}
++	const auto ratio = style::DevicePixelRatio();
++	const auto sourcePx = Data::FrameSizeFromTag(
++		Data::CustomEmojiSizeTag::Isolated);
++	if (_frame.width() != sourcePx) {
+ 		_frame = QImage(
+ 			QSize(sourcePx, sourcePx),
+ 			QImage::Format_ARGB32_Premultiplied);
+ 		_frame.setDevicePixelRatio(ratio);
+-		_frame.fill(Qt::transparent);
+-
+-		auto painter = QPainter(&_frame);
+-		painter.translate(-context.position);
+-		const auto was = context.internal.forceFirstFrame;
+-		context.internal.forceFirstFrame = true;
+-		_wrapped->paint(painter, context);
+-		context.internal.forceFirstFrame = was;
+-		painter.end();
+-
+-		_frame = _frame.scaled(
+-			QSize(_innerSize, _innerSize) * ratio,
+-			Qt::IgnoreAspectRatio,
+-			Qt::SmoothTransformation);
+-		_frameColor = context.textColor;
+ 	}
++	_frame.fill(Qt::transparent);
++
++	auto painter = QPainter(&_frame);
++	painter.translate(-context.position);
++	_wrapped->paint(painter, context);
++	painter.end();
++
+ 	const auto skip = (_outerSize - _innerSize) / 2;
+-	p.drawImage(context.position + QPoint(skip, skip), _frame);
++	auto hq = PainterHighQualityEnabler(p);
++	p.drawImage(
++		QRect(context.position + QPoint(skip, skip), Size(_innerSize)),
++		_frame);
+ }
+ 
+ void ScaledBotVerifiedEmoji::unload() {
+@@ -482,6 +476,7 @@ int PeerBadge::drawVerified(
+ 			.textColor = st.color->c,
+ 			.now = crl::now(),
+ 			.position = position + st.position,
++			.paused = On(PowerSaving::kEmojiStatus),
+ 		});
+ 		return icon->width();
+ 	}

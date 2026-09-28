@@ -18,7 +18,7 @@ Subject: [PATCH] feat: send quick replies in groups and channels
  create mode 100644 Telegram/SourceFiles/tele/tele_shortcuts.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index e40820ccf65d53c6083366a7dc68d13af1b8cb8e..f03ccbcb6a9bc2bc1fd8eafc39bab4e6900b51d8 100644
+index d2679fbfbd9dffac3d2f8a49dfa2259fe5f03cc2..fd283c59cae2dedf4393c4848152bb07752dddfd 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
 @@ -2219,6 +2219,8 @@ PRIVATE
@@ -157,10 +157,10 @@ index 7366ba88f7ddc24ffd426665a6e9df4793b62936..c9135a1339659a59ae6de8803eb6d0aa
  				if (const auto field = _composeControls->fieldForMention()) {
  					_composeControls->setText(field->getTextWithTagsPart(
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index 8aa99352d215ced94b1ecab540876349df242159..cf34d4591bba16ba3f4bec0b27441fae3a1d80d0 100644
+index 6a7709de9301383adda4d057bb7e5f8eae5be67c..aeb35a708bc86dc25614026e7d8b9758842a7716 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
-@@ -178,6 +178,11 @@ void TeleSection::setupContent() {
+@@ -180,6 +180,11 @@ void TeleSection::setupContent() {
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);

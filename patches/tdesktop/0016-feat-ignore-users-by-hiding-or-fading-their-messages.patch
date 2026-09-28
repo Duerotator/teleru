@@ -1,0 +1,841 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 02:17:29 +0300
+Subject: [PATCH] feat: ignore users by hiding or fading their messages
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../history/history_inner_widget.cpp          |   2 +
+ .../history/view/history_view_element.cpp     |   5 +-
+ .../history/view/history_view_list_widget.cpp |   7 +
+ .../history/view/history_view_message.cpp     |   2 +
+ .../SourceFiles/settings/settings_tele.cpp    | 229 ++++++++++++++++
+ Telegram/SourceFiles/tele/tele_ignored.cpp    | 254 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_ignored.h      |  57 ++++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  44 +++
+ Telegram/SourceFiles/tele/tele_options.h      |   6 +
+ .../SourceFiles/window/window_peer_menu.cpp   |   2 +
+ 11 files changed, 609 insertions(+), 1 deletion(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_ignored.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_ignored.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 2ffbd114902574378add4b5a2baa531fba0e6645..b4b2d203f4100a29cb98634d102578a65b0d04e1 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2225,6 +2225,8 @@ PRIVATE
+     tele/tele_button_payload.h
+     tele/tele_gifts.cpp
+     tele/tele_gifts.h
++    tele/tele_ignored.cpp
++    tele/tele_ignored.h
+     tele/tele_options.cpp
+     tele/tele_options.h
+     tele/tele_peer_id.cpp
+diff --git a/Telegram/SourceFiles/history/history_inner_widget.cpp b/Telegram/SourceFiles/history/history_inner_widget.cpp
+index 1a64d9bd43d4e58d2dc41714a6c7562d8c6a2b93..e437058654c61daad5c0a49d7454a8dfc390482f 100644
+--- a/Telegram/SourceFiles/history/history_inner_widget.cpp
++++ b/Telegram/SourceFiles/history/history_inner_widget.cpp
+@@ -128,6 +128,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_histories.h"
+ #include "data/data_changes.h"
+ #include "dialogs/ui/dialogs_video_userpic.h"
++#include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_menu_icons.h"
+ 
+@@ -1714,6 +1715,7 @@ void HistoryInner::paintEvent(QPaintEvent *e) {
+ 		// paint the userpic if it intersects the painted rect
+ 		if (userpicTop + st::msgPhotoSize > clip.top()) {
+ 			const auto item = view->data();
++			const auto fade = Tele::IgnoredFade(p, view);
+ 			const auto shift = context.gestureHorizontal.visualTranslationFor(
+ 				item->id.bare);
+ 			if (shift) {
+diff --git a/Telegram/SourceFiles/history/view/history_view_element.cpp b/Telegram/SourceFiles/history/view/history_view_element.cpp
+index 247aa56f5f9e0cc942a7112abe72806145bf57e9..db89b14648c4554a3442977437b4e89b95f969c3 100644
+--- a/Telegram/SourceFiles/history/view/history_view_element.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_element.cpp
+@@ -68,6 +68,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_message_reactions.h"
+ #include "data/data_user.h"
+ #include "lang/lang_keys.h"
++#include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_style.h"
+ #include "styles/style_dialogs.h"
+@@ -1250,6 +1251,7 @@ Element::Element(
+ 	| (countIsTopicRootReply() ? Flag::TopicRootReply : Flag()))
+ , _context(delegate->elementContext()) {
+ 	history()->owner().registerItemView(this);
++	Tele::RegisterView(this);
+ 	if (data->isTtlCoveredMedia()) {
+ 		AddComponents(TtlPaintState::Bit());
+ 	}
+@@ -1537,7 +1539,7 @@ bool Element::isHiddenByGroup() const {
+ }
+ 
+ bool Element::isHidden() const {
+-	return isHiddenByGroup();
++	return isHiddenByGroup() || Tele::IgnoredHidden(this);
+ }
+ 
+ void Element::overrideMedia(std::unique_ptr<Media> media) {
+@@ -3465,6 +3467,7 @@ Element::~Element() {
+ 		history()->owner().notifyViewRemoved(this);
+ 	}
+ 	history()->owner().unregisterItemView(this);
++	Tele::UnregisterView(this);
+ }
+ 
+ void Element::Hovered(Element *view) {
+diff --git a/Telegram/SourceFiles/history/view/history_view_list_widget.cpp b/Telegram/SourceFiles/history/view/history_view_list_widget.cpp
+index 6868759bfbc8c966c50d30d0d333f29d3dbef13a..ace026d4aed54df6c55403f721a2455dd283398f 100644
+--- a/Telegram/SourceFiles/history/view/history_view_list_widget.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_list_widget.cpp
+@@ -100,6 +100,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/data_file_click_handler.h"
+ #include "data/data_message_reactions.h"
+ #include "data/data_peer_values.h"
++#include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_window.h" // columnMaximalWidthLeft
+ 
+@@ -3248,6 +3249,7 @@ void ListWidget::paintUserpics(
+ 		// paint the userpic if it intersects the painted rect
+ 		if (userpicTop + st::msgPhotoSize > clip.top()) {
+ 			const auto item = view->data();
++			const auto fade = Tele::IgnoredFade(p, view);
+ 			const auto shift = context.gestureHorizontal.visualTranslationFor(
+ 				item->id.bare);
+ 			if (shift) {
+@@ -4118,6 +4120,11 @@ void ListWidget::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
+ 		return;
+ 	} else if (linkUserpicPeerId) {
+ 		_menu = _delegate->listFillSenderUserpicMenu(linkUserpicPeerId);
++		if (!_menu) {
++			_menu = Tele::IgnoreMenu(
++				this,
++				session().data().peer(linkUserpicPeerId));
++		}
+ 		if (_menu) {
+ 			Window::AddSenderUserpicModerateAction(
+ 				controller(),
+diff --git a/Telegram/SourceFiles/history/view/history_view_message.cpp b/Telegram/SourceFiles/history/view/history_view_message.cpp
+index db6ca0d6350ca844a3fe9d82d108b6fabe03e7bc..8c8e0b54671f9c93814a362ebef5eea849ebe743 100644
+--- a/Telegram/SourceFiles/history/view/history_view_message.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_message.cpp
+@@ -66,6 +66,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "apiwrap.h"
+ #include "api/api_rich_tasks.h"
+ #include "tele/tele_bubble_badges.h"
++#include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_chat_style.h"
+@@ -1767,6 +1768,7 @@ void Message::draw(Painter &p, const PaintContext &context) const {
+ 	if (isHidden()) {
+ 		return;
+ 	}
++	const auto fade = Tele::IgnoredFade(p, this);
+ 
+ 	const auto entry = logEntryOriginal();
+ 	const auto check = factcheckBlock();
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index cb5653af7f6fccc2779399cf0c81d50861a0fb34..5c432ffed51471aa72113fa6b028755a77252afb 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -3,14 +3,20 @@
+ #include "base/event_filter.h"
+ #include "base/options.h"
+ #include "base/timer.h"
++#include "boxes/peer_list_controllers.h"
+ #include "core/application.h"
+ #include "core/deep_links/deep_links_settings.h"
+ #include "core/version.h"
++#include "data/data_session.h"
++#include "data/data_user.h"
++#include "history/history.h"
+ #include "lang/lang_keys.h"
++#include "main/main_session.h"
+ #include "settings/settings_builder.h"
+ #include "settings/settings_common_session.h"
+ #include "tele/tele_badges.h"
+ #include "tele/tele_build.h"
++#include "tele/tele_ignored.h"
+ #include "tele/tele_options.h"
+ #include "tele/tele_title.h"
+ #include "tele/tele_updater.h"
+@@ -362,6 +368,223 @@ void AddTitle(
+ 		st::settingsExperimentalAboutPadding);
+ }
+ 
++class IgnoredRow final : public PeerListRowWithLink {
++public:
++	explicit IgnoredRow(not_null<UserData*> user)
++	: PeerListRowWithLink(user) {
++	}
++
++	QString generateName() override {
++		return peer()->isMinimalLoaded()
++			? PeerListRowWithLink::generateName()
++			: u"Unknown user"_q;
++	}
++
++};
++
++class IgnoredController final : public PeerListController {
++public:
++	explicit IgnoredController(
++		not_null<Window::SessionController*> window);
++
++	Main::Session &session() const override;
++	void prepare() override;
++	void rowClicked(not_null<PeerListRow*> row) override;
++	void rowRightActionClicked(not_null<PeerListRow*> row) override;
++
++private:
++	void refreshRows();
++	[[nodiscard]] std::unique_ptr<PeerListRow> createRow(
++		not_null<UserData*> user) const;
++
++	const not_null<Window::SessionController*> _window;
++
++};
++
++class IgnorePeerController final : public ChatsListBoxController {
++public:
++	explicit IgnorePeerController(not_null<Main::Session*> session);
++
++	Main::Session &session() const override;
++	void rowClicked(not_null<PeerListRow*> row) override;
++
++	void setDoneCallback(Fn<void()> callback) {
++		_done = std::move(callback);
++	}
++
++protected:
++	void prepareViewHook() override;
++	std::unique_ptr<Row> createRow(not_null<History*> history) override;
++
++private:
++	const not_null<Main::Session*> _session;
++	Fn<void()> _done;
++
++};
++
++IgnoredController::IgnoredController(
++	not_null<Window::SessionController*> window)
++: _window(window) {
++}
++
++Main::Session &IgnoredController::session() const {
++	return _window->session();
++}
++
++void IgnoredController::prepare() {
++	delegate()->peerListSetTitle(rpl::single(u"Ignored users"_q));
++	::Tele::IgnoredChanges(
++	) | rpl::on_next([=] {
++		refreshRows();
++	}, lifetime());
++	refreshRows();
++}
++
++void IgnoredController::refreshRows() {
++	const auto users = ::Tele::IgnoredUsers(&session());
++	auto keep = base::flat_set<PeerListRowId>();
++	for (const auto &id : users) {
++		keep.emplace(peerFromUser(id).value);
++	}
++	for (auto i = delegate()->peerListFullRowsCount(); i != 0;) {
++		const auto row = delegate()->peerListRowAt(--i);
++		if (!keep.contains(row->id())) {
++			delegate()->peerListRemoveRow(row);
++		}
++	}
++	for (const auto &id : users) {
++		if (!delegate()->peerListFindRow(peerFromUser(id).value)) {
++			delegate()->peerListAppendRow(
++				createRow(session().data().user(id)));
++		}
++	}
++	setDescriptionText(users.empty()
++		? u"Nobody is ignored. Right-click a userpic in a group "
++			"to ignore someone."_q
++		: QString());
++	delegate()->peerListRefreshRows();
++}
++
++void IgnoredController::rowClicked(not_null<PeerListRow*> row) {
++	const auto peer = row->peer();
++	if (!peer->isMinimalLoaded()) {
++		return;
++	}
++	const auto window = _window;
++	crl::on_main(window, [=] {
++		window->showPeerInfo(peer);
++	});
++}
++
++void IgnoredController::rowRightActionClicked(not_null<PeerListRow*> row) {
++	const auto peer = row->peer();
++	crl::on_main(_window, [=] {
++		::Tele::SetIgnored(peer, false);
++	});
++}
++
++std::unique_ptr<PeerListRow> IgnoredController::createRow(
++		not_null<UserData*> user) const {
++	auto row = std::make_unique<IgnoredRow>(user);
++	row->setActionLink(u"Remove"_q);
++	const auto username = user->username();
++	row->setCustomStatus(username.isEmpty()
++		? u"ID %1"_q.arg(peerToUser(user->id).bare)
++		: u"@%1"_q.arg(username));
++	return row;
++}
++
++IgnorePeerController::IgnorePeerController(
++	not_null<Main::Session*> session)
++: ChatsListBoxController(session)
++, _session(session) {
++}
++
++Main::Session &IgnorePeerController::session() const {
++	return *_session;
++}
++
++void IgnorePeerController::prepareViewHook() {
++	delegate()->peerListSetTitle(rpl::single(u"Ignore user"_q));
++}
++
++void IgnorePeerController::rowClicked(not_null<PeerListRow*> row) {
++	::Tele::SetIgnored(row->peer(), true);
++	if (_done) {
++		_done();
++	}
++}
++
++auto IgnorePeerController::createRow(not_null<History*> history)
++-> std::unique_ptr<Row> {
++	const auto peer = history->peer;
++	if (!peer->isUser()
++		|| peer->isServiceUser()
++		|| peer->isSelf()
++		|| peer->isRepliesChat()
++		|| peer->isVerifyCodes()
++		|| ::Tele::IsIgnored(peer)) {
++		return nullptr;
++	}
++	return std::make_unique<Row>(history);
++}
++
++void ShowIgnoreUserBox(not_null<Window::SessionController*> window) {
++	auto controller = std::make_unique<IgnorePeerController>(
++		&window->session());
++	auto initBox = [=, controller = controller.get()](
++			not_null<PeerListBox*> box) {
++		controller->setDoneCallback([=] {
++			box->closeBox();
++		});
++		box->addButton(tr::lng_cancel(), [=] {
++			box->closeBox();
++		});
++	};
++	window->show(
++		Box<PeerListBox>(std::move(controller), std::move(initBox)));
++}
++
++void ShowIgnoredBox(not_null<Window::SessionController*> window) {
++	auto initBox = [=](not_null<PeerListBox*> box) {
++		box->addButton(tr::lng_close(), [=] {
++			box->closeBox();
++		});
++		box->addLeftButton(rpl::single(u"Add"_q), [=] {
++			ShowIgnoreUserBox(window);
++		});
++	};
++	window->show(Box<PeerListBox>(
++		std::make_unique<IgnoredController>(window),
++		std::move(initBox)));
++}
++
++void AddIgnoredUsers(
++		not_null<Ui::VerticalLayout*> container,
++		not_null<Window::SessionController*> controller) {
++	const auto &option = base::options::lookup<QString>(
++		::Tele::kOptionIgnoredUsers);
++	const auto button = AddButtonWithLabel(
++		container,
++		rpl::single(u"Ignored users"_q),
++		::Tele::IgnoredCountValue(
++			&controller->session()
++		) | rpl::map([](int count) {
++			return count ? QString::number(count) : u"none"_q;
++		}),
++		st::settingsButtonNoIcon);
++	button->setClickedCallback([=] {
++		ShowIgnoredBox(controller);
++	});
++	SetupLink(button, u"tele-ignored-users"_q);
++	container->add(
++		object_ptr<Ui::FlatLabel>(
++			container,
++			option.description(),
++			st::settingsExperimentalAbout),
++		st::settingsExperimentalAboutPadding);
++}
++
+ TeleSection::TeleSection(
+ 	QWidget *parent,
+ 	not_null<Window::SessionController*> controller)
+@@ -399,6 +622,12 @@ void TeleSection::setupContent() {
+ 	Ui::AddSkip(content);
+ 	Ui::AddDivider(content);
+ 	Ui::AddSkip(content);
++	Ui::AddSubsectionTitle(content, rpl::single(u"Ignoring"_q));
++	AddIgnoredUsers(content, controller());
++	AddOptionToggle(content, controller(), ::Tele::kOptionHideIgnored);
++	Ui::AddSkip(content);
++	Ui::AddDivider(content);
++	Ui::AddSkip(content);
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
+ 	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
+ 	Ui::AddSkip(content);
+diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..4e4a5d5e1847399fc90bbf528b3f4093b5b0f627
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_ignored.cpp
+@@ -0,0 +1,254 @@
++#include "tele/tele_ignored.h"
++
++#include "data/data_peer.h"
++#include "data/data_session.h"
++#include "data/data_user.h"
++#include "history/history.h"
++#include "history/history_item.h"
++#include "history/view/history_view_element.h"
++#include "main/main_session.h"
++#include "tele/tele_options.h"
++#include "ui/widgets/menu/menu_add_action_callback.h"
++#include "ui/widgets/menu/menu_add_action_callback_factory.h"
++#include "ui/widgets/popup_menu.h"
++#include "styles/style_menu_icons.h"
++#include "styles/style_widgets.h"
++
++namespace Tele {
++namespace {
++
++constexpr auto kFadeOpacity = 0.35;
++constexpr auto kTestBit = BareId(1) << 63;
++
++using Key = BareId;
++using HistoryView::Context;
++using HistoryView::Element;
++
++struct State {
++	State();
++
++	base::flat_set<Key> keys;
++	std::unordered_set<not_null<Element*>> views;
++	rpl::event_stream<> changes;
++	rpl::lifetime lifetime;
++};
++
++[[nodiscard]] State &Get() {
++	static State state;
++	return state;
++}
++
++[[nodiscard]] Key MakeKey(UserId id, bool test) {
++	return peerFromUser(id).value | (test ? kTestBit : Key());
++}
++
++[[nodiscard]] Key PeerKey(not_null<PeerData*> peer) {
++	return MakeKey(peerToUser(peer->id), peer->session().isTestMode());
++}
++
++[[nodiscard]] UserId KeyUser(Key key) {
++	return peerToUser(PeerId(key & ~kTestBit));
++}
++
++[[nodiscard]] base::flat_set<Key> Parse(const QString &value) {
++	auto result = base::flat_set<Key>();
++	for (const auto &part : value.split(QChar(','), Qt::SkipEmptyParts)) {
++		auto entry = part.trimmed();
++		const auto test = entry.startsWith(u"test:"_q);
++		if (test) {
++			entry = entry.mid(5);
++		}
++		auto ok = false;
++		const auto id = entry.toULongLong(&ok);
++		if (ok && id) {
++			result.emplace(MakeKey(UserId(id), test));
++		}
++	}
++	return result;
++}
++
++[[nodiscard]] QString Serialize(const base::flat_set<Key> &keys) {
++	auto list = QStringList();
++	list.reserve(int(keys.size()));
++	for (const auto key : keys) {
++		const auto id = QString::number(KeyUser(key).bare);
++		list.push_back((key & kTestBit) ? (u"test:"_q + id) : id);
++	}
++	return list.join(QChar(','));
++}
++
++void Refresh(const State &state, const base::flat_set<Key> &changed) {
++	if (changed.empty()) {
++		return;
++	}
++	auto items = base::flat_set<not_null<HistoryItem*>>();
++	for (const auto &view : state.views) {
++		const auto item = view->data();
++		const auto from = item->from();
++		if (from->isUser() && changed.contains(PeerKey(from))) {
++			items.emplace(item);
++		}
++	}
++	for (const auto &item : items) {
++		item->history()->owner().requestItemViewRefresh(item);
++	}
++}
++
++State::State() {
++	IgnoredListValue(
++	) | rpl::on_next([=](const QString &value) {
++		auto now = Parse(value);
++		auto changed = base::flat_set<Key>();
++		for (const auto key : keys) {
++			if (!now.contains(key)) {
++				changed.emplace(key);
++			}
++		}
++		for (const auto key : now) {
++			if (!keys.contains(key)) {
++				changed.emplace(key);
++			}
++		}
++		keys = std::move(now);
++		Refresh(*this, changed);
++		changes.fire({});
++	}, lifetime);
++
++	HideIgnoredValue(
++	) | rpl::skip(1) | rpl::on_next([=] {
++		Refresh(*this, keys);
++	}, lifetime);
++}
++
++[[nodiscard]] bool Applies(Context context) {
++	return (context == Context::History)
++		|| (context == Context::Replies)
++		|| (context == Context::Pinned)
++		|| (context == Context::Monoforum)
++		|| (context == Context::SavedSublist)
++		|| (context == Context::ChatPreview);
++}
++
++[[nodiscard]] bool IgnoredView(not_null<const Element*> view) {
++	const auto &state = Get();
++	if (state.keys.empty() || !Applies(view->context())) {
++		return false;
++	}
++	const auto item = view->data();
++	if (item->isService() || item->isSponsored()) {
++		return false;
++	}
++	const auto from = item->from();
++	return from->isUser()
++		&& (item->history()->peer != from)
++		&& state.keys.contains(PeerKey(from));
++}
++
++[[nodiscard]] UserData *Ignorable(not_null<PeerData*> peer) {
++	const auto user = peer->asUser();
++	return (user && !user->isSelf()) ? user : nullptr;
++}
++
++} // namespace
++
++bool IsIgnored(not_null<PeerData*> peer) {
++	return peer->isUser() && Get().keys.contains(PeerKey(peer));
++}
++
++void SetIgnored(not_null<PeerData*> peer, bool ignored) {
++	if (!Ignorable(peer)) {
++		return;
++	}
++	auto keys = Get().keys;
++	const auto key = PeerKey(peer);
++	const auto changed = ignored
++		? keys.emplace(key).second
++		: keys.remove(key);
++	if (changed) {
++		SetIgnoredList(Serialize(keys));
++	}
++}
++
++rpl::producer<> IgnoredChanges() {
++	return Get().changes.events();
++}
++
++std::vector<UserId> IgnoredUsers(not_null<Main::Session*> session) {
++	const auto test = session->isTestMode();
++	auto result = std::vector<UserId>();
++	for (const auto key : Get().keys) {
++		if (((key & kTestBit) != 0) == test) {
++			result.push_back(KeyUser(key));
++		}
++	}
++	return result;
++}
++
++rpl::producer<int> IgnoredCountValue(not_null<Main::Session*> session) {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		IgnoredChanges()
++	) | rpl::map([=] {
++		return int(IgnoredUsers(session).size());
++	});
++}
++
++void RegisterView(not_null<HistoryView::Element*> view) {
++	Get().views.emplace(view);
++}
++
++void UnregisterView(not_null<HistoryView::Element*> view) {
++	Get().views.erase(view);
++}
++
++bool IgnoredHidden(not_null<const HistoryView::Element*> view) {
++	return HideIgnored() && IgnoredView(view);
++}
++
++IgnoredFade::IgnoredFade(
++		QPainter &p,
++		not_null<const HistoryView::Element*> view) {
++	if (!HideIgnored() && IgnoredView(view)) {
++		_painter = &p;
++		_opacity = p.opacity();
++		p.setOpacity(_opacity * kFadeOpacity);
++	}
++}
++
++IgnoredFade::~IgnoredFade() {
++	if (_painter) {
++		_painter->setOpacity(_opacity);
++	}
++}
++
++void AddIgnoreAction(
++		not_null<PeerData*> peer,
++		const Ui::Menu::MenuCallback &addAction) {
++	const auto user = Ignorable(peer);
++	if (!user) {
++		return;
++	}
++	const auto ignored = IsIgnored(user);
++	addAction(
++		(ignored
++			? u"Stop ignoring this user"_q
++			: u"Ignore messages from this user"_q),
++		[=] { SetIgnored(user, !ignored); },
++		ignored ? &st::menuIconUnmute : &st::menuIconMute);
++}
++
++base::unique_qptr<Ui::PopupMenu> IgnoreMenu(
++		not_null<QWidget*> parent,
++		not_null<PeerData*> peer) {
++	if (!Ignorable(peer)) {
++		return nullptr;
++	}
++	auto result = base::make_unique_q<Ui::PopupMenu>(
++		parent.get(),
++		st::popupMenuWithIcons);
++	AddIgnoreAction(peer, Ui::Menu::CreateAddActionCallback(result.get()));
++	return result;
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_ignored.h b/Telegram/SourceFiles/tele/tele_ignored.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..f15f6732f85384c8f730d856dbbbeb1aeb2812bd
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_ignored.h
+@@ -0,0 +1,57 @@
++#pragma once
++
++#include "base/unique_qptr.h"
++
++class PeerData;
++
++namespace Main {
++class Session;
++} // namespace Main
++
++namespace HistoryView {
++class Element;
++} // namespace HistoryView
++
++namespace Ui {
++class PopupMenu;
++} // namespace Ui
++
++namespace Ui::Menu {
++struct MenuCallback;
++} // namespace Ui::Menu
++
++namespace Tele {
++
++[[nodiscard]] bool IsIgnored(not_null<PeerData*> peer);
++void SetIgnored(not_null<PeerData*> peer, bool ignored);
++[[nodiscard]] rpl::producer<> IgnoredChanges();
++[[nodiscard]] std::vector<UserId> IgnoredUsers(
++	not_null<Main::Session*> session);
++[[nodiscard]] rpl::producer<int> IgnoredCountValue(
++	not_null<Main::Session*> session);
++
++void RegisterView(not_null<HistoryView::Element*> view);
++void UnregisterView(not_null<HistoryView::Element*> view);
++[[nodiscard]] bool IgnoredHidden(not_null<const HistoryView::Element*> view);
++
++class IgnoredFade final {
++public:
++	IgnoredFade(QPainter &p, not_null<const HistoryView::Element*> view);
++	IgnoredFade(const IgnoredFade &) = delete;
++	IgnoredFade &operator=(const IgnoredFade &) = delete;
++	~IgnoredFade();
++
++private:
++	QPainter *_painter = nullptr;
++	float64 _opacity = 1.;
++
++};
++
++void AddIgnoreAction(
++	not_null<PeerData*> peer,
++	const Ui::Menu::MenuCallback &addAction);
++[[nodiscard]] base::unique_qptr<Ui::PopupMenu> IgnoreMenu(
++	not_null<QWidget*> parent,
++	not_null<PeerData*> peer);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index b34c5a7d33ad1aef8b9672299c843a7afe766281..76c4449d77364d4693adc1a799caac8c2cdd535e 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -13,6 +13,8 @@ const char kOptionBubbleBadges[] = "tele-bubble-badges";
+ const char kOptionShowGiftIds[] = "tele-show-gift-ids";
+ const char kOptionPeerIdsWithoutSpaces[] = "tele-peer-ids-without-spaces";
+ const char kOptionBotApiPeerIds[] = "tele-bot-api-peer-ids";
++const char kOptionHideIgnored[] = "tele-hide-ignored";
++const char kOptionIgnoredUsers[] = "tele-ignored-users";
+ const char kOptionServerUrl[] = "tele-server-url";
+ const char kOptionTitleTemplate[] = "tele-title";
+ 
+@@ -89,6 +91,20 @@ base::options::toggle BotApiPeerIdsOption({
+ 		"get -100 in front.",
+ });
+ 
++base::options::toggle HideIgnoredOption({
++	.id = kOptionHideIgnored,
++	.name = "Hide ignored messages completely",
++	.description = "Messages from ignored users disappear from chats. "
++		"When off, they are shown faded.",
++});
++
++base::options::option<QString> IgnoredUsersOption({
++	.id = kOptionIgnoredUsers,
++	.name = "Ignored users",
++	.description = "People whose messages are faded or hidden in chats. "
++		"Right-click a userpic in a group to ignore someone.",
++});
++
+ base::options::option<QString> ServerUrlOption({
+ 	.id = kOptionServerUrl,
+ 	.name = "tele server",
+@@ -160,6 +176,34 @@ rpl::producer<> PeerIdFormatChanges() {
+ 		BotApiPeerIdsOption.changes());
+ }
+ 
++bool HideIgnored() {
++	return HideIgnoredOption.value();
++}
++
++rpl::producer<bool> HideIgnoredValue() {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		HideIgnoredOption.changes()
++	) | rpl::map([] {
++		return HideIgnoredOption.value();
++	});
++}
++
++void SetIgnoredList(const QString &value) {
++	IgnoredUsersOption.set(value);
++}
++
++rpl::producer<QString> IgnoredListValue() {
++	return rpl::single(
++		rpl::empty
++	) | rpl::then(
++		IgnoredUsersOption.changes()
++	) | rpl::map([] {
++		return IgnoredUsersOption.value();
++	});
++}
++
+ QString ServerUrl() {
+ 	return ServerUrlOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index d1bebdec494e8825ae4e325ff3eb1060651c091f..0e1aabd4e07b37ff98696589a659f0fb72faef09 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -11,6 +11,8 @@ extern const char kOptionBubbleBadges[];
+ extern const char kOptionShowGiftIds[];
+ extern const char kOptionPeerIdsWithoutSpaces[];
+ extern const char kOptionBotApiPeerIds[];
++extern const char kOptionHideIgnored[];
++extern const char kOptionIgnoredUsers[];
+ extern const char kOptionServerUrl[];
+ extern const char kOptionTitleTemplate[];
+ 
+@@ -25,6 +27,10 @@ extern const char kOptionTitleTemplate[];
+ [[nodiscard]] bool PeerIdsWithoutSpaces();
+ [[nodiscard]] bool BotApiPeerIds();
+ [[nodiscard]] rpl::producer<> PeerIdFormatChanges();
++[[nodiscard]] bool HideIgnored();
++[[nodiscard]] rpl::producer<bool> HideIgnoredValue();
++void SetIgnoredList(const QString &value);
++[[nodiscard]] rpl::producer<QString> IgnoredListValue();
+ [[nodiscard]] QString ServerUrl();
+ void SetServerUrl(const QString &url);
+ [[nodiscard]] rpl::producer<QString> ServerUrlValue();
+diff --git a/Telegram/SourceFiles/window/window_peer_menu.cpp b/Telegram/SourceFiles/window/window_peer_menu.cpp
+index 9ab1453e8e831dabbbf793811bd043bedcaeeb11..7198154f4c69197c236ad0e3e376d291b4e34713 100644
+--- a/Telegram/SourceFiles/window/window_peer_menu.cpp
++++ b/Telegram/SourceFiles/window/window_peer_menu.cpp
+@@ -126,6 +126,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "boxes/peers/edit_peer_info_box.h"
+ #include "boxes/peers/manage_community_box.h"
+ #include "boxes/premium_preview_box.h"
++#include "tele/tele_ignored.h"
+ #include "styles/style_chat.h"
+ #include "styles/style_chat_helpers.h"
+ #include "styles/style_credits.h"
+@@ -4495,6 +4496,7 @@ void FillSenderUserpicMenu(
+ 			}
+ 		}
+ 	}
++	Tele::AddIgnoreAction(peer, addAction);
+ }
+ 
+ void AddSenderUserpicModerateAction(
