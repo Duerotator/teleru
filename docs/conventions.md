@@ -86,7 +86,7 @@ off by default has to mean exactly upstream's behaviour. with the option off, th
 
 - tele's strings are hardcoded english. don't add keys to `lang.strings`.
 - write them in sentence case and pass every one through `Tele::Lower` (`tele/tele_lowercase.h`) where it's shown, so the lowercase option covers it. option names and descriptions shown through `AddOptionToggle` are already handled.
-- keep descriptions to one or two short sentences that say what changes for the user.
+- a description only when the name can't fully explain the item, for options, rows and the texts under settings groups alike. if the name says it all, leave it out. when it's needed: one short sentence with the missing fact (a side effect, a condition, what gets sent where). no filler ("this lets you…", "when enabled…"), no restating the name, no lists of examples.
 - call the app tele, and the service telegram.
 
 ## commits

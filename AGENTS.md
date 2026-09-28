@@ -10,6 +10,7 @@ tele is telegram desktop kept as a patch queue: this repository holds `UPSTREAM`
 2. **minimal upstream hunks.** in upstream files only add an include and a call into `Tele::` (an early return, a changed argument, a hook). don't reformat, reorder, rename or copy upstream code. avoid widely included headers (`data/data_peer.h`, `history/history_item.h`, the precompiled header): editing them rebuilds most of the tree and conflicts more often.
 3. **no code comments.**
 4. **every ui string goes through `Tele::Lower`** (`tele/tele_lowercase.h`). strings are hardcoded english in sentence case, never `lang.strings` keys.
+   **descriptions only when needed.** an option, row or settings group gets a description only when its name can't fully explain it. then one short sentence with the missing fact (a side effect, a condition, what gets sent where). no filler ("this lets you…", "when enabled…"), no restating the name, no lists of examples.
 5. **every setting is a `base::options` option**, and a new one touches all four places:
    - declared in `tele/tele_options.h` and defined in `tele/tele_options.cpp` (`kOption...` id `"tele-..."`, `base::options::toggle` or `option<QString>`, getter);
    - shown on a settings page in `settings/settings_tele.cpp`, inside a group (`AddGroupTitle` / `AddGroupDivider`), never appended loose, with search keywords where the name and description don't cover what people would search for;
