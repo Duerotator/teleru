@@ -290,3 +290,13 @@ crash reports are optional. tele speaks the same protocol as telegram's own cras
 - `GET ?act=query_report&apiid=…&version=…&dmp=0|1&platform=…` answers `Report` as plain text when the server wants the report. anything else makes tele say thanks and send nothing.
 - `POST ?act=report` is `multipart/form-data` with `platform` (like `Windows64Bit`, `Linux`, `MacOS`), `version` (like `7002009`), `report` (the report text) and, when there is one, `dump` (a zip with one `.dmp` minidump, under 20 MiB). answer `Done`.
 - answer `404` to both if you don't collect crashes.
+
+## contributing
+
+bug fixes, conflict fixes and new features are welcome. for a feature, open an issue first. [CONTRIBUTING.md](CONTRIBUTING.md) walks through the whole cycle: getting the patched sources with `tele.py`, building, testing, exporting patches and opening a pull request.
+
+- [docs/architecture.md](docs/architecture.md): the patch queue, `tele.py`, where the fork code lives and what ci does.
+- [docs/development.md](docs/development.md): building, running a dev build safely and making a change.
+- [docs/conventions.md](docs/conventions.md): code style, commits, patch hygiene and privacy rules.
+- [docs/releasing.md](docs/releasing.md): how releases are built, signed and published.
+- [AGENTS.md](AGENTS.md): rules for ai coding agents.
