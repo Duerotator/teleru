@@ -1,0 +1,138 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 22:25:56 +0300
+Subject: [PATCH] feat: go offline right after sending in ghost mode
+
+---
+ Telegram/SourceFiles/api/api_updates.cpp   |  1 +
+ Telegram/SourceFiles/tele/tele_ghost.cpp   | 46 ++++++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_ghost.h     |  1 +
+ Telegram/SourceFiles/tele/tele_options.cpp |  4 +-
+ 4 files changed, 50 insertions(+), 2 deletions(-)
+
+diff --git a/Telegram/SourceFiles/api/api_updates.cpp b/Telegram/SourceFiles/api/api_updates.cpp
+index deded5d3e7eeff110da8bb8fb33b5e82c1d4a08c..62fa4ed3ab26e007a86f6fde17f0f5325f819815 100644
+--- a/Telegram/SourceFiles/api/api_updates.cpp
++++ b/Telegram/SourceFiles/api/api_updates.cpp
+@@ -1662,6 +1662,7 @@ void Updates::feedUpdate(const MTPUpdate &update) {
+ 				} else if (local->isBusinessShortcut()) {
+ 					session().data().shortcutMessages().apply(d, local);
+ 				} else {
++					Tele::OfflineAfterSend(&session());
+ 					const auto existing = session().data().message(
+ 						id.peer,
+ 						newId);
+diff --git a/Telegram/SourceFiles/tele/tele_ghost.cpp b/Telegram/SourceFiles/tele/tele_ghost.cpp
+index d9fc40c0b8825fb52ecbf4ff665234bc9d443624..0b1c1270d4e8ca18d88387a824fb3de02b2fdf3d 100644
+--- a/Telegram/SourceFiles/tele/tele_ghost.cpp
++++ b/Telegram/SourceFiles/tele/tele_ghost.cpp
+@@ -3,15 +3,18 @@
+ #include "api/api_common.h"
+ #include "api/api_updates.h"
+ #include "apiwrap.h"
++#include "base/timer.h"
+ #include "base/unixtime.h"
+ #include "core/application.h"
+ #include "core/core_settings.h"
+ #include "data/components/ephemeral_messages.h"
++#include "data/data_changes.h"
+ #include "data/data_channel.h"
+ #include "data/data_forum_topic.h"
+ #include "data/data_peer.h"
+ #include "data/data_saved_sublist.h"
+ #include "data/data_session.h"
++#include "data/data_user.h"
+ #include "history/history.h"
+ #include "history/history_item.h"
+ #include "main/main_account.h"
+@@ -48,6 +51,7 @@ constexpr auto kTestBit = BareId(1) << 63;
+ constexpr auto kChannelShift = int64(1000000000000LL);
+ constexpr auto kScheduleDelay = TimeId(12);
+ constexpr auto kScheduleProxyDelay = TimeId(15);
++constexpr auto kOfflineAfterSendDelay = crl::time(200);
+ 
+ using Key = BareId;
+ 
+@@ -262,6 +266,30 @@ void MarkReadTill(not_null<HistoryItem*> item) {
+ 			caption);
+ }
+ 
++using OfflineTimerMap = base::flat_map<
++	not_null<Main::Session*>,
++	std::unique_ptr<base::Timer>>;
++
++[[nodiscard]] OfflineTimerMap &OfflineTimers() {
++	static auto result = OfflineTimerMap();
++	return result;
++}
++
++void SendOffline(not_null<Main::Session*> session) {
++	if (!HideOnline()) {
++		return;
++	}
++	session->api().request(MTPaccount_UpdateStatus(
++		MTP_bool(true)
++	)).send();
++	const auto self = session->user();
++	self->updateLastseen(Data::LastseenStatus::OnlineTill(
++		base::unixtime::now() - 1));
++	session->changes().peerUpdated(
++		self,
++		Data::PeerUpdate::Flag::OnlineStatus);
++}
++
+ } // namespace
+ 
+ bool HideRead(not_null<PeerData*> peer) {
+@@ -318,6 +346,24 @@ void ReadOnSend(const Api::SendAction &action) {
+ 	}
+ }
+ 
++void OfflineAfterSend(not_null<Main::Session*> session) {
++	if (!HideOnline()) {
++		return;
++	}
++	auto &timers = OfflineTimers();
++	auto i = timers.find(session);
++	if (i == end(timers)) {
++		i = timers.emplace(
++			session,
++			std::make_unique<base::Timer>([=] { SendOffline(session); })
++		).first;
++		session->lifetime().add([=] {
++			OfflineTimers().remove(session);
++		});
++	}
++	i->second->callOnce(kOfflineAfterSendDelay);
++}
++
+ void ApplyGhostSchedule(Api::SendAction &action, const QString &caption) {
+ 	if (CanGhostSchedule(action, caption)) {
+ 		action.options.scheduled = base::unixtime::now() + ScheduleDelay();
+diff --git a/Telegram/SourceFiles/tele/tele_ghost.h b/Telegram/SourceFiles/tele/tele_ghost.h
+index df4f394418bf70ffefa2dcd8035febd3d1910c87..5c399ac14033ba8bf7b08e2f834badb1e328f910 100644
+--- a/Telegram/SourceFiles/tele/tele_ghost.h
++++ b/Telegram/SourceFiles/tele/tele_ghost.h
+@@ -41,6 +41,7 @@ struct GhostChat {
+ [[nodiscard]] bool HideOnline();
+ [[nodiscard]] bool SkipReadInbox(not_null<History*> history, MsgId tillId);
+ void ReadOnSend(const Api::SendAction &action);
++void OfflineAfterSend(not_null<Main::Session*> session);
+ 
+ void ApplyGhostSchedule(
+ 	Api::SendAction &action,
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 09365078977bb1b62e212b6a9cb657883155991c..92fa3c62388ca5760ea7393ae12029d8cfebb841 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -115,8 +115,8 @@ base::options::toggle GhostTypingOption({
+ base::options::toggle GhostOnlineOption({
+ 	.id = kOptionGhostOnline,
+ 	.name = "Don't go online",
+-	.description = "Sending a message still shows you online, unless it's "
+-		"scheduled.",
++	.description = "After sending a message, tele sets you offline right "
++		"away.",
+ 	.defaultValue = true,
+ });
+ 

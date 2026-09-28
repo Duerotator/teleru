@@ -1,0 +1,158 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 23:11:59 +0300
+Subject: [PATCH] fix: show the premium star next to checkmarks
+
+---
+ .../view/history_view_chat_preview.cpp        | 39 ++++++++++++-------
+ .../info/profile/info_profile_badge.cpp       |  4 +-
+ Telegram/SourceFiles/ui/unread_badge.cpp      | 21 +++++-----
+ 3 files changed, 38 insertions(+), 26 deletions(-)
+
+diff --git a/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp b/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
+index 7abf143eac7ce338874d15709a51fed965d96935..2478f1df6ed06d4cf3220eb895b41d25c85252cb 100644
+--- a/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
++++ b/Telegram/SourceFiles/history/view/history_view_chat_preview.cpp
+@@ -204,6 +204,7 @@ private:
+ 	const std::unique_ptr<Ui::FlatButton> _markRead;
+ 
+ 	Info::Profile::Badge _badge;
++	Info::Profile::Badge _verified;
+ 
+ 	QPointer<ListWidget> _inner;
+ 	std::unique_ptr<AboutView> _aboutView;
+@@ -264,22 +265,17 @@ struct StatusFields {
+ }
+ 
+ [[nodiscard]] rpl::producer<Info::Profile::Badge::Content> ContentForPeer(
+-		not_null<PeerData*> peer) {
++		not_null<PeerData*> peer,
++		bool verified) {
+ 	using namespace Info::Profile;
+ 	if (peer->isSelf()
+ 		|| peer->isRepliesChat()
+ 		|| peer->isSavedHiddenAuthor()) {
+ 		return rpl::single(Badge::Content{});
+ 	}
+-	return rpl::combine(
+-		BadgeContentForPeer(peer),
+-		VerifiedContentForPeer(peer)
+-	) | rpl::map([](Badge::Content &&content, Badge::Content &&verified) {
+-		if (verified.badge == BadgeType::Verified) {
+-			content.badge = BadgeType::Verified;
+-		}
+-		return content;
+-	});
++	return verified
++		? VerifiedContentForPeer(peer)
++		: BadgeContentForPeer(peer);
+ }
+ 
+ Item::Item(not_null<Ui::Menu::Menu*> parent, not_null<Data::Thread*> thread)
+@@ -304,7 +300,15 @@ Item::Item(not_null<Ui::Menu::Menu*> parent, not_null<Data::Thread*> thread)
+ 		_top.get(),
+ 		st::settingsInfoPeerBadge,
+ 		_session,
+-		ContentForPeer(_peer),
++		ContentForPeer(_peer, false),
++		nullptr,
++		nullptr,
++		1)
++, _verified(
++		_top.get(),
++		st::settingsInfoPeerBadge,
++		_session,
++		ContentForPeer(_peer, true),
+ 		nullptr,
+ 		nullptr,
+ 		1) {
+@@ -403,13 +407,18 @@ void Item::setupTop() {
+ 	rpl::combine(
+ 		_top->widthValue(),
+ 		std::move(nameValue),
+-		rpl::single(rpl::empty) | rpl::then(_badge.updated())
++		rpl::single(rpl::empty) | rpl::then(
++			rpl::merge(_badge.updated(), _verified.updated()))
+ 	) | rpl::on_next([=](int width, const auto &, const auto &) {
+ 		const auto &st = st::previewTop;
++		const auto badgeWidth = _badge.widget()
++			? _badge.widget()->width()
++			: 0;
+ 		name->resizeToNaturalWidth(width
+ 			- st.namePosition.x()
+ 			- st.photoPosition.x()
+-			- (_badge.widget() ? _badge.widget()->width() : 0));
++			- badgeWidth
++			- (_verified.widget() ? _verified.widget()->width() : 0));
+ 		if (status) {
+ 			name->move(st::previewTop.namePosition);
+ 		} else {
+@@ -421,6 +430,10 @@ void Item::setupTop() {
+ 			name->x() + name->width() + st::normalFont->spacew,
+ 			name->y(),
+ 			name->y() + name->height());
++		_verified.move(
++			name->x() + name->width() + st::normalFont->spacew + badgeWidth,
++			name->y(),
++			name->y() + name->height());
+ 	}, name->lifetime());
+ 
+ 	_top->geometryValue() | rpl::on_next([=](QRect geometry) {
+diff --git a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+index cc74c3ee0d6bdec8099a3a613af4578a24d4f395..fcebcc983f76506e4fc496dea6ee80d440750f5b 100644
+--- a/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
++++ b/Telegram/SourceFiles/info/profile/info_profile_badge.cpp
+@@ -282,8 +282,8 @@ rpl::producer<Badge::Content> BadgeContentForPeer(not_null<PeerData*> peer) {
+ 			return Badge::Content{ BadgeType::Premium, emojiStatusId };
+ 		}
+ 		if (badge == BadgeType::Verified) {
+-			badge = (emojiStatusId
+-					&& (!statusOnlyForPremium || peer->isPremium()))
++			badge = (peer->isPremium()
++					|| (emojiStatusId && !statusOnlyForPremium))
+ 				? BadgeType::Premium
+ 				: BadgeType::None;
+ 		}
+diff --git a/Telegram/SourceFiles/ui/unread_badge.cpp b/Telegram/SourceFiles/ui/unread_badge.cpp
+index d748ead0a66f43517f8e449afff4607c5befe6ae..3a6a441e897e8128a79a6d52ce0443cd91c1ff3d 100644
+--- a/Telegram/SourceFiles/ui/unread_badge.cpp
++++ b/Telegram/SourceFiles/ui/unread_badge.cpp
+@@ -252,16 +252,18 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
+ 
+ 	const auto paintVerify = verifyCheck;
+ 	const auto paintEmoji = emojiStatus;
+-	const auto paintStar = premiumStar && !paintVerify;
++	const auto paintStar = premiumStar;
+ 
+ 	auto result = 0;
+-	if (paintEmoji) {
++	if (paintEmoji || paintStar) {
+ 		auto &rectForName = descriptor.rectForName;
+-		const auto verifyWidth = descriptor.verified->width();
+-		if (paintVerify) {
+-			rectForName.setWidth(rectForName.width() - verifyWidth);
+-		}
+-		result += drawPremiumEmojiStatus(p, descriptor);
++		const auto verifyWidth = paintVerify
++			? descriptor.verified->width()
++			: 0;
++		rectForName.setWidth(rectForName.width() - verifyWidth);
++		result += paintEmoji
++			? drawPremiumEmojiStatus(p, descriptor)
++			: drawPremiumStar(p, descriptor);
+ 		if (!paintVerify) {
+ 			return result;
+ 		}
+@@ -272,11 +274,8 @@ int PeerBadge::drawGetWidth(Painter &p, Descriptor &&descriptor) {
+ 	}
+ 	if (paintVerify) {
+ 		result += drawVerifyCheck(p, descriptor);
+-		return result;
+-	} else if (paintStar) {
+-		return drawPremiumStar(p, descriptor);
+ 	}
+-	return 0;
++	return result;
+ }
+ 
+ int PeerBadge::drawTextBadge(Painter &p, const Descriptor &descriptor) {

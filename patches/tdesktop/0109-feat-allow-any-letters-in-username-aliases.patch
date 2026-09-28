@@ -1,0 +1,135 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Mon, 28 Sep 2026 00:59:13 +0300
+Subject: [PATCH] feat: allow any letters in username aliases
+
+---
+ .../tele/tele_username_aliases.cpp            | 61 +++++++++++++------
+ 1 file changed, 43 insertions(+), 18 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_username_aliases.cpp b/Telegram/SourceFiles/tele/tele_username_aliases.cpp
+index 302e1f215f338ed337f49f7203045c04369299a2..b3d3d2304e5e099ac47c1fe5ffcb5ed0188d98ad 100644
+--- a/Telegram/SourceFiles/tele/tele_username_aliases.cpp
++++ b/Telegram/SourceFiles/tele/tele_username_aliases.cpp
+@@ -15,7 +15,7 @@
+ #include "ui/text/text_entity.h"
+ #include "ui/text/text_utilities.h"
+ #include "ui/toast/toast.h"
+-#include "ui/widgets/fields/special_fields.h"
++#include "ui/widgets/fields/input_field.h"
+ #include "ui/widgets/labels.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+ #include "ui/widgets/popup_menu.h"
+@@ -70,9 +70,7 @@ bool SkipAliases = false;
+ }
+ 
+ [[nodiscard]] bool IsAliasChar(QChar ch) {
+-	return (ch >= 'a' && ch <= 'z')
+-		|| (ch >= '0' && ch <= '9')
+-		|| (ch == '_');
++	return ch.isLetterOrNumber() || (ch == '_');
+ }
+ 
+ [[nodiscard]] bool IsValidAlias(const QString &alias) {
+@@ -189,13 +187,6 @@ void Save(not_null<Main::Session*> session, Map map) {
+ 	return usernames.empty() ? peer->username() : usernames.front();
+ }
+ 
+-[[nodiscard]] bool IsUsernameChar(QChar ch) {
+-	return (ch >= 'a' && ch <= 'z')
+-		|| (ch >= 'A' && ch <= 'Z')
+-		|| (ch >= '0' && ch <= '9')
+-		|| (ch == '_');
+-}
+-
+ [[nodiscard]] bool KeepsText(EntityType type) {
+ 	return (type == EntityType::Code)
+ 		|| (type == EntityType::Pre)
+@@ -306,13 +297,41 @@ void AliasBox(not_null<Ui::GenericBox*> box, not_null<PeerData*> peer) {
+ 	const auto session = &peer->session();
+ 	box->setTitle(rpl::single(Lower(u"Alias for "_q) + peer->name()));
+ 	const auto wrap = box->addRow(object_ptr<Ui::RpWidget>(box));
+-	const auto field = Ui::CreateChild<Ui::UsernameInput>(
++	const auto field = Ui::CreateChild<Ui::InputField>(
+ 		wrap,
+ 		st::setupChannelLink,
++		Ui::InputField::Mode::SingleLine,
+ 		nullptr,
+-		QString(),
+-		u"@"_q);
++		QString());
+ 	field->setMaxLength(kMaxAliasLength);
++	const auto &font = st::setupChannelLink.style.font;
++	const auto prefix = u"@"_q;
++	field->setAdditionalMargins({ font->width(prefix), 0, 0, 0 });
++	const auto at = Ui::CreateChild<Ui::RpWidget>(field);
++	at->setAttribute(Qt::WA_TransparentForMouseEvents);
++	field->sizeValue(
++	) | rpl::on_next([=](QSize size) {
++		const auto margins = field->fullTextMargins();
++		at->setGeometry(
++			margins.left() - font->width(prefix),
++			0,
++			font->width(prefix),
++			size.height());
++		at->raise();
++	}, at->lifetime());
++	at->paintRequest(
++	) | rpl::on_next([=] {
++		auto p = QPainter(at);
++		const auto &st = st::setupChannelLink;
++		const auto line = std::max(st.style.lineHeight, font->height);
++		const auto ascent = line * 4. / 5.
++			- std::max(font->fleading.toReal(), 0.);
++		p.setFont(font);
++		p.setPen(st.placeholderFg);
++		p.drawText(
++			QPointF(0., field->fullTextMargins().top() + ascent),
++			prefix);
++	}, at->lifetime());
+ 	wrap->widthValue(
+ 	) | rpl::on_next([=](int width) {
+ 		field->resize(width, field->height());
+@@ -332,7 +351,7 @@ void AliasBox(not_null<Ui::GenericBox*> box, not_null<PeerData*> peer) {
+ 		if (!IsValidAlias(alias)) {
+ 			field->showError();
+ 			box->showToast(Lower(
+-				u"Use 1-32 latin letters, digits or underscores."_q));
++				u"Use 1-32 letters, digits or underscores."_q));
+ 			return;
+ 		}
+ 		auto map = SessionMap(session);
+@@ -354,7 +373,10 @@ void AliasBox(not_null<Ui::GenericBox*> box, not_null<PeerData*> peer) {
+ 		}
+ 		box->closeBox();
+ 	};
+-	QObject::connect(field, &Ui::UsernameInput::submitted, save);
++	field->submits(
++	) | rpl::on_next([=](Qt::KeyboardModifiers) {
++		save();
++	}, field->lifetime());
+ 	box->setFocusCallback([=] {
+ 		field->setFocusFast();
+ 	});
+@@ -523,8 +545,11 @@ std::vector<UsernameAliasMention> UsernameAliasMentions(
+ 	if (filter.isEmpty()) {
+ 		return result;
+ 	}
++	const auto query = filter.toLower();
+ 	for (const auto &[alias, id] : SessionMap(session)) {
+-		if (alias.size() <= filter.size() || !alias.startsWith(filter)) {
++		if (alias.size() <= query.size()
++			|| !TextUtilities::RemoveAccents(alias).toLower().startsWith(
++				query)) {
+ 			continue;
+ 		}
+ 		const auto peer = LoadedPeer(session, id);
+@@ -551,7 +576,7 @@ void ReplaceUsernameAliases(
+ 			break;
+ 		}
+ 		auto till = from + 1;
+-		while (till < text.text.size() && IsUsernameChar(text.text[till])) {
++		while (till < text.text.size() && IsAliasChar(text.text[till])) {
+ 			++till;
+ 		}
+ 		position = till;

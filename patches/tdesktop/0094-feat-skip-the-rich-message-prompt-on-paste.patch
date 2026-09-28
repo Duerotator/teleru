@@ -1,0 +1,98 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 22:51:58 +0300
+Subject: [PATCH] feat: skip the rich message prompt on paste
+
+---
+ .../SourceFiles/chat_helpers/rich_paste_toast.cpp    |  2 ++
+ Telegram/SourceFiles/settings/settings_tele.cpp      |  1 +
+ Telegram/SourceFiles/tele/tele_options.cpp           | 12 ++++++++++++
+ Telegram/SourceFiles/tele/tele_options.h             |  2 ++
+ 4 files changed, 17 insertions(+)
+
+diff --git a/Telegram/SourceFiles/chat_helpers/rich_paste_toast.cpp b/Telegram/SourceFiles/chat_helpers/rich_paste_toast.cpp
+index 344965be024a47a768a8308d4ddd4dc22499f72b..705aa0e4c39f6209e43cd582201a69df33882dd1 100644
+--- a/Telegram/SourceFiles/chat_helpers/rich_paste_toast.cpp
++++ b/Telegram/SourceFiles/chat_helpers/rich_paste_toast.cpp
+@@ -14,6 +14,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "iv/iv_rich_page.h"
+ #include "lang/lang_keys.h"
+ #include "main/main_session.h"
++#include "tele/tele_options.h"
+ #include "window/window_session_controller.h"
+ #include "ui/text/text_utilities.h"
+ #include "ui/toast/toast.h"
+@@ -35,6 +36,7 @@ std::optional<RichPasteDecision> MimeDataRichPasteOffer(
+ 		not_null<Main::Session*> session,
+ 		not_null<const QMimeData*> data) {
+ 	if (PasteAsPlainTextRequested()
++		|| ::Tele::NoRichPastePrompt()
+ 		|| !Iv::Editor::CanAuthorRichMessages(session)) {
+ 		return std::nullopt;
+ 	}
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 8382b5f1e15be9b41321cfb34c9a28075e048369..68da98e3ffd939869c55d8f81157286fb9012bf2 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -1077,6 +1077,7 @@ void FillChats(SectionBuilder &builder) {
+ 	AddOptionToggle(builder, ::Tele::kOptionCalcmula);
+ 	AddOptionToggle(builder, ::Tele::kOptionSentToBottom);
+ 	AddOptionToggle(builder, ::Tele::kOptionQueueBehindMedia);
++	AddOptionToggle(builder, ::Tele::kOptionNoRichPastePrompt);
+ 	AddGroupDivider(builder);
+ 	AddGroupTitle(builder, u"Disappearing media"_q);
+ 	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 754986baf09b3a57bc58eee6fe5ac9679a278d1f..1341cbe70d0de68933b9cf114968b604b20fc076 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -62,6 +62,7 @@ const char kOptionMessageMenuLayout[] = "tele-message-menu";
+ const char kOptionSentToBottom[] = "tele-sent-to-bottom";
+ const char kOptionQueueBehindMedia[] = "tele-queue-behind-media";
+ const char kOptionInlineWithoutVia[] = "tele-inline-without-via";
++const char kOptionNoRichPastePrompt[] = "tele-no-rich-paste-prompt";
+ 
+ namespace {
+ 
+@@ -432,6 +433,13 @@ base::options::toggle InlineWithoutViaOption({
+ 	.description = "Sent as your own message, without the bot's buttons.",
+ });
+ 
++base::options::toggle NoRichPastePromptOption({
++	.id = kOptionNoRichPastePrompt,
++	.name = "No rich message prompt on paste",
++	.description = "Pasting formatted text won't offer to send it as a rich "
++		"message.",
++});
++
+ void MigrateHideCalls() {
+ 	if (!HideCallsOption.value()) {
+ 		return;
+@@ -889,4 +897,8 @@ bool InlineWithoutVia() {
+ 	return InlineWithoutViaOption.value();
+ }
+ 
++bool NoRichPastePrompt() {
++	return NoRichPastePromptOption.value();
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 9a413ab217f4a2b9ecba80c7d3a380dd3a9cb462..56be81723c6c6d849488f2bbc6b98716bcf5db7d 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -59,6 +59,7 @@ extern const char kOptionMessageMenuLayout[];
+ extern const char kOptionSentToBottom[];
+ extern const char kOptionQueueBehindMedia[];
+ extern const char kOptionInlineWithoutVia[];
++extern const char kOptionNoRichPastePrompt[];
+ 
+ [[nodiscard]] bool HideStories();
+ [[nodiscard]] bool InvisibleStories();
+@@ -147,5 +148,6 @@ void SetMessageMenuLayout(const QString &value);
+ [[nodiscard]] bool QueueBehindMedia();
+ [[nodiscard]] rpl::producer<> QueueBehindMediaChanges();
+ [[nodiscard]] bool InlineWithoutVia();
++[[nodiscard]] bool NoRichPastePrompt();
+ 
+ } // namespace Tele

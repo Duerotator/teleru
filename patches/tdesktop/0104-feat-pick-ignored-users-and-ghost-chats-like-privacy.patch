@@ -1,0 +1,654 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 23:57:21 +0300
+Subject: [PATCH] feat: pick ignored users and ghost chats like privacy
+ exceptions
+
+---
+ .../SourceFiles/settings/settings_tele.cpp    | 394 +++++++-----------
+ Telegram/SourceFiles/tele/tele_ghost.cpp      |  46 +-
+ Telegram/SourceFiles/tele/tele_ghost.h        |  10 +-
+ Telegram/SourceFiles/tele/tele_ignored.cpp    |  22 +
+ Telegram/SourceFiles/tele/tele_ignored.h      |   3 +
+ Telegram/SourceFiles/tele/tele_options.cpp    |   2 +-
+ 6 files changed, 230 insertions(+), 247 deletions(-)
+
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index 8d4f41fb66e3cbb31a0bb868f156211065296335..ddddecbeac4dff41803c3fa31354fa435127789c 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -7,6 +7,8 @@
+ #include "core/application.h"
+ #include "core/deep_links/deep_links_settings.h"
+ #include "core/version.h"
++#include "data/data_channel.h"
++#include "data/data_chat.h"
+ #include "data/data_session.h"
+ #include "data/data_user.h"
+ #include "history/history.h"
+@@ -702,173 +704,146 @@ void AddCallButtons(SectionBuilder &builder) {
+ 		{ u"hide"_q, u"confirm"_q, u"group call"_q, u"live stream"_q });
+ }
+ 
+-class IgnoredRow final : public PeerListRowWithLink {
++class UnknownPeerRow final : public PeerListRow {
+ public:
+-	explicit IgnoredRow(not_null<UserData*> user)
+-	: PeerListRowWithLink(user) {
++	UnknownPeerRow(not_null<PeerData*> peer, QString name)
++	: PeerListRow(peer)
++	, _name(std::move(name)) {
+ 	}
+ 
+ 	QString generateName() override {
+-		return peer()->isMinimalLoaded()
+-			? PeerListRowWithLink::generateName()
+-			: ::Tele::Lower(u"Unknown user"_q);
++		return _name;
++	}
++	QString generateShortName() override {
++		return _name;
+ 	}
+-
+-};
+-
+-class IgnoredController final : public PeerListController {
+-public:
+-	explicit IgnoredController(
+-		not_null<Window::SessionController*> window);
+-
+-	Main::Session &session() const override;
+-	void prepare() override;
+-	void rowClicked(not_null<PeerListRow*> row) override;
+-	void rowRightActionClicked(not_null<PeerListRow*> row) override;
+ 
+ private:
+-	void refreshRows();
+-	[[nodiscard]] std::unique_ptr<PeerListRow> createRow(
+-		not_null<UserData*> user) const;
+-
+-	const not_null<Window::SessionController*> _window;
++	const QString _name;
+ 
+ };
+ 
+-class IgnorePeerController final : public ChatsListBoxController {
++class PickPeersController final : public ChatsListBoxController {
+ public:
+-	explicit IgnorePeerController(not_null<Main::Session*> session);
++	PickPeersController(
++		not_null<Main::Session*> session,
++		QString title,
++		std::vector<not_null<PeerData*>> selected,
++		Fn<bool(not_null<PeerData*>)> filter);
+ 
+ 	Main::Session &session() const override;
+ 	void rowClicked(not_null<PeerListRow*> row) override;
+ 
+-	void setDoneCallback(Fn<void()> callback) {
+-		_done = std::move(callback);
+-	}
+-
+ protected:
+ 	void prepareViewHook() override;
+ 	std::unique_ptr<Row> createRow(not_null<History*> history) override;
+ 
+ private:
+ 	const not_null<Main::Session*> _session;
+-	Fn<void()> _done;
++	const QString _title;
++	const std::vector<not_null<PeerData*>> _selected;
++	const Fn<bool(not_null<PeerData*>)> _filter;
+ 
+ };
+ 
+-IgnoredController::IgnoredController(
+-	not_null<Window::SessionController*> window)
+-: _window(window) {
+-}
+-
+-Main::Session &IgnoredController::session() const {
+-	return _window->session();
++PickPeersController::PickPeersController(
++	not_null<Main::Session*> session,
++	QString title,
++	std::vector<not_null<PeerData*>> selected,
++	Fn<bool(not_null<PeerData*>)> filter)
++: ChatsListBoxController(session)
++, _session(session)
++, _title(std::move(title))
++, _selected(std::move(selected))
++, _filter(std::move(filter)) {
+ }
+ 
+-void IgnoredController::prepare() {
+-	delegate()->peerListSetTitle(rpl::single(::Tele::Lower(u"Ignored users"_q)));
+-	::Tele::IgnoredChanges(
+-	) | rpl::on_next([=] {
+-		refreshRows();
+-	}, lifetime());
+-	refreshRows();
++Main::Session &PickPeersController::session() const {
++	return *_session;
+ }
+ 
+-void IgnoredController::refreshRows() {
+-	const auto users = ::Tele::IgnoredUsers(&session());
+-	auto keep = base::flat_set<PeerListRowId>();
+-	for (const auto &id : users) {
+-		keep.emplace(peerFromUser(id).value);
+-	}
+-	for (auto i = delegate()->peerListFullRowsCount(); i != 0;) {
+-		const auto row = delegate()->peerListRowAt(--i);
+-		if (!keep.contains(row->id())) {
+-			delegate()->peerListRemoveRow(row);
++void PickPeersController::prepareViewHook() {
++	delegate()->peerListSetTitle(rpl::single(_title));
++	auto loaded = std::vector<not_null<PeerData*>>();
++	auto unknown = std::vector<std::unique_ptr<PeerListRow>>();
++	for (const auto &peer : _selected) {
++		if (peer->isMinimalLoaded()) {
++			loaded.push_back(peer);
++		} else {
++			unknown.push_back(std::make_unique<UnknownPeerRow>(
++				peer,
++				(peer->isUser()
++					? ::Tele::Lower(u"Unknown user"_q)
++					: ::Tele::Lower(u"Unknown chat"_q))));
+ 		}
+ 	}
+-	for (const auto &id : users) {
+-		if (!delegate()->peerListFindRow(peerFromUser(id).value)) {
+-			delegate()->peerListAppendRow(
+-				createRow(session().data().user(id)));
++	delegate()->peerListAddSelectedPeers(loaded);
++	if (!unknown.empty()) {
++		auto rows = std::vector<not_null<PeerListRow*>>();
++		for (const auto &row : unknown) {
++			rows.push_back(row.get());
+ 		}
++		delegate()->peerListAddSelectedRows(rows);
+ 	}
+-	setDescriptionText(users.empty()
+-		? ::Tele::Lower(u"Nobody is ignored. Right-click a userpic in a group "
+-			"to ignore someone."_q)
+-		: QString());
+-	delegate()->peerListRefreshRows();
+ }
+ 
+-void IgnoredController::rowClicked(not_null<PeerListRow*> row) {
++void PickPeersController::rowClicked(not_null<PeerListRow*> row) {
+ 	const auto peer = row->peer();
+-	if (!peer->isMinimalLoaded()) {
+-		return;
+-	}
+-	const auto window = _window;
+-	crl::on_main(window, [=] {
+-		window->showPeerInfo(peer);
+-	});
+-}
+-
+-void IgnoredController::rowRightActionClicked(not_null<PeerListRow*> row) {
+-	const auto peer = row->peer();
+-	crl::on_main(_window, [=] {
+-		::Tele::SetIgnored(peer, false);
+-	});
+-}
+-
+-std::unique_ptr<PeerListRow> IgnoredController::createRow(
+-		not_null<UserData*> user) const {
+-	auto row = std::make_unique<IgnoredRow>(user);
+-	row->setActionLink(::Tele::Lower(u"Remove"_q));
+-	const auto username = user->username();
+-	row->setCustomStatus(username.isEmpty()
+-		? ::Tele::Lower(u"ID %1"_q).arg(peerToUser(user->id).bare)
+-		: u"@%1"_q.arg(username));
+-	return row;
+-}
+-
+-IgnorePeerController::IgnorePeerController(
+-	not_null<Main::Session*> session)
+-: ChatsListBoxController(session)
+-, _session(session) {
+-}
+-
+-Main::Session &IgnorePeerController::session() const {
+-	return *_session;
+-}
+-
+-void IgnorePeerController::prepareViewHook() {
+-	delegate()->peerListSetTitle(rpl::single(::Tele::Lower(u"Ignore user"_q)));
+-}
+-
+-void IgnorePeerController::rowClicked(not_null<PeerListRow*> row) {
+-	::Tele::SetIgnored(row->peer(), true);
+-	if (_done) {
+-		_done();
++	delegate()->peerListSetRowChecked(row, !row->checked());
++	if (const auto channel = peer->asChannel()) {
++		if (!channel->membersCountKnown()) {
++			channel->updateFull();
++		}
+ 	}
+ }
+ 
+-auto IgnorePeerController::createRow(not_null<History*> history)
++auto PickPeersController::createRow(not_null<History*> history)
+ -> std::unique_ptr<Row> {
+ 	const auto peer = history->peer;
+-	if (!peer->isUser()
+-		|| peer->isServiceUser()
+-		|| peer->isSelf()
++	if (peer->isSelf()
+ 		|| peer->isRepliesChat()
+ 		|| peer->isVerifyCodes()
+-		|| ::Tele::IsIgnored(peer)) {
++		|| !_filter(peer)) {
+ 		return nullptr;
+ 	}
+-	return std::make_unique<Row>(history);
++	auto result = std::make_unique<Row>(history);
++	if (const auto chat = peer->asChat()) {
++		if (chat->count > 0) {
++			result->setCustomStatus(tr::lng_chat_status_members(
++				tr::now,
++				lt_count_decimal,
++				chat->count));
++		}
++	} else if (const auto channel = peer->asChannel()) {
++		if (channel->membersCountKnown() && channel->membersCount() > 0) {
++			result->setCustomStatus(channel->isBroadcast()
++				? tr::lng_chat_status_subscribers(
++					tr::now,
++					lt_count_decimal,
++					channel->membersCount())
++				: tr::lng_chat_status_members(
++					tr::now,
++					lt_count_decimal,
++					channel->membersCount()));
++		}
++	}
++	return result;
+ }
+ 
+-void ShowIgnoreUserBox(not_null<Window::SessionController*> window) {
+-	auto controller = std::make_unique<IgnorePeerController>(
+-		&window->session());
+-	auto initBox = [=, controller = controller.get()](
+-			not_null<PeerListBox*> box) {
+-		controller->setDoneCallback([=] {
++void ShowPickPeersBox(
++		not_null<Window::SessionController*> window,
++		QString title,
++		std::vector<not_null<PeerData*>> selected,
++		Fn<bool(not_null<PeerData*>)> filter,
++		Fn<void(std::vector<not_null<PeerData*>>)> save) {
++	auto controller = std::make_unique<PickPeersController>(
++		&window->session(),
++		std::move(title),
++		std::move(selected),
++		std::move(filter));
++	auto initBox = [=](not_null<PeerListBox*> box) {
++		box->addButton(tr::lng_settings_save(), [=] {
++			save(box->collectSelectedRows());
+ 			box->closeBox();
+ 		});
+ 		box->addButton(tr::lng_cancel(), [=] {
+@@ -880,17 +855,21 @@ void ShowIgnoreUserBox(not_null<Window::SessionController*> window) {
+ }
+ 
+ void ShowIgnoredBox(not_null<Window::SessionController*> window) {
+-	auto initBox = [=](not_null<PeerListBox*> box) {
+-		box->addButton(tr::lng_close(), [=] {
+-			box->closeBox();
+-		});
+-		box->addLeftButton(rpl::single(::Tele::Lower(u"Add"_q)), [=] {
+-			ShowIgnoreUserBox(window);
++	const auto session = &window->session();
++	auto selected = std::vector<not_null<PeerData*>>();
++	for (const auto &id : ::Tele::IgnoredUsers(session)) {
++		selected.push_back(session->data().user(id));
++	}
++	ShowPickPeersBox(
++		window,
++		::Tele::Lower(u"Ignored users"_q),
++		std::move(selected),
++		[](not_null<PeerData*> peer) {
++			return peer->isUser() && !peer->isServiceUser();
++		},
++		[=](std::vector<not_null<PeerData*>> peers) {
++			::Tele::SetIgnoredUsers(session, peers);
+ 		});
+-	};
+-	window->show(Box<PeerListBox>(
+-		std::make_unique<IgnoredController>(window),
+-		std::move(initBox)));
+ }
+ 
+ void AddIgnoredUsers(SectionBuilder &builder) {
+@@ -932,102 +911,20 @@ public:
+ 
+ };
+ 
+-class GhostChatsController final : public PeerListController {
+-public:
+-	explicit GhostChatsController(
+-		not_null<Window::SessionController*> window);
+-
+-	Main::Session &session() const override;
+-	void prepare() override;
+-	void rowClicked(not_null<PeerListRow*> row) override;
+-	void rowRightActionClicked(not_null<PeerListRow*> row) override;
+-
+-private:
+-	void refreshRows();
+-
+-	const not_null<Window::SessionController*> _window;
+-
+-};
+-
+-GhostChatsController::GhostChatsController(
+-	not_null<Window::SessionController*> window)
+-: _window(window) {
+-}
+-
+-Main::Session &GhostChatsController::session() const {
+-	return _window->session();
+-}
+-
+-void GhostChatsController::prepare() {
+-	delegate()->peerListSetTitle(rpl::single(::Tele::Lower(u"Ghost mode in chats"_q)));
+-	::Tele::GhostChatsChanges(
+-	) | rpl::on_next([=] {
+-		refreshRows();
+-	}, lifetime());
+-	refreshRows();
+-}
+-
+-void GhostChatsController::refreshRows() {
+-	const auto chats = ::Tele::GhostChats(&session());
+-	auto keep = base::flat_set<PeerListRowId>();
+-	for (const auto &chat : chats) {
+-		keep.emplace(chat.id.value);
+-	}
+-	for (auto i = delegate()->peerListFullRowsCount(); i != 0;) {
+-		const auto row = delegate()->peerListRowAt(--i);
+-		if (!keep.contains(row->id())) {
+-			delegate()->peerListRemoveRow(row);
+-		}
+-	}
+-	for (const auto &chat : chats) {
+-		auto row = delegate()->peerListFindRow(chat.id.value);
+-		if (!row) {
+-			auto created = std::make_unique<GhostChatRow>(
+-				session().data().peer(chat.id));
+-			created->setActionLink(::Tele::Lower(u"Remove"_q));
+-			row = created.get();
+-			delegate()->peerListAppendRow(std::move(created));
+-		}
+-		row->setCustomStatus(
+-			(chat.mode == ::Tele::GhostOverride::Always)
+-				? ::Tele::Lower(u"Always ghost"_q)
+-				: ::Tele::Lower(u"Never ghost"_q));
+-	}
+-	setDescriptionText(chats.empty()
+-		? ::Tele::Lower(u"No chats yet. Pick Ghost mode in this chat in a chat's "
+-			"menu."_q)
+-		: QString());
+-	delegate()->peerListRefreshRows();
+-}
+-
+-void GhostChatsController::rowClicked(not_null<PeerListRow*> row) {
+-	const auto peer = row->peer();
+-	if (!peer->isMinimalLoaded()) {
+-		return;
+-	}
+-	const auto window = _window;
+-	crl::on_main(window, [=] {
+-		window->showPeerInfo(peer);
+-	});
+-}
+-
+-void GhostChatsController::rowRightActionClicked(
+-		not_null<PeerListRow*> row) {
+-	const auto peer = row->peer();
+-	crl::on_main(_window, [=] {
+-		::Tele::SetChatGhostOverride(peer, ::Tele::GhostOverride::Default);
+-	});
+-}
+-
+-void ShowGhostChatsBox(not_null<Window::SessionController*> window) {
+-	auto initBox = [=](not_null<PeerListBox*> box) {
+-		box->addButton(tr::lng_close(), [=] {
+-			box->closeBox();
++void ShowGhostChatsBox(
++		not_null<Window::SessionController*> window,
++		::Tele::GhostOverride mode) {
++	const auto session = &window->session();
++	ShowPickPeersBox(
++		window,
++		((mode == ::Tele::GhostOverride::Always)
++			? ::Tele::Lower(u"Always ghost in"_q)
++			: ::Tele::Lower(u"Never ghost in"_q)),
++		::Tele::GhostChatPeers(session, mode),
++		[](not_null<PeerData*>) { return true; },
++		[=](std::vector<not_null<PeerData*>> peers) {
++			::Tele::SetChatsGhostOverride(session, mode, peers);
+ 		});
+-	};
+-	window->show(Box<PeerListBox>(
+-		std::make_unique<GhostChatsController>(window),
+-		std::move(initBox)));
+ }
+ 
+ void AddGhostChats(SectionBuilder &builder) {
+@@ -1035,23 +932,34 @@ void AddGhostChats(SectionBuilder &builder) {
+ 		::Tele::kOptionGhostChats);
+ 	const auto controller = builder.controller();
+ 	const auto description = ::Tele::Lower(option.description());
+-	const auto button = builder.addButton({
+-		.id = option.id(),
+-		.title = rpl::single(::Tele::Lower(option.name())),
+-		.st = &st::settingsButtonNoIcon,
+-		.label = ::Tele::GhostChatsCountValue(
+-			builder.session()
+-		) | rpl::map([](int count) {
+-			return count ? QString::number(count) : u"none"_q;
+-		}),
+-		.onClick = [=] {
+-			ShowGhostChatsBox(controller);
+-		},
+-		.keywords = { description },
+-	});
+-	if (button) {
+-		SetupLink(button, option.id());
+-	}
++	const auto add = [&](
++			const QString &id,
++			const QString &title,
++			::Tele::GhostOverride mode) {
++		const auto button = builder.addButton({
++			.id = id,
++			.title = rpl::single(::Tele::Lower(title)),
++			.st = &st::settingsButtonNoIcon,
++			.label = ::Tele::GhostChatsCountValue(
++				builder.session(),
++				mode
++			) | rpl::map([](int count) {
++				return count ? QString::number(count) : u"none"_q;
++			}),
++			.onClick = [=] {
++				ShowGhostChatsBox(controller, mode);
++			},
++			.keywords = { description },
++		});
++		if (button) {
++			SetupLink(button, id);
++		}
++	};
++	add(option.id(), u"Always ghost in"_q, ::Tele::GhostOverride::Always);
++	add(
++		option.id() + u"-never"_q,
++		u"Never ghost in"_q,
++		::Tele::GhostOverride::Never);
+ 	AddAbout(builder, description);
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_ghost.cpp b/Telegram/SourceFiles/tele/tele_ghost.cpp
+index f463d7d17d81ed1c96dd2dec61748b4a97eef9a7..4ded39f88b977f452e55a695b80298548017a1d0 100644
+--- a/Telegram/SourceFiles/tele/tele_ghost.cpp
++++ b/Telegram/SourceFiles/tele/tele_ghost.cpp
+@@ -558,6 +558,31 @@ void SetChatGhostOverride(
+ 	SetGhostChats(Serialize(overrides));
+ }
+ 
++void SetChatsGhostOverride(
++		not_null<Main::Session*> session,
++		GhostOverride mode,
++		const std::vector<not_null<PeerData*>> &peers) {
++	const auto test = session->isTestMode();
++	auto overrides = Get().overrides;
++	for (auto i = begin(overrides); i != end(overrides);) {
++		if ((((i->first & kTestBit) != 0) == test) && (i->second == mode)) {
++			i = overrides.erase(i);
++		} else {
++			++i;
++		}
++	}
++	if (mode != GhostOverride::Default) {
++		for (const auto &peer : peers) {
++			if (!peer->isSelf()) {
++				overrides[PeerKey(peer)] = mode;
++			}
++		}
++	}
++	if (overrides != Get().overrides) {
++		SetGhostChats(Serialize(overrides));
++	}
++}
++
+ std::vector<GhostChat> GhostChats(not_null<Main::Session*> session) {
+ 	const auto test = session->isTestMode();
+ 	auto result = std::vector<GhostChat>();
+@@ -569,17 +594,34 @@ std::vector<GhostChat> GhostChats(not_null<Main::Session*> session) {
+ 	return result;
+ }
+ 
++std::vector<not_null<PeerData*>> GhostChatPeers(
++		not_null<Main::Session*> session,
++		GhostOverride mode) {
++	auto result = std::vector<not_null<PeerData*>>();
++	for (const auto &chat : GhostChats(session)) {
++		if (chat.mode == mode) {
++			result.push_back(session->data().peer(chat.id));
++		}
++	}
++	return result;
++}
++
+ rpl::producer<> GhostChatsChanges() {
+ 	return Get().changes.events();
+ }
+ 
+-rpl::producer<int> GhostChatsCountValue(not_null<Main::Session*> session) {
++rpl::producer<int> GhostChatsCountValue(
++		not_null<Main::Session*> session,
++		GhostOverride mode) {
+ 	return rpl::single(
+ 		rpl::empty
+ 	) | rpl::then(
+ 		GhostChatsChanges()
+ 	) | rpl::map([=] {
+-		return int(GhostChats(session).size());
++		return int(ranges::count(
++			GhostChats(session),
++			mode,
++			&GhostChat::mode));
+ 	});
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_ghost.h b/Telegram/SourceFiles/tele/tele_ghost.h
+index dfbbca5b59ab7b2921201f3f04bea07796893cb8..8df5f81d9f4fee9bc7c677cb765e32f702e1514c 100644
+--- a/Telegram/SourceFiles/tele/tele_ghost.h
++++ b/Telegram/SourceFiles/tele/tele_ghost.h
+@@ -74,11 +74,19 @@ void AddGhostMenuToggle(not_null<Ui::VerticalLayout*> container);
+ void SetChatGhostOverride(
+ 	not_null<PeerData*> peer,
+ 	GhostOverride mode);
++void SetChatsGhostOverride(
++	not_null<Main::Session*> session,
++	GhostOverride mode,
++	const std::vector<not_null<PeerData*>> &peers);
+ [[nodiscard]] std::vector<GhostChat> GhostChats(
+ 	not_null<Main::Session*> session);
++[[nodiscard]] std::vector<not_null<PeerData*>> GhostChatPeers(
++	not_null<Main::Session*> session,
++	GhostOverride mode);
+ [[nodiscard]] rpl::producer<> GhostChatsChanges();
+ [[nodiscard]] rpl::producer<int> GhostChatsCountValue(
+-	not_null<Main::Session*> session);
++	not_null<Main::Session*> session,
++	GhostOverride mode);
+ void AddGhostChatAction(
+ 	PeerData *peer,
+ 	const Ui::Menu::MenuCallback &addAction);
+diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
+index 5f4eabe36455090cb9fb87984f946ec35322ea62..2ceea8996ce607d341bd875c16c0c69c0d8f704c 100644
+--- a/Telegram/SourceFiles/tele/tele_ignored.cpp
++++ b/Telegram/SourceFiles/tele/tele_ignored.cpp
+@@ -189,6 +189,28 @@ void SetIgnored(not_null<PeerData*> peer, bool ignored) {
+ 	}
+ }
+ 
++void SetIgnoredUsers(
++		not_null<Main::Session*> session,
++		const std::vector<not_null<PeerData*>> &peers) {
++	const auto test = session->isTestMode();
++	auto keys = Get().keys;
++	for (auto i = begin(keys); i != end(keys);) {
++		if (((*i & kTestBit) != 0) == test) {
++			i = keys.erase(i);
++		} else {
++			++i;
++		}
++	}
++	for (const auto &peer : peers) {
++		if (Ignorable(peer)) {
++			keys.emplace(PeerKey(peer));
++		}
++	}
++	if (keys != Get().keys) {
++		SetIgnoredList(Serialize(keys));
++	}
++}
++
+ rpl::producer<> IgnoredChanges() {
+ 	return Get().changes.events();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_ignored.h b/Telegram/SourceFiles/tele/tele_ignored.h
+index f15f6732f85384c8f730d856dbbbeb1aeb2812bd..7ac6959d567e74429640eb02c2837016a66dccec 100644
+--- a/Telegram/SourceFiles/tele/tele_ignored.h
++++ b/Telegram/SourceFiles/tele/tele_ignored.h
+@@ -24,6 +24,9 @@ namespace Tele {
+ 
+ [[nodiscard]] bool IsIgnored(not_null<PeerData*> peer);
+ void SetIgnored(not_null<PeerData*> peer, bool ignored);
++void SetIgnoredUsers(
++	not_null<Main::Session*> session,
++	const std::vector<not_null<PeerData*>> &peers);
+ [[nodiscard]] rpl::producer<> IgnoredChanges();
+ [[nodiscard]] std::vector<UserId> IgnoredUsers(
+ 	not_null<Main::Session*> session);
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 9b36d078a77e9650be22095fe74fbf6eac120c6d..b5d53195d6a959dce878bc03a5249f33cc8d46f7 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -142,7 +142,7 @@ base::options::toggle GhostStoriesOption({
+ base::options::option<QString> GhostChatsOption({
+ 	.id = kOptionGhostChats,
+ 	.name = "Ghost mode in chats",
+-	.description = "Chats that are always or never ghosted, set in a chat's "
++	.description = "Chats that are always or never ghosted. Also in a chat's "
+ 		"menu.",
+ });
+ 

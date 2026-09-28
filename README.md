@@ -25,7 +25,49 @@ tele updates itself: it checks these releases every 3 hours, downloads new build
 everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats and messages, privacy, profiles and ids, bots, server and updates. the search at the top of the page, and the main settings search, find every tele setting.
 
 <details>
-<summary>all 81 patches, newest release first</summary>
+<summary>all 118 patches, newest release first</summary>
+
+### [tele 9](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.9)
+
+| # | what it does | where to toggle |
+|---|---|---|
+| [82](patches/tdesktop/0082-feat-keep-messages-you-delete-yourself.patch) | messages you delete yourself are kept too, not only ones deleted by others | with 29 |
+| [83](patches/tdesktop/0083-feat-show-server-and-updates-on-the-tele-settings-pa.patch) | the server and updates rows sit right on the tele settings page | always on |
+| [84](patches/tdesktop/0084-feat-pick-brush-colors-from-the-image.patch) | an eyedropper in the photo editor picks the brush color from the image | always on |
+| [85](patches/tdesktop/0085-feat-show-edit-history-as-a-chat.patch) | edit history opens as its own chat: every version as a full message with its media and time | with 28 |
+| [86](patches/tdesktop/0086-feat-hide-or-confirm-call-and-voice-chat-buttons.patch) | call and voice chat buttons can each be shown, hidden, or ask before calling | tele → interface |
+| [87](patches/tdesktop/0087-feat-group-the-tele-interface-settings.patch) | the interface page is split into groups: title bar, chat list, chats and profiles, text | always on |
+| [88](patches/tdesktop/0088-feat-hide-ghost-mode-from-the-main-menu-unless-asked.patch) | the ghost mode toggle in the main menu is optional | tele → privacy, off |
+| [89](patches/tdesktop/0089-feat-show-ids-on-regular-gifts.patch) | a copyable id on regular gifts too, not only on collectible ones | tele → profiles and ids, off |
+| [90](patches/tdesktop/0090-feat-go-offline-right-after-sending-in-ghost-mode.patch) | with the online status hidden in ghost mode, sending a message sets you offline again right away | with 44 |
+| [91](patches/tdesktop/0091-feat-send-inline-results-without-via.patch) | inline bot results go out as your own messages, without via @bot | tele → bots, off |
+| [92](patches/tdesktop/0092-fix-put-the-checkmark-after-the-emoji-status.patch) | badges go in telegram's order everywhere: custom verification, name, emoji status, checkmark | always on |
+| [93](patches/tdesktop/0093-fix-play-reactions-once-in-ghost-mode.patch) | in ghost mode, reaction animations play once instead of over and over | with 44 |
+| [94](patches/tdesktop/0094-feat-skip-the-rich-message-prompt-on-paste.patch) | no rich message prompt when you paste formatted text | tele → chats and messages, off |
+| [95](patches/tdesktop/0095-feat-group-the-tele-profile-settings.patch) | the profiles and ids page is split into groups: peer ids, profiles, gifts | always on |
+| [96](patches/tdesktop/0096-feat-remove-a-chat-s-background-only-for-you.patch) | remove a chat's background only for you, from the chat menu | tele → chats and messages → chat backgrounds |
+| [97](patches/tdesktop/0097-feat-set-chat-backgrounds-only-for-you.patch) | set your own background for any chat, only for you | with 96 |
+| [98](patches/tdesktop/0098-fix-show-the-premium-star-next-to-checkmarks.patch) | the premium star shows next to checkmarks instead of being hidden by them | always on |
+| [99](patches/tdesktop/0099-feat-skip-or-quote-deleted-messages-when-replying.patch) | replying to a message that got deleted meanwhile either drops the reply or quotes the deleted text | tele → chats and messages |
+| [100](patches/tdesktop/0100-feat-add-test-server-accounts-with-a-plain-right-cli.patch) | a plain right-click on add account offers the test server | always on |
+| [101](patches/tdesktop/0101-feat-link-usernames-to-profiles-locally.patch) | username aliases: your own @alias for any profile, clickable and in autocomplete, only for you | tele → chats and messages → username aliases |
+| [102](patches/tdesktop/0102-feat-replace-username-aliases-when-sending.patch) | aliases in sent messages become real mentions, a toast says what changed | with 101 |
+| [103](patches/tdesktop/0103-feat-hide-the-mentions-and-reactions-buttons.patch) | the jump to mentions and jump to reactions buttons can be hidden | tele → interface, off |
+| [104](patches/tdesktop/0104-feat-pick-ignored-users-and-ghost-chats-like-privacy.patch) | ignored users and ghost chats are picked from a searchable list, like privacy exceptions | tele → privacy |
+| [105](patches/tdesktop/0105-feat-show-what-s-new-in-a-local-tele-chat.patch) | what's new comes from a local tele chat with its own profile instead of telegram's service chat | with 55 |
+| [106](patches/tdesktop/0106-feat-group-what-s-new-by-settings-category.patch) | what's new is grouped by settings page | with 55 |
+| [107](patches/tdesktop/0107-feat-show-what-s-new-once-per-account-when-you-open-.patch) | every account gets what's new once, the first time you open it after an update | with 55 |
+| [108](patches/tdesktop/0108-feat-show-names-instead-of-phone-numbers-in-chat-hea.patch) | people who shared their number with you but aren't in your contacts keep their name in the chat header instead of the number | tele → profiles and ids, off |
+| [109](patches/tdesktop/0109-feat-allow-any-letters-in-username-aliases.patch) | aliases can use any letters, not only latin ones | with 101 |
+| [110](patches/tdesktop/0110-feat-open-the-emoji-panel-by-click-only.patch) | the emoji, sticker and gif panel opens on click only, not on hover | tele → interface, off |
+| [111](patches/tdesktop/0111-feat-rewrite-pasted-links-with-your-own-rules.patch) | links you paste are rewritten by your own rules, like x.com to fixupx.com. ctrl+z brings the original back | tele → chats and messages → link rewrites |
+| [112](patches/tdesktop/0112-feat-edit-link-rewrite-rules-and-presets.patch) | an editor for link rewrite rules: domains or regex patterns, presets for x, instagram, tiktok, reddit, bluesky and pixiv, and a field to test a link | with 111 |
+| [113](patches/tdesktop/0113-feat-name-people-only-for-you.patch) | give people a name only you see, from their chat menu. their profile keeps the real one | tele → profiles and ids → custom names |
+| [114](patches/tdesktop/0114-feat-add-launch-flags-to-turn-off-tele-s-own-network.patch) | launch flags that keep tele off the network for one launch, see [below](#launch-flags) | always on |
+| [115](patches/tdesktop/0115-feat-preview-calcmula-results-while-typing.patch) | the calcmula result shows above the input field while you type, like an inline bot | tele → chats and messages, off |
+| [116](patches/tdesktop/0116-feat-open-the-attach-menu-by-click-only.patch) | the attach menu opens on click only, not on hover | tele → interface, off |
+| [117](patches/tdesktop/0117-feat-clear-the-tele-server-s-cached-data.patch) | clear the tele server's saved data, badges included | tele → server → clear cached data |
+| [118](patches/tdesktop/0118-fix-stop-calcmula-s-restored-text-from-doubling.patch) | a failed calcmula message goes back into the field once instead of doubling | with 68 |
 
 ### [tele 8](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.8)
 
@@ -153,9 +195,19 @@ the window title (what the taskbar, alt+tab and the system window frame show) ta
 on every site: `utm*`, `mtm_*`, `pk_*`, `ga_*`, `_ga`, `_gl`, `gclid`, `gclsrc`, `gbraid`, `wbraid`, `dclid`, `gad_source`, `gad_campaignid`, `fbclid`, `fb_action_*`, `fb_source`, `fb_ref`, `action_*_map`, `msclkid`, `twclid`, `ttclid`, `li_fat_id`, `epik`, `yclid`, `ysclid`, `_openstat`, `mc_cid`, `mc_eid`, `mc_tc`, `ml_subscriber*`, `mkt_tok`, `igshid`, `igsh`, `_hsenc`, `_hsmi`, `__hsfp`, `__hssc`, `__hstc`, `hsctatracking`, `srsltid`, `s_kwcid`, `s_cid`, `oly_*_id`, `rb_clickid`, `vero_*`, `wickedid`, `_kx`, `wt_mc`, `wtrid`, `hmb_*`, `itm_*`, `otm_*`, `cmpid`, `os_ehash`, `__twitter_impression`, `tracking_source`, `echobox`, `spm`, `_branch_match_id`, `_branch_referrer`, `si`. fragments like `#utm_source=…` go too.
 
 per site, on top of that: youtube (`feature`, `pp`, `kw`), spotify (`context`, `nd`, `dl_branch`), twitter / x and fx/vx mirrors (`s`, `t`, `src`, `ref_src`, `ref_url`, `cn`), threads (`xmt`, `slof`), tiktok (`_r`, `_t`, `is_from_webapp`, `sender_device`, `share_*` and more), facebook (`mibextid`, `__tn__`, `__cft__`, `ref*`, `notif_*` and more), reddit (`share_id`, `ref*`, `correlation_id`, `rdt`), amazon (`pd_rd_*`, `qid`, `ref_`, `tag`, `linkCode`, `/ref=…` in the path and more), aliexpress (`aff_*`, `algo_*`, `pvid`, `scm*` and more), vk (`from`, `ref`, `ref_domain`), yandex (`from`, `clid`, `redircnt`), google search (`ved`, `ei`, `sa`, `usg`, `oq`, `aqs`, `gs_*` and more), google docs / drive (`usp`), linkedin (`trk*`, `refId`, `lipi` and more), ebay (`_trk*`, `mk*`, `campid` and more), medium (`source`), github (`email_token`, `email_source`), steam (`snr`), netflix (`trackId`, `tctx`), twitch (`tt_medium`, `tt_content`), imdb (`ref_`, `pf_rd_*`), bing, msn, apple (`itsct`, `itscg`), pinterest, hh.ru, ozon. t.me links are never touched.
+### launch flags
+
+start tele with any of these to keep it off the network on its own for that launch. telegram's own connection works as usual, and your settings stay as they are.
+
+- `-noteleserver`: nothing goes to the tele server: no checkmark or other mark updates (the saved ones still show) and no crash reports.
+- `-noteleupdate`: no update checks, no downloads, no what's new.
+- `-teleoffline`: both of the above, and calcmula is off too.
+
+the flags stay on when tele restarts itself, like after an update. on windows, add them to a shortcut after `tele.exe`; on linux, `./tele -teleoffline`; on macos, `open -a tele --args -teleoffline`. a shortcut with `-noteleserver` keeps even the very first launch away from the tele server. to turn the server off for good, empty its field in settings.
+
 ### tele server
 
-tele can pull extra account data, like checkmarks, custom verification, scam / fake marks and support marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off.
+tele can pull extra account data, like checkmarks, custom verification, scam / fake marks and support marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off. "clear cached data" drops the list tele saved, so the marks disappear until the next fetch.
 
 the same server takes crash reports. after a crash, tele offers to send the report: a short text with the version, platform and the crash reason, plus a minidump of the crashed process. you can look at it first and untick your username. with the server field empty, nothing is offered.
 

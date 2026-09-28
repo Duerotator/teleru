@@ -1,0 +1,29 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Mon, 28 Sep 2026 02:55:20 +0300
+Subject: [PATCH] fix: stop calcmula's restored text from doubling
+
+---
+ Telegram/SourceFiles/tele/tele_calcmula.cpp | 2 ++
+ 1 file changed, 2 insertions(+)
+
+diff --git a/Telegram/SourceFiles/tele/tele_calcmula.cpp b/Telegram/SourceFiles/tele/tele_calcmula.cpp
+index 83abb2503ebbe7e3cc3f5bd219f6402d21426385..9d2a659edd30b656b73dc850afe476f251b9ad71 100644
+--- a/Telegram/SourceFiles/tele/tele_calcmula.cpp
++++ b/Telegram/SourceFiles/tele/tele_calcmula.cpp
+@@ -2,6 +2,7 @@
+ 
+ #include "api/api_common.h"
+ #include "apiwrap.h"
++#include "core/application.h"
+ #include "data/components/ephemeral_messages.h"
+ #include "data/data_changes.h"
+ #include "data/data_drafts.h"
+@@ -149,6 +150,7 @@ void ShowError(not_null<History*> history, const QString &error) {
+ }
+ 
+ void RestoreDraft(const Api::MessageToSend &message) {
++	Core::App().materializeLocalDrafts();
+ 	const auto history = message.action.history;
+ 	const auto topicRootId = message.action.replyTo.topicRootId;
+ 	const auto monoforumPeerId = message.action.replyTo.monoforumPeerId;

@@ -1,0 +1,293 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Mon, 28 Sep 2026 01:11:58 +0300
+Subject: [PATCH] feat: open the emoji panel by click only
+
+---
+ Telegram/CMakeLists.txt                       |   2 +
+ .../SourceFiles/chat_helpers/tabbed_panel.cpp |   6 +-
+ .../SourceFiles/settings/settings_tele.cpp    |   1 +
+ .../SourceFiles/tele/tele_emoji_panel.cpp     | 137 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_emoji_panel.h  |  15 ++
+ Telegram/SourceFiles/tele/tele_options.cpp    |  11 ++
+ Telegram/SourceFiles/tele/tele_options.h      |   2 +
+ 7 files changed, 172 insertions(+), 2 deletions(-)
+ create mode 100644 Telegram/SourceFiles/tele/tele_emoji_panel.cpp
+ create mode 100644 Telegram/SourceFiles/tele/tele_emoji_panel.h
+
+diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
+index 5efd79c120e5b13d872d0ab8965c9877002260a6..72c35367b61e438c0efa04d873e20d3cc0e42a18 100644
+--- a/Telegram/CMakeLists.txt
++++ b/Telegram/CMakeLists.txt
+@@ -2253,6 +2253,8 @@ PRIVATE
+     tele/tele_edit_history.h
+     tele/tele_editor_eyedropper.cpp
+     tele/tele_editor_eyedropper.h
++    tele/tele_emoji_panel.cpp
++    tele/tele_emoji_panel.h
+     tele/tele_edit_history_section.cpp
+     tele/tele_edit_history_section.h
+     tele/tele_folders.cpp
+diff --git a/Telegram/SourceFiles/chat_helpers/tabbed_panel.cpp b/Telegram/SourceFiles/chat_helpers/tabbed_panel.cpp
+index 30c19ed302d334bcb0ab057e1ef9c167b813e878..1408ff3bf6aac9cc202995d9e1cf9fc4c14fb8f2 100644
+--- a/Telegram/SourceFiles/chat_helpers/tabbed_panel.cpp
++++ b/Telegram/SourceFiles/chat_helpers/tabbed_panel.cpp
+@@ -17,6 +17,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "data/stickers/data_stickers.h"
+ #include "core/application.h"
+ #include "base/options.h"
++#include "tele/tele_emoji_panel.h"
+ #include "styles/style_chat_helpers.h"
+ 
+ namespace ChatHelpers {
+@@ -283,7 +284,7 @@ bool TabbedPanel::preventAutoHide() const {
+ 
+ void TabbedPanel::leaveEventHook(QEvent *e) {
+ 	Core::App().unregisterLeaveSubscription(this);
+-	if (preventAutoHide()) {
++	if (preventAutoHide() || Tele::EmojiPanelKeepsOpen(this)) {
+ 		return;
+ 	}
+ 	if (_a_show.animating() || _a_opacity.animating()) {
+@@ -488,7 +489,8 @@ void TabbedPanel::showStarted() {
+ }
+ 
+ bool TabbedPanel::eventFilter(QObject *obj, QEvent *e) {
+-	if (TabbedPanelShowOnClick.value()) {
++	if (Tele::EmojiPanelClickOnly(this, obj)
++		|| TabbedPanelShowOnClick.value()) {
+ 		return false;
+ 	} else if (e->type() == QEvent::Enter) {
+ 		otherEnter();
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index f97fd8fe5bcd295ed78f6eee6f159cd3444e3951..437d3e4606b736b930150e399220b7a81a966797 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -1256,6 +1256,7 @@ void FillInterface(SectionBuilder &builder) {
+ 	AddOptionToggle(builder, ::Tele::kOptionStaticUserpicsChats);
+ 	AddOptionToggle(builder, ::Tele::kOptionHideMentionsButton);
+ 	AddOptionToggle(builder, ::Tele::kOptionHideReactionsButton);
++	AddOptionToggle(builder, ::Tele::kOptionEmojiPanelClick);
+ 	AddCallButtons(builder);
+ 	AddGroupDivider(builder);
+ 	AddGroupTitle(builder, u"Text"_q);
+diff --git a/Telegram/SourceFiles/tele/tele_emoji_panel.cpp b/Telegram/SourceFiles/tele/tele_emoji_panel.cpp
+new file mode 100644
+index 0000000000000000000000000000000000000000..98b2d1464c4bffcab263dfcaf3ce5b03452a3a9f
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_emoji_panel.cpp
+@@ -0,0 +1,137 @@
++#include "tele/tele_emoji_panel.h"
++
++#include "base/event_filter.h"
++#include "chat_helpers/tabbed_panel.h"
++#include "chat_helpers/tabbed_selector.h"
++#include "tele/tele_options.h"
++
++#include <QtGui/QKeyEvent>
++#include <QtGui/QMouseEvent>
++#include <QtWidgets/QApplication>
++
++namespace Tele {
++namespace {
++
++struct State {
++	std::vector<QPointer<QWidget>> toggles;
++	QPointer<QObject> filter;
++};
++
++base::flat_map<not_null<ChatHelpers::TabbedPanel*>, State*> Panels;
++
++[[nodiscard]] bool Contains(QWidget *parent, QWidget *widget) {
++	return parent && ((parent == widget) || parent->isAncestorOf(widget));
++}
++
++[[nodiscard]] bool Closable(not_null<ChatHelpers::TabbedPanel*> panel) {
++	return EmojiPanelClick()
++		&& !panel->isHidden()
++		&& !panel->hiding()
++		&& !panel->selector()->preventAutoHide();
++}
++
++[[nodiscard]] bool PressedOutside(
++		not_null<ChatHelpers::TabbedPanel*> panel,
++		not_null<State*> state,
++		not_null<QMouseEvent*> e) {
++	const auto widget = QApplication::widgetAt(e->globalPos());
++	if (!widget
++		|| widget->window() != panel->window()
++		|| Contains(panel, widget)) {
++		return false;
++	}
++	for (const auto &toggle : state->toggles) {
++		if (Contains(toggle.data(), widget)) {
++			return false;
++		}
++	}
++	return true;
++}
++
++[[nodiscard]] bool EscapePressed(
++		not_null<ChatHelpers::TabbedPanel*> panel,
++		not_null<QKeyEvent*> e) {
++	if (e->key() != Qt::Key_Escape || e->modifiers()) {
++		return false;
++	}
++	const auto focused = QApplication::focusWidget();
++	return focused
++		&& !Contains(panel, focused)
++		&& Contains(panel->parentWidget(), focused);
++}
++
++void ToggleFilter(
++		not_null<ChatHelpers::TabbedPanel*> panel,
++		not_null<State*> state,
++		bool shown) {
++	if (!shown) {
++		if (const auto filter = base::take(state->filter)) {
++			filter->deleteLater();
++		}
++		return;
++	} else if (state->filter) {
++		return;
++	}
++	state->filter = base::install_event_filter(panel, qApp, [=](
++			not_null<QEvent*> e) {
++		const auto type = e->type();
++		if ((type != QEvent::MouseButtonPress && type != QEvent::KeyPress)
++			|| !Closable(panel)) {
++			return base::EventFilterResult::Continue;
++		} else if (type == QEvent::MouseButtonPress) {
++			if (PressedOutside(panel, state, static_cast<QMouseEvent*>(
++					e.get()))) {
++				panel->hideAnimated();
++			}
++			return base::EventFilterResult::Continue;
++		} else if (EscapePressed(panel, static_cast<QKeyEvent*>(e.get()))) {
++			panel->hideAnimated();
++			return base::EventFilterResult::Cancel;
++		}
++		return base::EventFilterResult::Continue;
++	}).get();
++}
++
++[[nodiscard]] not_null<State*> Register(
++		not_null<ChatHelpers::TabbedPanel*> panel) {
++	if (const auto i = Panels.find(panel); i != end(Panels)) {
++		return i->second;
++	}
++	const auto state = panel->lifetime().make_state<State>();
++	Panels.emplace(panel, state);
++	panel->lifetime().add([=] {
++		Panels.remove(panel);
++	});
++	panel->shownValue(
++	) | rpl::on_next([=](bool shown) {
++		ToggleFilter(panel, state, shown);
++	}, panel->lifetime());
++	return state;
++}
++
++} // namespace
++
++bool EmojiPanelClickOnly(
++		not_null<ChatHelpers::TabbedPanel*> panel,
++		QObject *toggle) {
++	if (!EmojiPanelClick()) {
++		return false;
++	}
++	const auto state = Register(panel);
++	if (toggle && toggle->isWidgetType()) {
++		const auto widget = static_cast<QWidget*>(toggle);
++		if (!ranges::contains(state->toggles, widget, [](
++				const QPointer<QWidget> &toggle) {
++			return toggle.data();
++		})) {
++			state->toggles.push_back(widget);
++		}
++	}
++	return true;
++}
++
++bool EmojiPanelKeepsOpen(not_null<ChatHelpers::TabbedPanel*> panel) {
++	return EmojiPanelClick() && Panels.contains(panel);
++}
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_emoji_panel.h b/Telegram/SourceFiles/tele/tele_emoji_panel.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..0e224ebe3c4fc98107ea1c889c92c3c74db8456f
+--- /dev/null
++++ b/Telegram/SourceFiles/tele/tele_emoji_panel.h
+@@ -0,0 +1,15 @@
++#pragma once
++
++namespace ChatHelpers {
++class TabbedPanel;
++} // namespace ChatHelpers
++
++namespace Tele {
++
++[[nodiscard]] bool EmojiPanelClickOnly(
++	not_null<ChatHelpers::TabbedPanel*> panel,
++	QObject *toggle);
++[[nodiscard]] bool EmojiPanelKeepsOpen(
++	not_null<ChatHelpers::TabbedPanel*> panel);
++
++} // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index b03aba4f5b256d35e97e9572df1dad30c94db0e2..8bac98ea049df8cf1f4f805783f96483aae38844 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -38,6 +38,7 @@ const char kOptionStaticUserpicsList[] = "tele-static-userpics-list";
+ const char kOptionStaticUserpicsChats[] = "tele-static-userpics-chats";
+ const char kOptionHideMentionsButton[] = "tele-hide-mentions-button";
+ const char kOptionHideReactionsButton[] = "tele-hide-reactions-button";
++const char kOptionEmojiPanelClick[] = "tele-emoji-panel-click";
+ const char kOptionShowGiftIds[] = "tele-show-gift-ids";
+ const char kOptionShowRegularGiftIds[] = "tele-show-regular-gift-ids";
+ const char kOptionSeeTgButton[] = "tele-seetg-button";
+@@ -292,6 +293,12 @@ base::options::toggle HideReactionsButtonOption({
+ 	.description = "No heart button above the input field for unread reactions.",
+ });
+ 
++base::options::toggle EmojiPanelClickOption({
++	.id = kOptionEmojiPanelClick,
++	.name = "Open the emoji panel by click only",
++	.description = "Hovering the emoji button no longer opens stickers and GIFs.",
++});
++
+ base::options::toggle ShowGiftIdsOption({
+ 	.id = kOptionShowGiftIds,
+ 	.name = "Show gift IDs",
+@@ -743,6 +750,10 @@ rpl::producer<> HideReactionsButtonChanges() {
+ 	return HideReactionsButtonOption.changes();
+ }
+ 
++bool EmojiPanelClick() {
++	return EmojiPanelClickOption.value();
++}
++
+ bool ShowGiftIds() {
+ 	return ShowGiftIdsOption.value();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
+index 2f830654da028dbb225bab91fa384c022bb7105d..9fb5863874a8112ce0f0b7fbffb708e7e0a595ac 100644
+--- a/Telegram/SourceFiles/tele/tele_options.h
++++ b/Telegram/SourceFiles/tele/tele_options.h
+@@ -35,6 +35,7 @@ extern const char kOptionGhostInMenu[];
+ extern const char kOptionStaticUserpicsChats[];
+ extern const char kOptionHideMentionsButton[];
+ extern const char kOptionHideReactionsButton[];
++extern const char kOptionEmojiPanelClick[];
+ extern const char kOptionShowGiftIds[];
+ extern const char kOptionShowRegularGiftIds[];
+ extern const char kOptionSeeTgButton[];
+@@ -117,6 +118,7 @@ void SetGroupCallButton(const QString &value);
+ [[nodiscard]] rpl::producer<> HideMentionsButtonChanges();
+ [[nodiscard]] bool HideReactionsButton();
+ [[nodiscard]] rpl::producer<> HideReactionsButtonChanges();
++[[nodiscard]] bool EmojiPanelClick();
+ [[nodiscard]] bool ShowGiftIds();
+ [[nodiscard]] bool ShowRegularGiftIds();
+ [[nodiscard]] bool SeeTgButton();

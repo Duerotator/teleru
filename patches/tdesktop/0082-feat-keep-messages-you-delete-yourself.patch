@@ -1,0 +1,88 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 21:29:57 +0300
+Subject: [PATCH] feat: keep messages you delete yourself
+
+---
+ Telegram/SourceFiles/data/data_histories.cpp |  1 +
+ Telegram/SourceFiles/tele/tele_deleted.cpp   | 16 ++++++++++++----
+ Telegram/SourceFiles/tele/tele_deleted.h     |  1 +
+ Telegram/SourceFiles/tele/tele_options.cpp   |  2 +-
+ 4 files changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/Telegram/SourceFiles/data/data_histories.cpp b/Telegram/SourceFiles/data/data_histories.cpp
+index d6d0a66c0ee2fca26074da5cce70488a62a6ec51..8ff6398f3319b5f697cc12c569fa26d8e77e4a7c 100644
+--- a/Telegram/SourceFiles/data/data_histories.cpp
++++ b/Telegram/SourceFiles/data/data_histories.cpp
+@@ -1023,6 +1023,7 @@ void Histories::deleteMessages(const MessageIdsList &ids, bool revoke) {
+ 		document->owner().savedMusic().remove(document);
+ 	}
+ 
++	Tele::KeepOwnDeleted(remove);
+ 	if (!remove.empty()) {
+ 		_owner->notifyItemsAboutToBeDestroyed(remove);
+ 	}
+diff --git a/Telegram/SourceFiles/tele/tele_deleted.cpp b/Telegram/SourceFiles/tele/tele_deleted.cpp
+index a019441e14a0573cebd46c2feab20e5492fac35c..974aed734116624138b67161ec1209edae796f64 100644
+--- a/Telegram/SourceFiles/tele/tele_deleted.cpp
++++ b/Telegram/SourceFiles/tele/tele_deleted.cpp
+@@ -149,15 +149,13 @@ void Forget(
+ 	return st::msgDateFont->height;
+ }
+ 
+-} // namespace
+-
+-void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
++void Keep(std::vector<not_null<HistoryItem*>> &items, bool own) {
+ 	if (!KeepDeletedMessages()) {
+ 		return;
+ 	}
+ 	auto kept = std::vector<not_null<HistoryItem*>>();
+ 	items.erase(ranges::remove_if(items, [&](not_null<HistoryItem*> item) {
+-		if (!Keepable(item)) {
++		if (!Keepable(item) || (own && IsKeptDeleted(item))) {
+ 			return false;
+ 		}
+ 		const auto history = item->history();
+@@ -178,6 +176,16 @@ void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
+ 	}
+ }
+ 
++} // namespace
++
++void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
++	Keep(items, false);
++}
++
++void KeepOwnDeleted(std::vector<not_null<HistoryItem*>> &items) {
++	Keep(items, true);
++}
++
+ bool IsKeptDeleted(not_null<const HistoryItem*> item) {
+ 	if (Get().sessions.empty()) {
+ 		return false;
+diff --git a/Telegram/SourceFiles/tele/tele_deleted.h b/Telegram/SourceFiles/tele/tele_deleted.h
+index 67f8717202d76d94bae0203097ac16a1d7cac252..9b2bfeb1d99ee413548f4298d70062c38bf86549 100644
+--- a/Telegram/SourceFiles/tele/tele_deleted.h
++++ b/Telegram/SourceFiles/tele/tele_deleted.h
+@@ -10,6 +10,7 @@ class Element;
+ namespace Tele {
+ 
+ void KeepDeleted(std::vector<not_null<HistoryItem*>> &items);
++void KeepOwnDeleted(std::vector<not_null<HistoryItem*>> &items);
+ [[nodiscard]] bool IsKeptDeleted(not_null<const HistoryItem*> item);
+ [[nodiscard]] bool DeletedIconShown(not_null<const HistoryItem*> item);
+ [[nodiscard]] int DeletedIconWidth();
+diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
+index 63cd6fb62fb8c50581be8c7182cc296553210917..9ad55566f969546b75087c550d7dd2aba0f6b8c3 100644
+--- a/Telegram/SourceFiles/tele/tele_options.cpp
++++ b/Telegram/SourceFiles/tele/tele_options.cpp
+@@ -307,7 +307,7 @@ base::options::toggle EditHistoryOption({
+ base::options::toggle KeepDeletedOption({
+ 	.id = kOptionKeepDeleted,
+ 	.name = "Keep deleted messages",
+-	.description = "Kept until tele restarts, marked as deleted.",
++	.description = "Kept until tele restarts, including ones you delete yourself.",
+ });
+ 
+ base::options::toggle DeletedIconOption({

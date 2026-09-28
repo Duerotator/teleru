@@ -1,0 +1,348 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Mon, 28 Sep 2026 00:16:47 +0300
+Subject: [PATCH] feat: group what's new by settings category
+
+---
+ Telegram/SourceFiles/tele/tele_changelog.cpp  | 196 +++++++++++++++---
+ .../SourceFiles/tele/tele_changelog_chat.cpp  |   9 +-
+ .../SourceFiles/tele/tele_changelog_chat.h    |   5 +
+ 3 files changed, 182 insertions(+), 28 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_changelog.cpp b/Telegram/SourceFiles/tele/tele_changelog.cpp
+index 554e2daa107277cc5ce4c19fe04c8b39c186b1e3..8488add8758166bf14c3fcf825f0e0366af93d45 100644
+--- a/Telegram/SourceFiles/tele/tele_changelog.cpp
++++ b/Telegram/SourceFiles/tele/tele_changelog.cpp
+@@ -3,6 +3,7 @@
+ #include "core/application.h"
+ #include "core/version.h"
+ #include "data/data_session.h"
++#include "iv/iv_rich_page.h"
+ #include "main/main_account.h"
+ #include "main/main_domain.h"
+ #include "main/main_session.h"
+@@ -29,11 +30,29 @@ namespace {
+ constexpr auto kTransferTimeout = 60 * 1000;
+ constexpr auto kMaxSize = qint64(256 * 1024);
+ constexpr auto kMaxItems = 100;
++constexpr auto kMaxCategories = 16;
+ constexpr auto kMaxTitleLength = 64;
+ constexpr auto kMaxItemLength = 1024;
+ constexpr auto kMaxMessageLength = 4096;
++constexpr auto kMaxSplitLength = 4000;
+ constexpr auto kReleasesPrefix = "https://github.com/nitreojs/tele/releases/";
+ 
++struct Entry {
++	QString text;
++	QString where;
++};
++
++struct Group {
++	QString name;
++	std::vector<Entry> entries;
++};
++
++struct Notes {
++	QString title;
++	QString url;
++	std::vector<Group> groups;
++};
++
+ class Changelog final : public QObject {
+ public:
+ 	Changelog();
+@@ -42,7 +61,7 @@ private:
+ 	[[nodiscard]] std::vector<not_null<Main::Session*>> sessions() const;
+ 	void fetch();
+ 	void fetched(const QByteArray &data);
+-	void show(const TextWithEntities &text);
++	void show(const Notes &notes);
+ 	void fail(const QString &error);
+ 
+ 	QNetworkAccessManager _manager;
+@@ -65,7 +84,12 @@ QPointer<Changelog> Instance;
+ 		+ u"/tele-changelog.json"_q;
+ }
+ 
+-[[nodiscard]] std::optional<TextWithEntities> Parse(const QByteArray &data) {
++[[nodiscard]] QString Category(const QJsonValue &value) {
++	const auto result = value.toString().trimmed();
++	return (result.size() > kMaxTitleLength) ? QString() : result;
++}
++
++[[nodiscard]] std::optional<Notes> Parse(const QByteArray &data) {
+ 	auto error = QJsonParseError();
+ 	const auto document = QJsonDocument::fromJson(data, &error);
+ 	if (error.error != QJsonParseError::NoError || !document.isObject()) {
+@@ -76,16 +100,32 @@ QPointer<Changelog> Instance;
+ 	if (object.value(u"tag"_q).toString() != Tag() || !items.isArray()) {
+ 		return std::nullopt;
+ 	}
+-	auto title = object.value(u"title"_q).toString().trimmed();
+-	if (title.isEmpty() || title.size() > kMaxTitleLength) {
+-		title = u"tele %1"_q.arg(BuildNumber());
++	auto result = Notes();
++	result.title = object.value(u"title"_q).toString().trimmed();
++	if (result.title.isEmpty() || result.title.size() > kMaxTitleLength) {
++		result.title = u"tele %1"_q.arg(BuildNumber());
++	}
++	result.url = object.value(u"url"_q).toString();
++	if (!result.url.startsWith(QString::fromLatin1(kReleasesPrefix))) {
++		result.url = QString::fromLatin1(kReleasesPrefix)
++			+ u"tag/"_q
++			+ Tag();
+ 	}
+-	auto url = object.value(u"url"_q).toString();
+-	if (!url.startsWith(QString::fromLatin1(kReleasesPrefix))) {
+-		url = QString::fromLatin1(kReleasesPrefix) + u"tag/"_q + Tag();
++	const auto group = [&](const QString &name) -> Group& {
++		const auto i = ranges::find(result.groups, name, &Group::name);
++		if (i != end(result.groups)) {
++			return *i;
++		}
++		result.groups.push_back({ .name = name });
++		return result.groups.back();
++	};
++	for (const auto &value : object.value(u"categories"_q).toArray()) {
++		if (int(result.groups.size()) >= kMaxCategories) {
++			break;
++		} else if (const auto name = Category(value); !name.isEmpty()) {
++			group(name);
++		}
+ 	}
+-	auto result = Ui::Text::Bold(Lower(title + u" is here"_q));
+-	result.append(u"\n\n"_q);
+ 	auto count = 0;
+ 	for (const auto &value : items.toArray()) {
+ 		const auto item = value.toObject();
+@@ -95,31 +135,134 @@ QPointer<Changelog> Instance;
+ 		} else if (++count > kMaxItems) {
+ 			break;
+ 		}
+-		const auto where = item.value(u"where"_q).toString().trimmed();
+-		result.append(Ui::kQBullet + ' ' + Lower(text.left(kMaxItemLength)));
+-		if (!where.isEmpty()) {
+-			result.append(' ').append(Ui::Text::Italic(
+-				'(' + Lower(where.left(kMaxItemLength)) + ')'));
++		group(Category(item.value(u"category"_q))).entries.push_back({
++			.text = text.left(kMaxItemLength),
++			.where = item.value(
++				u"where"_q).toString().trimmed().left(kMaxItemLength),
++		});
++	}
++	result.groups.erase(ranges::remove_if(result.groups, [](
++			const Group &group) {
++		return group.entries.empty();
++	}), end(result.groups));
++	return result;
++}
++
++[[nodiscard]] TextWithEntities Title(const Notes &notes) {
++	return { Lower(notes.title + u" is here"_q) };
++}
++
++[[nodiscard]] TextWithEntities FullLink(const Notes &notes) {
++	return Ui::Text::Link(Lower(u"Full changelog"_q), notes.url);
++}
++
++[[nodiscard]] TextWithEntities EntryText(const Entry &entry) {
++	auto result = TextWithEntities{ Lower(entry.text) };
++	if (!entry.where.isEmpty()) {
++		result.append('\n').append(Ui::Text::Italic(Lower(entry.where)));
++	}
++	return result;
++}
++
++[[nodiscard]] Iv::RichPage::Block TextBlock(
++		Iv::RichPage::BlockKind kind,
++		TextWithEntities text,
++		int headingLevel = 0) {
++	auto result = Iv::RichPage::Block();
++	result.kind = kind;
++	result.headingLevel = headingLevel;
++	result.text.text = std::move(text);
++	return result;
++}
++
++[[nodiscard]] std::shared_ptr<const Iv::RichPage> RichNotes(
++		not_null<Main::Session*> session,
++		const Notes &notes) {
++	using Kind = Iv::RichPage::BlockKind;
++	auto result = std::make_shared<Iv::RichPage>();
++	auto &blocks = result->blocks;
++	blocks.push_back(TextBlock(Kind::Heading, Title(notes), 2));
++	for (const auto &group : notes.groups) {
++		if (!group.name.isEmpty()) {
++			blocks.push_back(TextBlock(
++				Kind::Heading,
++				{ Lower(group.name) },
++				3));
+ 		}
+-		result.append('\n');
++		auto list = Iv::RichPage::Block();
++		list.kind = Kind::List;
++		list.listKind = Iv::RichPage::ListKind::Bullet;
++		list.listItems.reserve(group.entries.size());
++		for (const auto &entry : group.entries) {
++			auto item = Iv::RichPage::ListItem();
++			item.text.text = EntryText(entry);
++			list.listItems.push_back(std::move(item));
++		}
++		blocks.push_back(std::move(list));
++	}
++	blocks.push_back(TextBlock(Kind::Paragraph, FullLink(notes)));
++	const auto limits = Iv::ResolveRichMessageLimits(session);
++	if (Iv::ValidateRichMessage(*result, limits)) {
++		return nullptr;
++	}
++	return result;
++}
++
++[[nodiscard]] TextWithEntities GroupText(const Group &group) {
++	auto result = TextWithEntities();
++	if (!group.name.isEmpty()) {
++		result.append(Ui::Text::Bold(Lower(group.name))).append('\n');
+ 	}
+-	if (count) {
++	for (const auto &entry : group.entries) {
++		result.append(Ui::kQBullet + ' ').append(EntryText(entry));
+ 		result.append('\n');
+ 	}
+-	result.append(Ui::Text::Link(Lower(u"Full changelog"_q), url));
+ 	return result;
+ }
+ 
+-[[nodiscard]] std::vector<ChangelogMessage> Split(TextWithEntities text) {
+-	auto result = std::vector<ChangelogMessage>();
++void AppendMessages(
++		std::vector<ChangelogMessage> &messages,
++		TextWithEntities text) {
+ 	auto part = TextWithEntities();
+ 	while (TextUtilities::CutPart(part, text, kMaxMessageLength)) {
+-		result.push_back({ .text = std::move(part) });
++		messages.push_back({ .text = std::move(part) });
+ 		part = TextWithEntities();
+ 	}
++}
++
++[[nodiscard]] std::vector<ChangelogMessage> PlainNotes(const Notes &notes) {
++	auto whole = Ui::Text::Bold(Title(notes).text);
++	for (const auto &group : notes.groups) {
++		whole.append('\n').append(GroupText(group));
++	}
++	whole.append('\n').append(FullLink(notes));
++	auto result = std::vector<ChangelogMessage>();
++	if (whole.text.size() <= kMaxSplitLength) {
++		AppendMessages(result, std::move(whole));
++		return result;
++	}
++	for (auto i = 0, count = int(notes.groups.size()); i != count; ++i) {
++		auto text = i
++			? TextWithEntities()
++			: Ui::Text::Bold(Title(notes).text).append(u"\n\n"_q);
++		text.append(GroupText(notes.groups[i]));
++		if (i + 1 == count) {
++			text.append('\n').append(FullLink(notes));
++		}
++		AppendMessages(result, std::move(text));
++	}
+ 	return result;
+ }
+ 
++[[nodiscard]] std::vector<ChangelogMessage> Messages(
++		not_null<Main::Session*> session,
++		const Notes &notes) {
++	if (auto rich = RichNotes(session, notes)) {
++		return { ChangelogMessage{ .rich = std::move(rich) } };
++	}
++	return PlainNotes(notes);
++}
++
+ Changelog::Changelog()
+ : QObject(QCoreApplication::instance()) {
+ 	const auto domain = &Core::App().domain();
+@@ -179,15 +322,15 @@ void Changelog::fetch() {
+ }
+ 
+ void Changelog::fetched(const QByteArray &data) {
+-	const auto text = Parse(data);
+-	if (!text) {
++	const auto notes = Parse(data);
++	if (!notes) {
+ 		fail(u"malformed changelog"_q);
+ 		return;
+ 	}
+-	show(*text);
++	show(*notes);
+ }
+ 
+-void Changelog::show(const TextWithEntities &text) {
++void Changelog::show(const Notes &notes) {
+ 	const auto build = BuildNumber();
+ 	const auto sessions = this->sessions();
+ 	if (sessions.empty()) {
+@@ -196,8 +339,9 @@ void Changelog::show(const TextWithEntities &text) {
+ 	const auto left = std::make_shared<int>(int(sessions.size()));
+ 	for (const auto &session : sessions) {
+ 		const auto data = &session->data();
++		const auto messages = Messages(session, notes);
+ 		const auto add = [=] {
+-			PostChangelog(session, Split(text));
++			PostChangelog(session, messages);
+ 			if (!--*left) {
+ 				SetChangelogShown(build);
+ 			}
+diff --git a/Telegram/SourceFiles/tele/tele_changelog_chat.cpp b/Telegram/SourceFiles/tele/tele_changelog_chat.cpp
+index 230587f934f0a963e8cbd310b4073dc72c92a3e5..ef2e3ffe0d84404117d658d2373a8d99f783cd46 100644
+--- a/Telegram/SourceFiles/tele/tele_changelog_chat.cpp
++++ b/Telegram/SourceFiles/tele/tele_changelog_chat.cpp
+@@ -12,6 +12,7 @@
+ #include "history/history_item.h"
+ #include "info/info_content_widget.h"
+ #include "info/info_memento.h"
++#include "iv/iv_rich_page.h"
+ #include "lang/lang_keys.h"
+ #include "main/main_session.h"
+ #include "tele/tele_changelog_section.h"
+@@ -219,12 +220,16 @@ void PostChangelog(
+ 	const auto owner = &session->data();
+ 	const auto date = base::unixtime::now();
+ 	for (const auto &message : messages) {
+-		history->addNewLocalMessage({
++		const auto item = history->makeMessage({
+ 			.id = owner->nextLocalMessageId(),
+-			.flags = MessageFlag::ClientSideUnread,
++			.flags = MessageFlag::ClientSideUnread | MessageFlag::Local,
+ 			.from = user->id,
+ 			.date = date,
+ 		}, message.text, MTP_messageMediaEmpty());
++		if (message.rich) {
++			item->applyLocalRichPage(message.rich);
++		}
++		history->addNewLocalMessage(item);
+ 	}
+ 	owner->sendHistoryChangeNotifications();
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_changelog_chat.h b/Telegram/SourceFiles/tele/tele_changelog_chat.h
+index 6b0615ef860e96e1482f7f3e3086e2474a65dc39..dc361ea4710929de9618c35ecdc418999a2f47ee 100644
+--- a/Telegram/SourceFiles/tele/tele_changelog_chat.h
++++ b/Telegram/SourceFiles/tele/tele_changelog_chat.h
+@@ -4,6 +4,10 @@ class History;
+ class PeerData;
+ class UserData;
+ 
++namespace Iv {
++struct RichPage;
++} // namespace Iv
++
+ namespace Main {
+ class Session;
+ } // namespace Main
+@@ -34,6 +38,7 @@ namespace Tele {
+ 
+ struct ChangelogMessage {
+ 	TextWithEntities text;
++	std::shared_ptr<const Iv::RichPage> rich;
+ };
+ 
+ [[nodiscard]] bool IsChangelogPeer(const PeerData *peer);

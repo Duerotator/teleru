@@ -1,0 +1,146 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 27 Sep 2026 21:34:01 +0300
+Subject: [PATCH] feat: show server and updates on the tele settings page
+
+---
+ .../SourceFiles/settings/settings_tele.cpp    | 75 +++++++++----------
+ 1 file changed, 36 insertions(+), 39 deletions(-)
+
+diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
+index fd7e962f106c14705663f8e9fdb663f599c5d187..2cd1c46d9320e60d83dedb7b2ee31b00f5ee8481 100644
+--- a/Telegram/SourceFiles/settings/settings_tele.cpp
++++ b/Telegram/SourceFiles/settings/settings_tele.cpp
+@@ -83,7 +83,8 @@ private:
+ 	struct Result {
+ 		SearchEntry entry;
+ 		QStringList terms;
+-		not_null<const Category*> category;
++		QString subtitle;
++		not_null<const style::icon*> icon;
+ 	};
+ 
+ 	void setupContent();
+@@ -1054,17 +1055,6 @@ void FillBots(SectionBuilder &builder) {
+ 	builder.addSkip();
+ }
+ 
+-void FillServer(SectionBuilder &builder) {
+-	builder.addSkip();
+-	AddServer(builder);
+-	builder.addSkip();
+-}
+-
+-void FillUpdates(SectionBuilder &builder) {
+-	builder.addSkip();
+-	AddUpdates(builder);
+-}
+-
+ void FillRoot(SectionBuilder &builder) {
+ 	builder.addSkip();
+ 	for (const auto &category : Categories()) {
+@@ -1078,8 +1068,12 @@ void FillRoot(SectionBuilder &builder) {
+ 			SetupCopyLink(button, category.id, QString());
+ 		}
+ 	}
+-	builder.addSkip();
+-	builder.addDividerText(rpl::single(BuildText()));
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Server"_q);
++	AddServer(builder);
++	AddGroupDivider(builder);
++	AddGroupTitle(builder, u"Updates"_q);
++	AddUpdates(builder);
+ }
+ 
+ [[nodiscard]] std::vector<Category> MakeCategories() {
+@@ -1137,18 +1131,6 @@ void FillRoot(SectionBuilder &builder) {
+ 		st::menuIconBot,
+ 		{ u"buttons"_q, u"callback"_q },
+ 		FillBots);
+-	add(
+-		u"server"_q,
+-		u"Server"_q,
+-		st::menuIconNetwork,
+-		{ u"verification"_q, u"checkmarks"_q },
+-		FillServer);
+-	add(
+-		u"updates"_q,
+-		u"Updates"_q,
+-		st::menuIconDownload,
+-		{ u"version"_q, u"github"_q },
+-		FillUpdates);
+ 	return result;
+ }
+ 
+@@ -1286,17 +1268,27 @@ void TeleSection::setupContent() {
+ 
+ void TeleSection::buildIndex() {
+ 	const auto session = &controller()->session();
++	const auto push = [&](
++			SearchEntry &&entry,
++			const QString &subtitle,
++			not_null<const style::icon*> icon) {
++		auto text = entry.title;
++		for (const auto &keyword : entry.keywords) {
++			text += ' ' + keyword;
++		}
++		_index.push_back({
++			.entry = std::move(entry),
++			.terms = SearchWords(text),
++			.subtitle = subtitle,
++			.icon = icon,
++		});
++	};
+ 	for (const auto &category : Categories()) {
+ 		const auto add = [&](SearchEntry &&entry) {
+-			auto text = entry.title;
+-			for (const auto &keyword : entry.keywords) {
+-				text += ' ' + keyword;
+-			}
+-			_index.push_back({
+-				.entry = std::move(entry),
+-				.terms = SearchWords(text),
+-				.category = &category,
+-			});
++			push(
++				std::move(entry),
++				::Tele::Lower(category.title),
++				category.icon);
+ 		};
+ 		add({
+ 			.title = ::Tele::Lower(category.title),
+@@ -1307,6 +1299,11 @@ void TeleSection::buildIndex() {
+ 			add(std::move(entry));
+ 		}
+ 	}
++	for (auto &entry : kMeta.index(session)) {
++		if (!entry.id.isEmpty()) {
++			push(std::move(entry), u"tele"_q, &st::menuIconCustomize);
++		}
++	}
+ }
+ 
+ void TeleSection::applyQuery(const QString &query) {
+@@ -1330,10 +1327,8 @@ void TeleSection::applyQuery(const QString &query) {
+ 		const auto button = AddResultButton(
+ 			list,
+ 			entry.title,
+-			(entry.id.isEmpty()
+-				? u"tele"_q
+-				: ::Tele::Lower(result.category->title)),
+-			result.category->icon);
++			(entry.id.isEmpty() ? u"tele"_q : result.subtitle),
++			result.icon);
+ 		const auto id = entry.id;
+ 		const auto section = entry.section;
+ 		const auto open = [=] {
+@@ -1368,6 +1363,8 @@ std::vector<std::pair<QString, Type>> TeleSettingsPaths() {
+ 	for (const auto &category : Categories()) {
+ 		result.emplace_back(u"tele/"_q + category.path, category.id);
+ 	}
++	result.emplace_back(u"tele/server"_q, TeleSection::Id());
++	result.emplace_back(u"tele/updates"_q, TeleSection::Id());
+ 	return result;
+ }
+ 
