@@ -41,6 +41,7 @@ VERSION_FILES = {'Telegram/SourceFiles/core/version.h', 'Telegram/Resources/winr
 NAME_KEYS = {'AppName', 'AppFile', 'FileDescription', 'ProductName'}
 LINE_KEY = re.compile(r'^\s*(?:constexpr\s+auto\s+(\w+)\s*=|VALUE\s+"(\w+)"\s*,)')
 CONFLICT = re.compile(r'<<<<<<< [^\n]*\n(.*?)(?:\|\|\|\|\|\|\| [^\n]*\n.*?)?=======\r?\n(.*?)>>>>>>> [^\n]*\n', re.S)
+INCLUDE = re.compile(r'^\s*#\s*include\s*[<"]([^>"]+)[>"]\s*$')
 
 
 class Fail(Exception):
@@ -185,31 +186,54 @@ def merge_version_block(upstream, patched):
     return ''.join(names.get(key, line) for key, line in zip(upstream_keys, upstream_lines))
 
 
-def resolve_version_conflicts(repo):
+def include_path(line):
+    match = INCLUDE.match(line)
+    return match and match.group(1)
+
+
+def merge_include_block(upstream, patched):
+    ours = upstream.splitlines(keepends=True)
+    theirs = patched.splitlines(keepends=True)
+    if not ours or not theirs or not all(include_path(line) for line in ours + theirs):
+        return None
+    known = {include_path(line) for line in ours}
+    merged = ours + [line for line in theirs if include_path(line) not in known]
+    ordered = lambda lines: [include_path(line).lower() for line in lines] == sorted(include_path(line).lower() for line in lines)
+    if ordered(ours) and ordered(theirs):
+        merged.sort(key=lambda line: include_path(line).lower())
+    return ''.join(merged)
+
+
+def resolve_known_conflicts(repo):
+    # two kinds are safe to merge without a human: the renamed app's version lines, and blocks
+    # where upstream and a patch both only added #include lines at the same spot
     conflicted = git(repo, 'diff', '--name-only', '--diff-filter=U').splitlines()
-    if not conflicted or not set(conflicted) <= VERSION_FILES:
+    if not conflicted:
         return False
     resolved = {}
     for name in conflicted:
-        text = (repo / name).read_bytes().decode('utf-8')
+        path = repo / name
+        if not path.is_file():
+            return False
+        text = path.read_bytes().decode('utf-8')
+        merge_block = merge_version_block if name in VERSION_FILES else merge_include_block
         failed = False
 
         def merge(match):
             nonlocal failed
-            block = merge_version_block(match.group(1), match.group(2))
+            block = merge_block(match.group(1), match.group(2))
             failed = failed or block is None
             return block or ''
 
-        text = CONFLICT.sub(merge, text)
-        if failed or '<<<<<<<' in text or '>>>>>>>' in text:
+        text, count = CONFLICT.subn(merge, text)
+        if failed or not count or '<<<<<<<' in text or '>>>>>>>' in text:
             return False
         resolved[name] = text
     for name, text in resolved.items():
         (repo / name).write_bytes(text.encode('utf-8'))
         git(repo, 'add', '--', name)
-    print(f'kept upstream version lines and tele names in {", ".join(sorted(resolved))}', flush=True)
+    print(f'merged known conflicts (version lines, added includes) in {", ".join(sorted(resolved))}', flush=True)
     return True
-
 
 
 def apply_pending(tdesktop, state):
@@ -219,7 +243,7 @@ def apply_pending(tdesktop, state):
         patches = groups[group]
         repo = repo_path(tdesktop, group)
         result = run_git(repo, *AM_ARGS, *map(str, patches))
-        while result.returncode != 0 and resolve_version_conflicts(repo):
+        while result.returncode != 0 and resolve_known_conflicts(repo):
             result = run_git(repo, 'am', '--continue')
         if result.returncode != 0:
             save_state(tdesktop, state)

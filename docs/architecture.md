@@ -63,6 +63,7 @@ details that matter when you work with it:
 - patch file names come from `git format-patch`: the number plus the subject, truncated. changing a subject renames the file.
 - before applying, `apply` and `checkout` make sure a 3-way merge can find each patch's base blobs: when `HEAD` isn't the `UPSTREAM` tag, the queue is first replayed on `UPSTREAM` in a temporary worktree.
 - the app rename touches the same lines of `Telegram/SourceFiles/core/version.h` and `Telegram/Resources/winrc/Telegram.rc` that every release bumps. `tele.py` resolves that conflict on its own: upstream's version values, tele's name values.
+- when upstream and a patch both add `#include` lines at the same spot, `tele.py` keeps both: the union of the two blocks, sorted when both were sorted. any other conflict stops the apply for a human. a file that conflicts without conflict markers (one side deleted it) is never resolved automatically.
 - on a conflict it stops and prints the failing patch, the conflicted files, the `git am` output and what to run next.
 
 state lives in `<tdesktop>/.git/tele-state.json`:
