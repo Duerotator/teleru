@@ -133,6 +133,9 @@ jobs:
     permissions:
       contents: read
       issues: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     env:
       TELE_BUILD: ${{ needs.number.outputs.counter }}
       RELEASE_TAG: ${{ needs.number.outputs.tag }}
@@ -283,6 +286,11 @@ jobs:
         shell: bash
         run: 7z a -tzip "tele-$RELEASE_TAG-win64.zip" "$TBUILD/tdesktop/out/Release/tele.exe" > /dev/null
 
+      - name: Attest the build
+        uses: actions/attest@v4
+        with:
+          subject-path: tele-${{ env.RELEASE_TAG }}-win64.zip
+
       - name: Upload the build
         uses: actions/upload-artifact@v7
         with:
@@ -390,6 +398,9 @@ jobs:
       packages: read
       actions: write
       issues: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     env:
       TELE_BUILD: ${{ needs.number.outputs.counter }}
       RELEASE_TAG: ${{ needs.number.outputs.tag }}
@@ -479,6 +490,11 @@ jobs:
           (cd tdesktop/out/Release && zip -9 -X -q "$GITHUB_WORKSPACE/tele-$RELEASE_TAG-linux64.zip" tele)
           [ "$(stat -c%s "tele-$RELEASE_TAG-linux64.zip")" -lt $((512 * 1024 * 1024)) ]
           [ "$(unzip -Z1 "tele-$RELEASE_TAG-linux64.zip")" = tele ]
+
+      - name: Attest the build
+        uses: actions/attest@v4
+        with:
+          subject-path: tele-${{ env.RELEASE_TAG }}-linux64.zip
 
       - name: Upload the build
         uses: actions/upload-artifact@v7
@@ -581,6 +597,9 @@ jobs:
       contents: read
       packages: read
       issues: write
+      id-token: write
+      attestations: write
+      artifact-metadata: write
     env:
       TELE_BUILD: ${{ needs.number.outputs.counter }}
       RELEASE_TAG: ${{ needs.number.outputs.tag }}
@@ -653,6 +672,13 @@ jobs:
           codesign --verify --strict --deep "$RUNNER_TEMP/mounted/tele.app"
           [ -L "$RUNNER_TEMP/mounted/Applications" ]
           hdiutil detach -quiet "$RUNNER_TEMP/mounted"
+
+      - name: Attest the build
+        uses: actions/attest@v4
+        with:
+          subject-path: |
+            tele-${{ env.RELEASE_TAG }}-macos.zip
+            tele-${{ env.RELEASE_TAG }}-macos.dmg
 
       - name: Upload the build
         uses: actions/upload-artifact@v7
