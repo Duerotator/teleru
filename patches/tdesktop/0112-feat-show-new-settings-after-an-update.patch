@@ -8,13 +8,13 @@ Subject: [PATCH] feat: show new settings after an update
  .../SourceFiles/settings/settings_tele.cpp    | 407 +++++++++++++++---
  Telegram/SourceFiles/settings/settings_tele.h |   1 +
  Telegram/SourceFiles/tele/tele_changelog.cpp  |   8 +
- .../SourceFiles/tele/tele_new_settings.cpp    | 140 ++++++
+ .../SourceFiles/tele/tele_new_settings.cpp    | 220 ++++++++++
  Telegram/SourceFiles/tele/tele_new_settings.h |  12 +
  Telegram/SourceFiles/tele/tele_options.cpp    |  16 +
  Telegram/SourceFiles/tele/tele_options.h      |   3 +
  .../SourceFiles/tele/tele_settings_io.cpp     |  11 +
  Telegram/SourceFiles/tele/tele_settings_io.h  |   1 +
- 10 files changed, 534 insertions(+), 67 deletions(-)
+ 10 files changed, 614 insertions(+), 67 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_new_settings.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_new_settings.h
 
@@ -952,10 +952,10 @@ index 95ad3f6b661795c2efab3346ac44b92b3d4939b6..7a38e13749a3f0f9932e4ff961b8d39d
  	}
 diff --git a/Telegram/SourceFiles/tele/tele_new_settings.cpp b/Telegram/SourceFiles/tele/tele_new_settings.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..55790b49f006a44deeb737e40a1aa100596f43af
+index 0000000000000000000000000000000000000000..99b089d5ceaee072f2dcc514dbf130ca7789df99
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_new_settings.cpp
-@@ -0,0 +1,140 @@
+@@ -0,0 +1,220 @@
 +#include "tele/tele_new_settings.h"
 +
 +#include "settings/settings_tele.h"
@@ -982,15 +982,93 @@ index 0000000000000000000000000000000000000000..55790b49f006a44deeb737e40a1aa100
 +	return result;
 +}
 +
-+constexpr auto kAddedBeforeTracking = std::array{
-+	"tele-docked-attachments",
-+	"tele-allow-screen-capture",
-+	"tele-copy-protected",
-+	"tele-hide-communities",
-+	"tele-send-older-replies",
-+	"tele-double-enter-send",
-+	"tele-local-pins",
-+	"tele-local-folders",
++constexpr auto kTele10Settings = std::array{
++	"tele-hide-stories",
++	"tele-invisible-stories",
++	"tele-ghost",
++	"tele-ghost-in-menu",
++	"tele-ghost-read",
++	"tele-ghost-read-on-reply",
++	"tele-ghost-typing",
++	"tele-ghost-online",
++	"tele-ghost-schedule",
++	"tele-ghost-stories",
++	"tele-button-payloads",
++	"tele-auto-update",
++	"tele-show-changelog",
++	"tele-group-quick-replies",
++	"tele-bubble-badges",
++	"tele-lowercase",
++	"tele-hide-sponsored",
++	"tele-hide-proxy-sponsor",
++	"tele-no-link-warning",
++	"tele-clean-opened-links",
++	"tele-clean-sent-links",
++	"tele-hide-all-chats",
++	"tele-jump-to-first",
++	"tele-static-userpics-list",
++	"tele-chat-list-no-reorder-animation",
++	"tele-static-userpics-chats",
++	"tele-hide-mentions-button",
++	"tele-hide-reactions-button",
++	"tele-emoji-panel-click",
++	"tele-attach-menu-click",
++	"tele-show-gift-ids",
++	"tele-show-regular-gift-ids",
++	"tele-seetg-button",
++	"show-peer-id-below-about",
++	"tele-peer-ids-without-spaces",
++	"tele-bot-api-peer-ids",
++	"tele-show-dc",
++	"tele-merge-id-dc",
++	"tele-message-id-menu",
++	"tele-hide-ignored",
++	"tele-message-seconds",
++	"tele-edit-history",
++	"tele-keep-deleted",
++	"tele-deleted-icon",
++	"tele-reveal-spoilers",
++	"tele-keep-secret-media",
++	"tele-screenshot-secret-media",
++	"tele-view-as-tl",
++	"tele-parallel-uploads",
++	"tele-calcmula",
++	"tele-calcmula-preview",
++	"tele-copy-emoji-id",
++	"tele-shot",
++	"tele-server-usernames",
++	"tele-sent-to-bottom",
++	"tele-queue-behind-media",
++	"tele-inline-without-via",
++	"tele-no-rich-paste-prompt",
++	"tele-punctual-scheduled",
++	"tele-hd-photos",
++	"tele-no-phone-in-header",
++	"tele-nft-purchase-price",
++	"tele-local-drafts",
++	"tele-call-button",
++	"tele-group-call-button",
++	"tele-deleted-reply",
++	"tele-link-previews",
++	"tele-server-url",
++	"tele-title",
++	"tele-window-title",
++	"tele-message-menu",
++	"tele-link-rewrites",
++	"tele-app-links",
++	"tele-ghost-chats",
++	"tele-ignored-users",
++	"tele-username-aliases",
++	"tele-local-names",
++	"tele-chat-backgrounds",
++	"tele-app-icon",
++	"tele-tray-icon",
++	"tele/interface",
++	"tele/chats",
++	"tele/privacy",
++	"tele/profiles",
++	"tele/bots",
++	"tele/debug",
 +};
 +
 +[[nodiscard]] bool UpdatedFromOlderTele() {
@@ -1044,11 +1122,13 @@ index 0000000000000000000000000000000000000000..55790b49f006a44deeb737e40a1aa100
 +	const auto object = document.object();
 +	if (!document.isObject() || !object.value(u"known"_q).isArray()) {
 +		if (UpdatedFromOlderTele()) {
-+			const auto current = CurrentIds();
-+			for (const auto id : kAddedBeforeTracking) {
-+				const auto value = QString::fromLatin1(id);
-+				if (ranges::contains(current, value)) {
-+					state.fresh.push_back(value);
++			for (const auto &id : CurrentIds()) {
++				const auto known = ranges::contains(
++					kTele10Settings,
++					id,
++					[](const char *value) { return QString::fromLatin1(value); });
++				if (!known) {
++					state.fresh.push_back(id);
 +				}
 +			}
 +		}
