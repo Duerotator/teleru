@@ -370,7 +370,7 @@ index 5e99e578f9da05b71231a4b38b8cfcad4ed26b3c..42985fbab7436e434ab3a0f7a2bcb1b3
  			}
  			replyToMessageRequestNotify({ newFullId });
 diff --git a/Telegram/SourceFiles/history/view/history_view_message.cpp b/Telegram/SourceFiles/history/view/history_view_message.cpp
-index 6906f5ae46e83440da29370934d7911f98757439..5c749a24b295371d9a2279f3454b64e8b556fcc4 100644
+index 73f6ce130c93b44773c3633a8eb4b032e2f7fadf..4706953506a297fd023e19491d28d5b920673760 100644
 --- a/Telegram/SourceFiles/history/view/history_view_message.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_message.cpp
 @@ -67,6 +67,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -381,7 +381,7 @@ index 6906f5ae46e83440da29370934d7911f98757439..5c749a24b295371d9a2279f3454b64e8
  #include "tele/tele_ignored.h"
  #include "styles/style_chat.h"
  #include "styles/style_chat_helpers.h"
-@@ -5997,6 +5998,7 @@ bool Message::displayFastReply() const {
+@@ -5998,6 +5999,7 @@ bool Message::displayFastReply() const {
  
  	return hasFastReply()
  		&& data()->isRegular()

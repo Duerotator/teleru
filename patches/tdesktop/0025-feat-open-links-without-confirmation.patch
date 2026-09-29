@@ -34,7 +34,7 @@ index 162971ff04271ec7edc84be3802f25d05b6a3db6..45720cc88d3dee176a41390d7c92b7ce
  			my.forceExternalUrlConfirmation = false;
  			openContext = QVariant::fromValue(my);
 diff --git a/Telegram/SourceFiles/history/view/media/history_view_poll.cpp b/Telegram/SourceFiles/history/view/media/history_view_poll.cpp
-index 0f4eab1071531523ee946c22006b24d8197256c5..3b39b88754d163b738071eeba87f4327bd9a3725 100644
+index 8af35b1f3b3e8462a7c3e3602de46972189daf3b..ef294ff6a271456d1f36d05affc81a8010059fdd 100644
 --- a/Telegram/SourceFiles/history/view/media/history_view_poll.cpp
 +++ b/Telegram/SourceFiles/history/view/media/history_view_poll.cpp
 @@ -64,6 +64,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

@@ -683,18 +683,18 @@ index bf752e63cf4e6482efdc2b39ace0675b4d6e30c2..683522616e82fd7d27815b02bfddc4b0
  	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
  	AddOptionToggle(builder, ::Tele::kOptionScreenshotSecretMedia);
 diff --git a/Telegram/SourceFiles/tele/tele_deleted.cpp b/Telegram/SourceFiles/tele/tele_deleted.cpp
-index 974aed734116624138b67161ec1209edae796f64..ae2f4448002591f5212675698fc51de91e4db7e9 100644
+index a98c8651fe75920d9469a79922d417a1d4a0f0d3..cc77304607e96aaf664dde8d2aaaf3897179eabf 100644
 --- a/Telegram/SourceFiles/tele/tele_deleted.cpp
 +++ b/Telegram/SourceFiles/tele/tele_deleted.cpp
-@@ -7,6 +7,7 @@
- #include "history/history_item.h"
- #include "history/view/history_view_element.h"
+@@ -9,6 +9,7 @@
+ #include "ui/chat/chat_style.h"
+ #include "ui/painter.h"
  #include "main/main_session.h"
 +#include "tele/tele_drafts_section.h"
  #include "tele/tele_options.h"
  #include "styles/style_chat.h"
  #include "styles/style_menu_icons.h"
-@@ -327,7 +328,8 @@ void ClearKeptDeleted(not_null<History*> history) {
+@@ -362,7 +363,8 @@ void ClearKeptDeleted(not_null<History*> history) {
  DeletedFade::DeletedFade(
  		QPainter &p,
  		not_null<const HistoryView::Element*> view) {

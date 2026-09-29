@@ -73,7 +73,7 @@ every tele setting is a `base::options` option. adding a switch touches four pla
    AddOptionToggle(builder, ::Tele::kOptionHdPhotos);
    ```
 
-   an optional third argument adds search keywords, e.g. `AddOptionToggle(builder, id, { u"quality"_q })`.
+   an optional third argument adds search keywords, e.g. `AddOptionToggle(builder, id, { u"quality"_q })`. a row that only matters while another option is on takes that option as the fourth argument, e.g. `AddOptionToggle(builder, id, {}, ::Tele::kOptionQueueBehindMedia)`, and stays hidden until it's on.
 
    the pages are built by `FillInterface`, `FillChats`, `FillPrivacy`, `FillProfiles`, `FillBots` and `FillDebug`, the root page by `FillRoot`. each page is split into groups with `AddGroupTitle` and `AddGroupDivider`. put a new row into the group it belongs to, or start a new group. never append a loose row to the end of a page. the description and the optional keywords feed both searches, so add keywords for words people would search for that aren't in the name or description.
 4. `tele/tele_settings_io.cpp`: add it to the `Specs()` table, so settings export and import know it. `Toggle(id)` for switches, `Choice`, `Text`, `People`, `Device` or `Internal` for the rest (see [architecture](architecture.md#settings-export-and-import)).

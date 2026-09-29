@@ -107,7 +107,7 @@ every tele setting is an upstream `base::options` option. they are stored in `td
 
 ### settings section
 
-`settings/settings_tele.cpp` builds settings → tele. the root page has a search field, one row per category page, and the server, backup and updates groups. the category pages are built by `Fill*` functions:
+`settings/settings_tele.cpp` builds settings → tele. the root page has a search field, one row per category page, and the server, backup and updates groups. after an update that adds settings, it also links to a page with just the new ones. the category pages are built by `Fill*` functions:
 
 | page | path | builder |
 |---|---|---|
@@ -117,9 +117,11 @@ every tele setting is an upstream `base::options` option. they are stored in `td
 | profiles and ids | `tele/profiles` | `FillProfiles` |
 | bots | `tele/bots` | `FillBots` |
 | debug | `tele/debug` | `FillDebug` |
+| new in tele | `tele/new` | `FillNew` |
 
 - each page is split into groups with `AddGroupTitle` and `AddGroupDivider`.
-- `AddOptionToggle(builder, id, keywords)` adds a switch for a toggle option: its name and description come from the option, and the description plus `keywords` feed the search. other row types (choices, boxes, lists) have their own `Add*` helpers in the same file.
+- `AddOptionToggle(builder, id, keywords, parent)` adds a switch for a toggle option: its name and description come from the option, and the description plus `keywords` feed the search. `parent` names the option (or `Off(id)` for an option that must be off) the row depends on: the row stays hidden until it's met. other row types (choices, boxes, lists) have their own `Add*` helpers in the same file.
+- `tele/tele_new_settings.*` keeps the ids of every setting and page this build has in the internal `tele-known-settings` option. a build that brings ids it hasn't seen lists them on the new page until it's opened.
 - every row registers a search entry, so both the tele search and the main settings search find it.
 - `SetupLink` gives a row a right-click "copy link" that opens a `tg://settings/...` deep link highlighting it.
 

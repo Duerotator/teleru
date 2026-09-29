@@ -108,7 +108,7 @@ index 7d116f8f9082d316606c2dd5a524e16f4acf570d..4a3fca2e5f997b10adc87ec932dac790
  	AddPinMessageAction(menu, request, list);
  	AddViewStatisticsAction(menu, request, list);
 diff --git a/Telegram/SourceFiles/history/view/media/history_view_document.cpp b/Telegram/SourceFiles/history/view/media/history_view_document.cpp
-index 4142ec35796aa792f8298bd7c703edaae6475fd0..1fdad18973ca288121e2492395f089ed9935aef4 100644
+index 35f69db86e0a7dae381095b4ee509bae10a8f185..b386697c480f924318808c10916a3f54931a50de 100644
 --- a/Telegram/SourceFiles/history/view/media/history_view_document.cpp
 +++ b/Telegram/SourceFiles/history/view/media/history_view_document.cpp
 @@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -130,7 +130,7 @@ index 4142ec35796aa792f8298bd7c703edaae6475fd0..1fdad18973ca288121e2492395f089ed
  
  				auto lifetime = std::make_shared<rpl::lifetime>();
 diff --git a/Telegram/SourceFiles/history/view/media/history_view_gif.cpp b/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
-index dccefd7aa2f0f41d90df518604c1152b7b9c4011..0441004555eb7201a44281fb0f021b2694549e58 100644
+index 198848a9d0c01293f170924a5ebc7172e47dde35..fc6b46fdb456f919cc9a8f681e1de8b59743d4b5 100644
 --- a/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
 +++ b/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
 @@ -63,6 +63,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

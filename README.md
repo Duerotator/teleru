@@ -31,7 +31,31 @@ gh attestation verify tele-<version>-win64.zip --repo nitreojs/tele
 everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats and messages, privacy, profiles and ids, bots and debug, with server, backup and updates on the page itself. the search at the top of the page, and the main settings search, find every tele setting. backup exports your tele settings to a file you can give to anyone, and imports one with a preview of what changes.
 
 <details>
-<summary>all 108 patches, newest release first</summary>
+<summary>all 127 patches, newest release first</summary>
+
+### [tele 11](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.11)
+
+| # | what it does | where to toggle |
+|---|---|---|
+| [109](patches/tdesktop/0109-feat-attach-media-above-the-field-beta.patch) | attach media above the input field instead of in a full-window box: reorder, remove, group or send as files right there, edit photos, see the album as a grid, and the unsent media stays in the chat | tele → chats and messages, off |
+| [110](patches/tdesktop/0110-fix-show-server-badges-on-the-personal-channel-in-pr.patch) | checkmarks and custom verification from the tele server show on a profile's personal channel too | always on |
+| [111](patches/tdesktop/0111-fix-explain-a-missing-changelog-instead-of-doing-not.patch) | when a version's changelog can't be found, the tele chat says so instead of doing nothing | always on |
+| [112](patches/tdesktop/0112-feat-show-new-settings-after-an-update.patch) | after an update, a new in tele page lists the settings that version added. the what's new message links to it | always on |
+| [113](patches/tdesktop/0113-feat-never-block-screen-capture.patch) | tele never blocks screenshots, screen recording or screen sharing, protected chats and disappearing media included | tele → privacy, on |
+| [114](patches/tdesktop/0114-feat-choose-what-shots-show.patch) | choose what shots show: names, userpics, reactions, time and checks, replies, forwarded headers, buttons and link previews | with 89 |
+| [115](patches/tdesktop/0115-fix-trim-settings-descriptions.patch) | setting descriptions only say what their names can't | always on |
+| [116](patches/tdesktop/0116-feat-forward-protected-messages-as-copies.patch) | forward messages from chats that forbid it: tele sends copies and uploads their media again | tele → chats and messages, off |
+| [117](patches/tdesktop/0117-fix-stop-videos-at-their-end.patch) | videos stop at their end, and play starts them again | always on |
+| [118](patches/tdesktop/0118-feat-caption-docked-media-and-bring-it-to-parity-wit.patch) | attached media above the field get a caption each and everything the send box has: self-destruct timer, caption above, hd, price, effects and the send menu. they can be saved as drafts, which keep video edits and price, and an edited draft video says its edits apply when sent | with 109 |
+| [119](patches/tdesktop/0119-feat-hide-settings-until-their-parent-is-on.patch) | settings that only matter while another one is on stay hidden until it is | always on |
+| [120](patches/tdesktop/0120-feat-hide-communities.patch) | hide communities: their chats stay in the list as regular chats | tele → interface, off |
+| [121](patches/tdesktop/0121-feat-send-replies-to-older-messages-past-the-queue.patch) | replies to messages older than the uploading media don't wait in the queue | with 51 |
+| [122](patches/tdesktop/0122-feat-send-right-away-on-double-enter.patch) | enter twice sends a queued message right away | with 51 |
+| [123](patches/tdesktop/0123-feat-regroup-the-sending-settings.patch) | the sending settings are split into sending order, uploads, message field and scheduled messages | always on |
+| [124](patches/tdesktop/0124-feat-use-aliases-for-inline-bots.patch) | username aliases work for inline bots too: `@alias query` asks the real bot | with 72 |
+| [125](patches/tdesktop/0125-feat-hide-mention-and-reaction-badges-in-the-chat-li.patch) | the options that hide the mentions and reactions buttons also hide the @ and ❤️ badges in the chat list and topic tabs | with 73 |
+| [126](patches/tdesktop/0126-feat-pin-chats-past-the-limit.patch) | pin more chats than telegram allows: the extra pins stay on this device and have a hollow pin icon | tele → interface, off |
+| [127](patches/tdesktop/0127-feat-folders-past-the-limit.patch) | more folders and more chats per folder than telegram allows: what doesn't fit stays on this device | tele → interface, off |
 
 ### [tele 10](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.10)
 
@@ -60,7 +84,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [104](patches/tdesktop/0104-fix-show-seen-and-reacted-counts-separately.patch) | the seen and reacted menu shows both counts separately | always on |
 | [105](patches/tdesktop/0105-feat-send-an-inline-bot-query-as-text.patch) | an inline bot query can be sent as plain text | always on |
 | [106](patches/tdesktop/0106-feat-choose-which-app-opens-each-service.patch) | choose which app opens each service's links: the official app, an alternative like spotifast, the browser, or any program | tele → chats and messages → open links in apps |
-| [107](patches/tdesktop/0107-feat-scale-shots-up-to-4x-and-show-your-messages-as-.patch) | shots render at 1x to 4x with sharp text, bubbles, icons and animated emoji, can show your own messages as incoming, and the selection clears when a shot opens | with 89 |
+| [107](patches/tdesktop/0107-feat-scale-shots-up-to-4x-and-show-your-messages-as-.patch) | shots render at 1x to 4x with sharp text, bubbles, userpics, icons, media and animated emoji, can show your own messages as incoming, and the selection clears when a shot opens | with 89 |
 | [108](patches/tdesktop/0108-feat-export-and-import-tele-settings.patch) | export tele settings to a file or as text and import them on any account, system or tele version, with a preview first. people and device settings are optional | tele → backup |
 
 ### [tele 9](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.9)
@@ -125,7 +149,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 |---|---|---|
 | [17](patches/tdesktop/0017-feat-show-seconds-in-message-times.patch) | message times show seconds, like 14:03:21 | tele → chats and messages, off |
 | [18](patches/tdesktop/0018-feat-keep-the-edit-history-of-messages.patch) | remembers what edited messages looked like while tele runs: right-click an edited message → edit history | tele → chats and messages, off |
-| [19](patches/tdesktop/0019-feat-keep-deleted-messages.patch) | messages deleted by others or from your other devices stay in the chat until tele restarts, faded or with a trash icon by the time. each chat gets a page with its kept deleted messages and a clear all button: chat menu → deleted messages | tele → chats and messages, off |
+| [19](patches/tdesktop/0019-feat-keep-deleted-messages.patch) | messages deleted by others or from your other devices stay in the chat until tele restarts, service messages too, faded as a whole or with a trash icon by the time. each chat gets a page with its kept deleted messages and a clear all button: chat menu → deleted messages | tele → chats and messages, off |
 | [20](patches/tdesktop/0020-fix-fade-every-unsupported-experimental-option.patch) | experimental options your system doesn't support are faded completely, title included | always on |
 | [21](patches/tdesktop/0021-feat-hide-call-buttons.patch) | no call button in private chats and profiles | tele → interface, off |
 | [22](patches/tdesktop/0022-feat-lowercase-every-interface-text.patch) | lowercases the whole interface. messages and names stay as they are | tele → interface, off, needs a restart |

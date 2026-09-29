@@ -317,10 +317,10 @@ index 0e8802ae4a52b63d43ba7105a7f21c216c629f36..858c5aebfa48379fe0381a4f5aede061
  		text = tr::lng_guest_chat_for(tr::now, lt_user, firstName);
  		if (availw < maxWidth) {
 diff --git a/Telegram/SourceFiles/history/view/history_view_reply.cpp b/Telegram/SourceFiles/history/view/history_view_reply.cpp
-index 23755ffeabad76b8abb49588508a5d67558061ff..ab2848ca25eeef579bf556a2c01d502ac6935df7 100644
+index d5276713be6f0e93e6428b7b348cc29e8a113bb3..974ab4c795a4d137ff5a0df06abd055740eac951 100644
 --- a/Telegram/SourceFiles/history/view/history_view_reply.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_reply.cpp
-@@ -608,7 +608,7 @@ QString Reply::senderName(
+@@ -609,7 +609,7 @@ QString Reply::senderName(
  		not_null<PeerData*> peer,
  		bool shorten) const {
  	const auto user = shorten ? peer->asUser() : nullptr;

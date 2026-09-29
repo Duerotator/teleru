@@ -23,10 +23,10 @@ index d6d0a66c0ee2fca26074da5cce70488a62a6ec51..8ff6398f3319b5f697cc12c569fa26d8
  		_owner->notifyItemsAboutToBeDestroyed(remove);
  	}
 diff --git a/Telegram/SourceFiles/tele/tele_deleted.cpp b/Telegram/SourceFiles/tele/tele_deleted.cpp
-index a019441e14a0573cebd46c2feab20e5492fac35c..974aed734116624138b67161ec1209edae796f64 100644
+index 9383ae7a9416d3ac90185df1e42b29f9f8d8a041..a98c8651fe75920d9469a79922d417a1d4a0f0d3 100644
 --- a/Telegram/SourceFiles/tele/tele_deleted.cpp
 +++ b/Telegram/SourceFiles/tele/tele_deleted.cpp
-@@ -149,15 +149,13 @@ void Forget(
+@@ -150,15 +150,13 @@ void Forget(
  	return st::msgDateFont->height;
  }
  
@@ -44,7 +44,7 @@ index a019441e14a0573cebd46c2feab20e5492fac35c..974aed734116624138b67161ec1209ed
  			return false;
  		}
  		const auto history = item->history();
-@@ -178,6 +176,16 @@ void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
+@@ -179,6 +177,16 @@ void KeepDeleted(std::vector<not_null<HistoryItem*>> &items) {
  	}
  }
  
@@ -62,10 +62,10 @@ index a019441e14a0573cebd46c2feab20e5492fac35c..974aed734116624138b67161ec1209ed
  	if (Get().sessions.empty()) {
  		return false;
 diff --git a/Telegram/SourceFiles/tele/tele_deleted.h b/Telegram/SourceFiles/tele/tele_deleted.h
-index 67f8717202d76d94bae0203097ac16a1d7cac252..9b2bfeb1d99ee413548f4298d70062c38bf86549 100644
+index 20baf8a0dc9712f6f972ba8a6f0e9f5b9348877f..07b6c00ea326f3340f73bd9e1e5a521d31e630f8 100644
 --- a/Telegram/SourceFiles/tele/tele_deleted.h
 +++ b/Telegram/SourceFiles/tele/tele_deleted.h
-@@ -10,6 +10,7 @@ class Element;
+@@ -14,6 +14,7 @@ struct ChatPaintContext;
  namespace Tele {
  
  void KeepDeleted(std::vector<not_null<HistoryItem*>> &items);
