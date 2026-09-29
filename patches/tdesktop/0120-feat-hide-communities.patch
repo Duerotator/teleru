@@ -639,7 +639,7 @@ index 244e0844e82cc5f67becabc51c422a644e3b7975..94396c9d60dce32377eead0cc9d8c412
  [[nodiscard]] bool GhostInMenu();
  [[nodiscard]] bool StaticUserpicsList();
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index e9b6b73d6c5b70357a368a321e7beb3a8f49a562..edf6dd8239f865ded02756383352837aff7c6792 100644
+index 59f363d533e276f111e6c4cb25901d2ea506e11a..80d240a4fc2fa18ed1b4ce41dc98611f99939f35 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
 @@ -112,6 +112,7 @@ struct Spec {

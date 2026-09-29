@@ -8,13 +8,13 @@ Subject: [PATCH] feat: show new settings after an update
  .../SourceFiles/settings/settings_tele.cpp    | 407 +++++++++++++++---
  Telegram/SourceFiles/settings/settings_tele.h |   1 +
  Telegram/SourceFiles/tele/tele_changelog.cpp  |   8 +
- .../SourceFiles/tele/tele_new_settings.cpp    | 116 +++++
+ .../SourceFiles/tele/tele_new_settings.cpp    | 140 ++++++
  Telegram/SourceFiles/tele/tele_new_settings.h |  12 +
  Telegram/SourceFiles/tele/tele_options.cpp    |  16 +
  Telegram/SourceFiles/tele/tele_options.h      |   3 +
  .../SourceFiles/tele/tele_settings_io.cpp     |  11 +
  Telegram/SourceFiles/tele/tele_settings_io.h  |   1 +
- 10 files changed, 510 insertions(+), 67 deletions(-)
+ 10 files changed, 534 insertions(+), 67 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_new_settings.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_new_settings.h
 
@@ -952,10 +952,10 @@ index 95ad3f6b661795c2efab3346ac44b92b3d4939b6..7a38e13749a3f0f9932e4ff961b8d39d
  	}
 diff --git a/Telegram/SourceFiles/tele/tele_new_settings.cpp b/Telegram/SourceFiles/tele/tele_new_settings.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..88c533e326279f373339ccaf998a3e0bf8d23b46
+index 0000000000000000000000000000000000000000..55790b49f006a44deeb737e40a1aa100596f43af
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_new_settings.cpp
-@@ -0,0 +1,116 @@
+@@ -0,0 +1,140 @@
 +#include "tele/tele_new_settings.h"
 +
 +#include "settings/settings_tele.h"
@@ -980,6 +980,21 @@ index 0000000000000000000000000000000000000000..88c533e326279f373339ccaf998a3e0b
 +[[nodiscard]] State &Current() {
 +	static auto result = State();
 +	return result;
++}
++
++constexpr auto kAddedBeforeTracking = std::array{
++	"tele-docked-attachments",
++	"tele-allow-screen-capture",
++	"tele-copy-protected",
++	"tele-hide-communities",
++	"tele-send-older-replies",
++	"tele-double-enter-send",
++	"tele-local-pins",
++	"tele-local-folders",
++};
++
++[[nodiscard]] bool UpdatedFromOlderTele() {
++	return (ChangelogShown() > 0) || !ChangelogAccounts().isEmpty();
 +}
 +
 +[[nodiscard]] std::vector<QString> CurrentIds() {
@@ -1028,7 +1043,16 @@ index 0000000000000000000000000000000000000000..88c533e326279f373339ccaf998a3e0b
 +	const auto document = QJsonDocument::fromJson(KnownSettings().toUtf8());
 +	const auto object = document.object();
 +	if (!document.isObject() || !object.value(u"known"_q).isArray()) {
-+		Write({}, false);
++		if (UpdatedFromOlderTele()) {
++			const auto current = CurrentIds();
++			for (const auto id : kAddedBeforeTracking) {
++				const auto value = QString::fromLatin1(id);
++				if (ranges::contains(current, value)) {
++					state.fresh.push_back(value);
++				}
++			}
++		}
++		Write(state.fresh, false);
 +		return;
 +	}
 +	const auto known = ParseIds(object.value(u"known"_q));
@@ -1153,10 +1177,10 @@ index b57429624c36d3066c9abf137a3e34722710483b..cb76e9192ba92a31e79ce1311b9dd172
  [[nodiscard]] bool BubbleBadges();
  [[nodiscard]] bool LowercaseStrings();
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index aa9adb2f348412cdfd03f822428774f0d6150dac..b9e1097f0d2107a7684f35a3b731360fddb4dcf7 100644
+index 1c26258c258928a1db23ed18d628787b3dc39d7c..68761756b44e543965a11903ea05868999ca2bf5 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-@@ -183,6 +183,7 @@ struct Spec {
+@@ -184,6 +184,7 @@ struct Spec {
  		Device(kOptionTrayIcon, Kind::TrayIcon),
  		Internal(kOptionChangelogShown),
  		Internal(kOptionChangelogAccounts),
@@ -1164,7 +1188,7 @@ index aa9adb2f348412cdfd03f822428774f0d6150dac..b9e1097f0d2107a7684f35a3b731360f
  		Internal("tele-hide-calls"),
  		Internal("tele-open-links-in-apps"),
  	};
-@@ -894,4 +895,14 @@ QString SettingName(const QString &id) {
+@@ -895,4 +896,14 @@ QString SettingName(const QString &id) {
  	return name.isEmpty() ? id : Lower(name);
  }
  

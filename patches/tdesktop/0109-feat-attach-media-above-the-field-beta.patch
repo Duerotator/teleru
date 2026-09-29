@@ -22,8 +22,8 @@ Subject: [PATCH] feat: attach media above the field (beta)
  .../SourceFiles/tele/tele_drafts_compose.h    |   25 +
  Telegram/SourceFiles/tele/tele_options.cpp    |   36 +
  Telegram/SourceFiles/tele/tele_options.h      |    7 +
- .../SourceFiles/tele/tele_settings_io.cpp     |    1 +
- 19 files changed, 3973 insertions(+), 30 deletions(-)
+ .../SourceFiles/tele/tele_settings_io.cpp     |    2 +
+ 19 files changed, 3974 insertions(+), 30 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_docked_media.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_docked_media.h
 
@@ -4537,14 +4537,15 @@ index c15fbcc65bb9f0fa0e501327f3a33aa58e30d77c..b57429624c36d3066c9abf137a3e3472
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index a09a5df4bb0bb6f601b5cfa1010d15159b932309..aa9adb2f348412cdfd03f822428774f0d6150dac 100644
+index a09a5df4bb0bb6f601b5cfa1010d15159b932309..1c26258c258928a1db23ed18d628787b3dc39d7c 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-@@ -150,6 +150,7 @@ struct Spec {
+@@ -150,6 +150,8 @@ struct Spec {
  		Toggle(kOptionNoRichPastePrompt),
  		Toggle(kOptionPunctualScheduled),
  		Toggle(kOptionHdPhotos),
 +		Toggle(kOptionDockedAttachments),
++		Toggle(kOptionDockedGrid),
  		Toggle(kOptionNoPhoneInHeader),
  		Toggle(kOptionNftPurchasePrice),
  		Toggle(kOptionLocalDrafts),

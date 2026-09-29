@@ -169,10 +169,10 @@ index 329d67f76388dc73cf6d84c85b33b279a86774b1..710d665f218a3db8cdcd84b171b7dd94
  void SetServerUrl(const QString &url);
  [[nodiscard]] rpl::producer<QString> ServerUrlValue();
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index 0d516ef5018d64a627e6f309fd6a9220f405fa5f..47acdca15dafeb2f46565faa883db0963f64161e 100644
+index d61c4f4de8d3323504a7768506e38d22069548a2..91b8b682dfa6912e92ccdd098ad5971c02fd4094 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-@@ -187,6 +187,7 @@ struct Spec {
+@@ -188,6 +188,7 @@ struct Spec {
  		Internal(kOptionKnownSettings),
  		Internal("tele-hide-calls"),
  		Internal("tele-open-links-in-apps"),

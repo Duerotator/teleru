@@ -249,7 +249,7 @@ index 8e8c88a51e8f990b794394b0e6d030d48748267f..1aa68c75b576255ac3a096400d99222c
  	const Data::Histories::PreparedMessage &message,
  	Fn<void()> send);
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index edf6dd8239f865ded02756383352837aff7c6792..e575fc7d176d7137a2a235039145149c87c21430 100644
+index 80d240a4fc2fa18ed1b4ce41dc98611f99939f35..17b8c8b2a91c2bc85f1672a8944aa1acad3dff84 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
 @@ -149,6 +149,7 @@ struct Spec {

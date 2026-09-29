@@ -1055,10 +1055,10 @@ index 4efddfc799c58e5dab363ec28843b9fc6efb8c84..9f53887314b36ae23da49cc5f71fc9e4
  [[nodiscard]] rpl::producer<> DockedAttachmentsChanges();
  [[nodiscard]] bool DockedGrid();
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index 5ca1d3e4a94205c2a5dc8aeb80aae9cebc59a5f8..4f9f931aa131cb182e7cb337a18de79f29376341 100644
+index fc7333aab5545af34b83cc85677a9bb227c6cd34..32a6b46cc1e024f6446affe579e4414c36ce3489 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-@@ -159,6 +159,7 @@ struct Spec {
+@@ -160,6 +160,7 @@ struct Spec {
  		Toggle(kOptionNoPhoneInHeader),
  		Toggle(kOptionNftPurchasePrice),
  		Toggle(kOptionLocalDrafts),

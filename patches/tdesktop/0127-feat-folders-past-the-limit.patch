@@ -1545,7 +1545,7 @@ index 9f53887314b36ae23da49cc5f71fc9e4beb57746..88d868851d17127e3ee5329d92193369
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index 4f9f931aa131cb182e7cb337a18de79f29376341..3fc919f604c3fc3084f09a9d6bd531e675871f60 100644
+index 32a6b46cc1e024f6446affe579e4414c36ce3489..691eec09becb7e4a77a578fdf78b7b821fd0b46b 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
 @@ -116,6 +116,7 @@ struct Spec {
