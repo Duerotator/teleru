@@ -226,7 +226,7 @@ the text of each item comes from README. a row has to match this exactly, on one
 |---|---|
 | `tele → <page>` or `tele → <page> → <row>`, optionally followed by `, off`, `, on`, `, off, needs a restart` | the page: `interface`, `chats and messages`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates` or `debug` |
 | `always on` | `everywhere` |
-| `with N` | the category of patch N, for fixes and extensions of another patch |
+| `with N` | the category of patch N, for fixes and extensions of another patch. in the app's changelog the location becomes patch N's `tele → …` path without its default, and `see N` / `(see N)` references are dropped, since patch numbers mean nothing there |
 | anything else | `other` |
 
 rows are grouped in README by the release that introduced them, newest first, under a `### [tele N](.../releases/tag/<tag>)` heading. a patch without a row still shows up in the notes, by its subject.

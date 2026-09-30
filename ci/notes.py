@@ -79,6 +79,17 @@ def category(where, wheres, seen=()):
     return name if name in CATEGORIES else 'other'
 
 
+def app_where(where, wheres, seen=()):
+    where = plain(where).strip()
+    related = re.match(r'with (\d+)', where, re.I)
+    if related:
+        number = int(related.group(1))
+        if number not in wheres or number in seen:
+            return ''
+        return re.sub(r',\s*(on|off)\b.*$', '', app_where(wheres[number], wheres, (*seen, number)))
+    return re.sub(r'\s*\((see|with) \d+\)|,\s*(see|with) \d+', '', where).strip()
+
+
 def changelog(args):
     _, paths, rows, added, changed, _ = changes(args)
     wheres = {number: where for number, _, where in rows.values()}
@@ -87,7 +98,7 @@ def changelog(args):
         path = paths.get(name, '')
         if path in rows:
             _, what, where = rows[path]
-            item = {'text': plain(what), 'where': plain(where), 'category': category(where, wheres)}
+            item = {'text': plain(what), 'where': app_where(where, wheres), 'category': category(where, wheres)}
         else:
             item = {'text': name, 'where': '', 'category': 'other'}
         item['url'] = f'{args.url}/blob/{args.rev}/{path}' if path else ''
