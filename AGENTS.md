@@ -49,6 +49,7 @@ tele is telegram desktop kept as a patch queue: this repository holds `UPSTREAM`
 - **`RpWidget::setVisible` is `final`.** override `setVisibleHook(bool)` instead.
 - **tl bare vs boxed.** `MTP_xxx(...)` returns the bare type, and its `write()` writes no constructor id. `MTPXxx` (boxed) `read()` expects one. when you store tl bytes, write and read the same form, or read bare with `MTPxxx().read(from, end, mtpc_xxx)`. mixing them made every stored rich draft unreadable after a restart.
 - **widely included headers** rebuild most of the tree when touched. keep new state in `tele/` files.
+- **`findChildren<T>()` needs `Q_OBJECT` in `T`.** most lib_ui widgets (`Ui::PopupMenu` and friends) have none, so qobject_cast falls back to the nearest base that has it (`RpWidget`) and returns any widget as a `T*`. walk `children()` with `dynamic_cast` instead.
 - **lib_ui buttons react to space and enter** when focused. a focused send button sends on space: think about focus when you add buttons next to text input.
 - **`export` rewrites all of `patches/`.** a commit inserted in the middle renumbers every later patch and breaks their README links. new features go at the end.
 - **renaming a commit subject renames its patch** and shows up in release notes as one dropped and one new patch.

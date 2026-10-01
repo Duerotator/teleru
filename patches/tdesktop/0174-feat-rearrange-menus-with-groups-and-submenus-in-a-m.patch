@@ -12,10 +12,11 @@ Subject: [PATCH] feat: rearrange menus with groups and submenus in a menu
  Telegram/SourceFiles/menu/menu_send.cpp       |    2 +
  .../SourceFiles/settings/settings_tele.cpp    |   70 +-
  .../tele/tele_chat_backgrounds.cpp            |   46 +-
+ Telegram/SourceFiles/tele/tele_counters.cpp   |    2 +
  .../tele/tele_download_folders.cpp            |   34 +-
- Telegram/SourceFiles/tele/tele_ghost.cpp      |   30 +-
- Telegram/SourceFiles/tele/tele_menu_apply.cpp |  955 ++++++++
- Telegram/SourceFiles/tele/tele_menu_apply.h   |   67 +
+ Telegram/SourceFiles/tele/tele_ghost.cpp      |   31 +-
+ Telegram/SourceFiles/tele/tele_menu_apply.cpp | 1016 ++++++++
+ Telegram/SourceFiles/tele/tele_menu_apply.h   |   72 +
  .../SourceFiles/tele/tele_menu_editor.cpp     | 2053 +++++++++++++++++
  Telegram/SourceFiles/tele/tele_menu_editor.h  |   17 +
  .../SourceFiles/tele/tele_menu_layout.cpp     |  505 ++++
@@ -26,14 +27,17 @@ Subject: [PATCH] feat: rearrange menus with groups and submenus in a menu
  .../SourceFiles/tele/tele_menu_registry.h     |   63 +
  .../SourceFiles/tele/tele_message_menu.cpp    |  146 +-
  Telegram/SourceFiles/tele/tele_message_menu.h |    1 +
+ Telegram/SourceFiles/tele/tele_mute.cpp       |    2 +
+ .../SourceFiles/tele/tele_online_notify.cpp   |    2 +
  Telegram/SourceFiles/tele/tele_options.cpp    |   41 +-
  Telegram/SourceFiles/tele/tele_options.h      |   11 +-
  .../SourceFiles/tele/tele_settings_io.cpp     |   15 +-
+ Telegram/SourceFiles/tele/tele_silent.cpp     |    2 +
  .../SourceFiles/tele/tele_translate_out.cpp   |    2 +
  .../ui/widgets/chat_filters_tabs_strip.cpp    |    2 +
  .../window/window_filters_menu.cpp            |    2 +
  .../SourceFiles/window/window_peer_menu.cpp   |    9 +-
- 28 files changed, 5471 insertions(+), 947 deletions(-)
+ 32 files changed, 5546 insertions(+), 947 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_apply.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_apply.h
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_editor.cpp
@@ -371,6 +375,26 @@ index 31dc86fc21ea69d52782e7005f965e9a5696e7f8..369cf1a520a58f28a0b09929966a9499
  }
  
  std::vector<ChatBackground> ChatBackgrounds(
+diff --git a/Telegram/SourceFiles/tele/tele_counters.cpp b/Telegram/SourceFiles/tele/tele_counters.cpp
+index 5eda81f041344e6ff9c29069e6b5e5b0e598ff49..a0930ab18590f10fa048ec0377f7dfdc76258098 100644
+--- a/Telegram/SourceFiles/tele/tele_counters.cpp
++++ b/Telegram/SourceFiles/tele/tele_counters.cpp
+@@ -7,6 +7,7 @@
+ #include "main/main_account.h"
+ #include "main/main_session.h"
+ #include "tele/tele_lowercase.h"
++#include "tele/tele_menu_apply.h"
+ #include "tele/tele_options.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+ #include "ui/widgets/menu/menu_toggle.h"
+@@ -122,6 +123,7 @@ void AddAccountCounterAction(
+ 			&st::menuIconMarkUnread);
+ 		result->action()->setCheckable(true);
+ 		result->action()->setChecked(uncounted);
++		FitMenuToggle(result.get());
+ 		return base::unique_qptr<Ui::Menu::ItemBase>(std::move(result));
+ 	} });
+ }
 diff --git a/Telegram/SourceFiles/tele/tele_download_folders.cpp b/Telegram/SourceFiles/tele/tele_download_folders.cpp
 index e181ee5b4475262485ab9e6c10378e7d8abdefbc..abf7fcf8680ea90eb41b43efcfdb12ff75126f54 100644
 --- a/Telegram/SourceFiles/tele/tele_download_folders.cpp
@@ -427,7 +451,7 @@ index e181ee5b4475262485ab9e6c10378e7d8abdefbc..abf7fcf8680ea90eb41b43efcfdb12ff
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_ghost.cpp b/Telegram/SourceFiles/tele/tele_ghost.cpp
-index ccc1adea686eded6e18fe1b3ae1b2b6bfc6f9454..e38d17e063284e380695b0c2d1eba363acaad6f0 100644
+index ccc1adea686eded6e18fe1b3ae1b2b6bfc6f9454..01779aefcf7b04d7c504c01f1c29b5a878125df6 100644
 --- a/Telegram/SourceFiles/tele/tele_ghost.cpp
 +++ b/Telegram/SourceFiles/tele/tele_ghost.cpp
 @@ -23,6 +23,7 @@
@@ -438,7 +462,12 @@ index ccc1adea686eded6e18fe1b3ae1b2b6bfc6f9454..e38d17e063284e380695b0c2d1eba363
  #include "tele/tele_options.h"
  #include "ui/chat/attach/attach_prepare.h"
  #include "ui/widgets/buttons.h"
-@@ -653,23 +654,24 @@ void AddGhostChatAction(
+@@ -649,27 +650,29 @@ void AddGhostChatAction(
+ 				&st::menuIconStealth);
+ 			result->action()->setCheckable(true);
+ 			result->action()->setChecked(always);
++			FitMenuToggle(result.get());
+ 			return base::unique_qptr<Ui::Menu::ItemBase>(std::move(result));
  		} });
  		return;
  	}
@@ -479,10 +508,10 @@ index ccc1adea686eded6e18fe1b3ae1b2b6bfc6f9454..e38d17e063284e380695b0c2d1eba363
  QString NormalizeGhostChats(const QString &value) {
 diff --git a/Telegram/SourceFiles/tele/tele_menu_apply.cpp b/Telegram/SourceFiles/tele/tele_menu_apply.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032c00784c0
+index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b856904cff
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_apply.cpp
-@@ -0,0 +1,955 @@
+@@ -0,0 +1,1016 @@
 +#include "tele/tele_menu_apply.h"
 +
 +#include "base/event_filter.h"
@@ -978,7 +1007,7 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +	}
 +}
 +
-+void FitToggle(not_null<Ui::Menu::Toggle*> item) {
++void FitToggleNow(not_null<Ui::Menu::Toggle*> item) {
 +	const auto &st = item->st();
 +	const auto &toggle = st.itemToggle;
 +	const auto text = item->action()->text().split('\t').front();
@@ -1026,11 +1055,7 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +				strong->deleteLater();
 +			}
 +		});
-+		const auto raw = result.get();
-+		QObject::connect(result->action(), &QAction::changed, raw, [=] {
-+			FitToggle(raw);
-+		});
-+		FitToggle(raw);
++		FitMenuToggle(result.get());
 +		return base::unique_qptr<Ui::Menu::ItemBase>(std::move(result));
 +	}
 +	return base::make_unique_q<Ui::Menu::Action>(
@@ -1237,6 +1262,62 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +	}
 +}
 +
++[[nodiscard]] std::vector<not_null<Ui::PopupMenu*>> OpenSubmenus(
++		not_null<Ui::PopupMenu*> menu) {
++	auto result = std::vector<not_null<Ui::PopupMenu*>>();
++	for (const auto child : menu->children()) {
++		const auto popup = dynamic_cast<Ui::PopupMenu*>(child);
++		if (popup && popup->isVisible()) {
++			result.push_back(popup);
++		}
++	}
++	return result;
++}
++
++void CloseSubmenus(not_null<Ui::PopupMenu*> menu) {
++	if (OpenSubmenus(menu).empty()) {
++		return;
++	}
++	const auto raw = menu->menu();
++	raw->setMouseSelectionFrozen(false);
++	raw->setChildShownAction(nullptr);
++	const auto &actions = raw->actions();
++	for (auto i = 0; i != int(actions.size()); ++i) {
++		const auto action = actions[i];
++		const auto item = raw->itemForAction(action);
++		if (item
++			&& item->isEnabled()
++			&& !action->isSeparator()
++			&& !action->menu()) {
++			raw->setSelected(i, true);
++			break;
++		}
++	}
++	raw->clearSelection();
++	for (const auto child : OpenSubmenus(menu)) {
++		child->hideMenu(true);
++	}
++}
++
++void CloseSubmenusOutsideItems(not_null<Ui::PopupMenu*> menu) {
++	const auto weak = QPointer<Ui::PopupMenu>(menu.get());
++	menu->menu()->setMouseMoveDelegate([=](QPoint global) {
++		const auto strong = weak.data();
++		if (!strong) {
++			return;
++		}
++		const auto inner = strong->inner();
++		const auto top = strong->mapToGlobal(inner.topLeft()).y();
++		const auto window = QRect(
++			strong->mapToGlobal(QPoint()),
++			strong->size());
++		if (window.contains(global)
++			&& (global.y() < top || global.y() >= top + inner.height())) {
++			CloseSubmenus(strong);
++		}
++	});
++}
++
 +void OpenEditorOnShow(
 +		not_null<Ui::PopupMenu*> menu,
 +		MenuKind kind,
@@ -1287,6 +1368,13 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +	QPointer<QAction> last;
 +};
 +
++void FitMenuToggle(not_null<Ui::Menu::Toggle*> item) {
++	QObject::connect(item->action(), &QAction::changed, item, [=] {
++		FitToggleNow(item);
++	});
++	FitToggleNow(item);
++}
++
 +QAction *TagMenuAction(
 +		QAction *action,
 +		const QString &key,
@@ -1325,6 +1413,8 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +	const auto raw = menu->menu();
 +	if (raw->empty()) {
 +		return;
++	} else if (args.kind == MenuKind::Message) {
++		CloseSubmenusOutsideItems(menu);
 +	}
 +	const auto &info = LookupMenu(args.kind);
 +	auto elements = CollectElements(raw, info, args.icons);
@@ -1440,10 +1530,10 @@ index 0000000000000000000000000000000000000000..c68edfb2badfe0867ede6c7373abe032
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_menu_apply.h b/Telegram/SourceFiles/tele/tele_menu_apply.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..5316e70c7dd561cea331046a8ac7e835943deb9e
+index 0000000000000000000000000000000000000000..ac99ac0cf712349c04e6dbffeedb6fc446629672
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_apply.h
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,72 @@
 +#pragma once
 +
 +#include "tele/tele_menu_layout.h"
@@ -1466,8 +1556,13 @@ index 0000000000000000000000000000000000000000..5316e70c7dd561cea331046a8ac7e835
 +class PopupMenu;
 +} // namespace Ui
 +
++namespace Ui::Menu {
++class Toggle;
++} // namespace Ui::Menu
++
 +namespace Tele {
 +
++void FitMenuToggle(not_null<Ui::Menu::Toggle*> item);
 +QAction *TagMenuAction(
 +	QAction *action,
 +	const QString &key,
@@ -6740,6 +6835,46 @@ index 7213c91aeabd2ccd58c666bd268f4ecc0fde03aa..f92a71e61899387aee80d91840c1ea1a
  void AddCopyEmojiIdAction(
  	not_null<Ui::PopupMenu*> menu,
  	std::shared_ptr<Main::SessionShow> show,
+diff --git a/Telegram/SourceFiles/tele/tele_mute.cpp b/Telegram/SourceFiles/tele/tele_mute.cpp
+index d6d6144f1ec5dd1d255607579b1e80a4d87cc365..a3863af512357f5ea8ff686a688dfe68923a8f40 100644
+--- a/Telegram/SourceFiles/tele/tele_mute.cpp
++++ b/Telegram/SourceFiles/tele/tele_mute.cpp
+@@ -15,6 +15,7 @@
+ #include "storage/details/storage_file_utilities.h"
+ #include "storage/storage_account.h"
+ #include "tele/tele_lowercase.h"
++#include "tele/tele_menu_apply.h"
+ #include "tele/tele_options.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+ #include "ui/widgets/menu/menu_toggle.h"
+@@ -408,6 +409,7 @@ void AddSilenceAction(not_null<Ui::PopupMenu*> menu, Data::Thread *thread) {
+ 		&st::menuIconBlock);
+ 	item->action()->setCheckable(true);
+ 	item->action()->setChecked(silenced);
++	FitMenuToggle(item.get());
+ 	menu->addAction(std::move(item));
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_online_notify.cpp b/Telegram/SourceFiles/tele/tele_online_notify.cpp
+index d02ac4b8306b0bdbd84653aa7758a40112829203..b3c5c0a94e686b8eb1700d29be6e13596912e79b 100644
+--- a/Telegram/SourceFiles/tele/tele_online_notify.cpp
++++ b/Telegram/SourceFiles/tele/tele_online_notify.cpp
+@@ -14,6 +14,7 @@
+ #include "storage/details/storage_file_utilities.h"
+ #include "storage/storage_account.h"
+ #include "tele/tele_lowercase.h"
++#include "tele/tele_menu_apply.h"
+ #include "tele/tele_options.h"
+ #include "ui/userpic_view.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+@@ -328,6 +329,7 @@ void AddOnlineNotifyAction(
+ 			&st::menuIconNotifications);
+ 		result->action()->setCheckable(true);
+ 		result->action()->setChecked(watched);
++		FitMenuToggle(result.get());
+ 		return base::unique_qptr<Ui::Menu::ItemBase>(std::move(result));
+ 	} });
+ }
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 27335b086404677113b341deeeeefb215590395e..f271a56959338e331155996f27ed54e3a55217df 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
@@ -6894,6 +7029,26 @@ index 82c3f70862ccab35a00cee8da3d6bca03148a359..841f0744df42a863be1752a14312c3a2
  		}
  		return;
  	case Kind::ServerUrl:
+diff --git a/Telegram/SourceFiles/tele/tele_silent.cpp b/Telegram/SourceFiles/tele/tele_silent.cpp
+index 7efb99ab7d5fd50232d695baac97cca6a78b03a0..1363d59fe64a101752a40c2d330e13b36fa185d2 100644
+--- a/Telegram/SourceFiles/tele/tele_silent.cpp
++++ b/Telegram/SourceFiles/tele/tele_silent.cpp
+@@ -10,6 +10,7 @@
+ #include "storage/details/storage_file_utilities.h"
+ #include "storage/storage_account.h"
+ #include "tele/tele_lowercase.h"
++#include "tele/tele_menu_apply.h"
+ #include "tele/tele_options.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+ #include "ui/widgets/menu/menu_toggle.h"
+@@ -259,6 +260,7 @@ void AddSilentChatAction(
+ 			&st::menuIconMute);
+ 		result->action()->setCheckable(true);
+ 		result->action()->setChecked(silent);
++		FitMenuToggle(result.get());
+ 		return base::unique_qptr<Ui::Menu::ItemBase>(std::move(result));
+ 	} });
+ }
 diff --git a/Telegram/SourceFiles/tele/tele_translate_out.cpp b/Telegram/SourceFiles/tele/tele_translate_out.cpp
 index 21b654107a3942005c0542fb4ff0010633404142..54873f3876ae9764e17fc0d1f6eda7fc9f192866 100644
 --- a/Telegram/SourceFiles/tele/tele_translate_out.cpp
