@@ -100,6 +100,16 @@ jobs:
           } | tee -a "$GITHUB_OUTPUT" > number.env
           echo "building $base.$number"
 
+      - name: Notify
+        if: ${{ !inputs.from_run }}
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          TAG: ${{ steps.number.outputs.tag }}
+        run: |
+          bash ci/notify.sh "🚀 tele ${TAG##*.}: build started · $(git log -1 --format=%s)"
+
       - name: Keep the release number
         if: ${{ !inputs.from_run }}
         uses: actions/upload-artifact@v7
@@ -309,6 +319,18 @@ jobs:
           echo "Building ${UPSTREAM_TAG:-UPSTREAM} for Windows failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
 
+      - name: Notify
+        if: always()
+        continue-on-error: true
+        shell: bash
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.}: windows built" "tele ${TAG##*.}: windows build failed"
+
   linux-env:
     name: Linux libraries
     needs: number
@@ -387,6 +409,17 @@ jobs:
         run: |
           echo "Building the Linux libraries for ${UPSTREAM_TAG:-UPSTREAM} failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+
+      - name: Notify
+        if: failure() || cancelled()
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.}: linux libraries built" "tele ${TAG##*.}: linux libraries failed"
 
   linux:
     name: Linux x64
@@ -510,6 +543,17 @@ jobs:
           echo "Building ${UPSTREAM_TAG:-UPSTREAM} for Linux failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
 
+      - name: Notify
+        if: always()
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.}: linux built" "tele ${TAG##*.}: linux build failed"
+
   macos-libs:
     name: macOS libraries
     needs: number
@@ -587,6 +631,17 @@ jobs:
         run: |
           echo "Building the macOS libraries for ${UPSTREAM_TAG:-UPSTREAM} failed, a re-run continues where it stopped: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+
+      - name: Notify
+        if: failure() || cancelled()
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.}: macos libraries built" "tele ${TAG##*.}: macos libraries failed"
 
   macos:
     name: macOS universal
@@ -695,6 +750,17 @@ jobs:
         run: |
           echo "Building ${UPSTREAM_TAG:-UPSTREAM} for macOS failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+
+      - name: Notify
+        if: always()
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.}: macos built" "tele ${TAG##*.}: macos build failed"
 
   publish:
     name: Publish
@@ -806,3 +872,14 @@ jobs:
         run: |
           echo "Publishing ${TAG:-the build} failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
           bash tele/ci/issue.sh open build-failure "Publish failed: ${TAG:-unknown}" issue.md
+
+      - name: Notify
+        if: always()
+        continue-on-error: true
+        env:
+          NOTIFY_TOKEN: ${{ secrets.TELE_BOT_TOKEN }}
+          NOTIFY_CHAT: ${{ secrets.TELE_NOTIFY_CHAT }}
+          STATUS: ${{ job.status }}
+          TAG: ${{ needs.number.outputs.tag }}
+        run: |
+          bash tele/ci/notify.sh "tele ${TAG##*.} published: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG" "tele ${TAG##*.}: publishing failed"
