@@ -36,10 +36,10 @@ index 919c5ca2761a74324eae44104192e493205b65bc..7f91a50892bd01d6154b6d517479786c
  				st::infoProfileLabeledPadding,
  				st::popupMenuWithIcons).text;
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index 29ea26a63e6f3b4f5d3f1781ea2e739b55d1e93d..cf0c78c2306d909340e2fad9f8aa0bace37be384 100644
+index 3948e51f6bc874dc402b31d475984fc23a0a2b6e..3b66055f59774809a8095db0709d4698bbf63222 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
-@@ -2097,6 +2097,10 @@ void FillProfiles(SectionBuilder &builder) {
+@@ -2963,6 +2963,10 @@ void FillProfiles(SectionBuilder &builder) {
  		::Info::Profile::kOptionShowPeerIdBelowAbout,
  	});
  	AddOptionToggle(builder, ::Tele::kOptionNoPhoneInHeader);
@@ -49,21 +49,21 @@ index 29ea26a63e6f3b4f5d3f1781ea2e739b55d1e93d..cf0c78c2306d909340e2fad9f8aa0bac
 +		{ u"mobile"_q });
  	AddOptionToggle(builder, ::Tele::kOptionNftPurchasePrice);
  	AddLocalNames(builder);
- 	AddGroupDivider(builder);
+ 	AddOptionToggle(
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index cbd7db96b3954896328bf9c0488d813da02031f4..2b09fb3d482960ceaa19b21ec0bae63fccaace2d 100644
+index f271a56959338e331155996f27ed54e3a55217df..4a4905394acb68e8e6479d947aafa96b286fd080 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
-@@ -98,6 +98,7 @@ const char kOptionLocalPins[] = "tele-local-pins";
- const char kOptionDockedAttachments[] = "tele-docked-attachments";
- const char kOptionDockedGrid[] = "tele-docked-grid";
- const char kOptionLocalFolders[] = "tele-local-folders";
+@@ -165,6 +165,7 @@ const char kOptionCounterAccounts[] = "tele-counter-accounts";
+ const char kOptionUncountedAccounts[] = "tele-uncounted-accounts";
+ const char kOptionViewerLoop[] = "tele-viewer-loop";
+ const char kOptionTranslateOutTo[] = "tele-translate-out-to";
 +const char kOptionHidePhoneInProfile[] = "tele-hide-phone-in-profile";
  
  namespace {
  
-@@ -682,6 +683,11 @@ base::options::toggle LocalFoldersOption({
- 		"device.",
+@@ -1129,6 +1130,11 @@ base::options::option<QString> TranslateOutToOption({
+ 	.name = "Translate your message to",
  });
  
 +base::options::toggle HidePhoneInProfileOption({
@@ -74,8 +74,8 @@ index cbd7db96b3954896328bf9c0488d813da02031f4..2b09fb3d482960ceaa19b21ec0bae63f
  void MigrateHideCalls() {
  	if (!HideCallsOption.value()) {
  		return;
-@@ -1495,4 +1501,14 @@ rpl::producer<bool> LocalFoldersValue() {
- 	});
+@@ -2378,4 +2384,14 @@ void SetTranslateOutTo(const QString &value) {
+ 	TranslateOutToOption.set(value);
  }
  
 +rpl::producer<bool> HidePhoneInProfileValue() {
@@ -90,21 +90,21 @@ index cbd7db96b3954896328bf9c0488d813da02031f4..2b09fb3d482960ceaa19b21ec0bae63f
 +
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_options.h b/Telegram/SourceFiles/tele/tele_options.h
-index 88d868851d17127e3ee5329d921933695b068eb6..bd91fe1e0e3fcd33b70bcf44c1d2b4c729441f7e 100644
+index 0a805bb403c25d092b28c05327eedb501ccba578..8de85b7116a1cd736fcf76a76ed38ab986447c2e 100644
 --- a/Telegram/SourceFiles/tele/tele_options.h
 +++ b/Telegram/SourceFiles/tele/tele_options.h
-@@ -94,6 +94,7 @@ extern const char kOptionLocalPins[];
- extern const char kOptionDockedAttachments[];
- extern const char kOptionDockedGrid[];
- extern const char kOptionLocalFolders[];
+@@ -160,6 +160,7 @@ extern const char kOptionCounterAccounts[];
+ extern const char kOptionUncountedAccounts[];
+ extern const char kOptionViewerLoop[];
+ extern const char kOptionTranslateOutTo[];
 +extern const char kOptionHidePhoneInProfile[];
  
  [[nodiscard]] bool HideStories();
  [[nodiscard]] bool InvisibleStories();
-@@ -249,5 +250,6 @@ void SetDockedGrid(bool enabled);
- [[nodiscard]] rpl::producer<> DockedGridChanges();
- [[nodiscard]] bool LocalFolders();
- [[nodiscard]] rpl::producer<bool> LocalFoldersValue();
+@@ -407,5 +408,6 @@ void SetViewerLoop(bool enabled);
+ [[nodiscard]] rpl::producer<bool> ViewerLoopValue();
+ [[nodiscard]] QString TranslateOutTo();
+ void SetTranslateOutTo(const QString &value);
 +[[nodiscard]] rpl::producer<bool> HidePhoneInProfileValue();
  
  } // namespace Tele
@@ -140,14 +140,14 @@ index 42971452c3e0bc01859a16907f799eb3906baa89..959532111bb2bb80dcffb7e067c0737c
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_settings_io.cpp b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-index 691eec09becb7e4a77a578fdf78b7b821fd0b46b..911a3cdbaab2d3ac60e60fa658b9f315ed4c5da9 100644
+index 841f0744df42a863be1752a14312c3a2d63a0f41..cdf927b708730cae745280f9e4d41e2274f6f377 100644
 --- a/Telegram/SourceFiles/tele/tele_settings_io.cpp
 +++ b/Telegram/SourceFiles/tele/tele_settings_io.cpp
-@@ -159,6 +159,7 @@ struct Spec {
- 		Toggle(kOptionDockedAttachments),
+@@ -208,6 +208,7 @@ struct Spec {
  		Toggle(kOptionDockedGrid),
+ 		Toggle(kOptionResizableField),
  		Toggle(kOptionNoPhoneInHeader),
 +		Toggle(kOptionHidePhoneInProfile),
  		Toggle(kOptionNftPurchasePrice),
- 		Toggle(kOptionLocalDrafts),
- 		Toggle(kOptionLocalPins),
+ 		Toggle(kOptionBackgroundMenu),
+ 		Toggle(kOptionAliasMenu),

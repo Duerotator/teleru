@@ -1,0 +1,133 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Wed, 30 Sep 2026 04:12:01 +0300
+Subject: [PATCH] fix: taller shot box, docked shot sending and a centered
+ draft button
+
+---
+ .../SourceFiles/tele/tele_docked_media.cpp    | 16 ++++++++++++++
+ Telegram/SourceFiles/tele/tele_docked_media.h |  4 ++++
+ .../SourceFiles/tele/tele_drafts_compose.cpp  | 12 +++++++++--
+ Telegram/SourceFiles/tele/tele_shot.cpp       | 21 ++++++++++++++-----
+ 4 files changed, 46 insertions(+), 7 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_docked_media.cpp b/Telegram/SourceFiles/tele/tele_docked_media.cpp
+index 281ebdbcf6b678fe928b4bf006f67127b715d418..bea3f20670942e13e920cda991455d3e15feb2b5 100644
+--- a/Telegram/SourceFiles/tele/tele_docked_media.cpp
++++ b/Telegram/SourceFiles/tele/tele_docked_media.cpp
+@@ -4278,6 +4278,22 @@ void DockedAfterSend(
+ 	Docked(session).setAfterSend({ .thread = thread }, std::move(callback));
+ }
+ 
++bool DockedAdd(
++		not_null<Data::Thread*> thread,
++		std::shared_ptr<ChatHelpers::Show> show,
++		Ui::PreparedList &list) {
++	if (!DockedAttachments()
++		|| list.error != Ui::PreparedList::Error::None
++		|| (list.files.empty() && list.filesToProcess.empty())) {
++		return false;
++	}
++	Docked(&thread->session()).add(
++		{ .thread = DraftsThread::From(thread) },
++		std::move(show),
++		std::move(list));
++	return true;
++}
++
+ bool ComposeDockedAdd(ComposeDocked *docked, Ui::PreparedList &list) {
+ 	return docked && docked->add(list);
+ }
+diff --git a/Telegram/SourceFiles/tele/tele_docked_media.h b/Telegram/SourceFiles/tele/tele_docked_media.h
+index 2b41a7d9555b70c8ef1071f9bb742c5e2dbfe4c6..f850a547573f1ad03b8aa57e02f0c9b471592259 100644
+--- a/Telegram/SourceFiles/tele/tele_docked_media.h
++++ b/Telegram/SourceFiles/tele/tele_docked_media.h
+@@ -158,6 +158,10 @@ void DockedAfterSend(
+ 	not_null<Main::Session*> session,
+ 	DraftsThread thread,
+ 	Fn<void()> callback);
++bool DockedAdd(
++	not_null<Data::Thread*> thread,
++	std::shared_ptr<ChatHelpers::Show> show,
++	Ui::PreparedList &list);
+ 
+ bool ComposeDockedAdd(ComposeDocked *docked, Ui::PreparedList &list);
+ bool ComposeDockedSend(ComposeDocked *docked, Api::SendOptions options);
+diff --git a/Telegram/SourceFiles/tele/tele_drafts_compose.cpp b/Telegram/SourceFiles/tele/tele_drafts_compose.cpp
+index 8e1ab80d788f742a0629f37c935877c1bf81c10c..292ee1c2f48008f225179d8da56648faffa94ebb 100644
+--- a/Telegram/SourceFiles/tele/tele_drafts_compose.cpp
++++ b/Telegram/SourceFiles/tele/tele_drafts_compose.cpp
+@@ -1208,10 +1208,18 @@ void SendFilesBoxAccess::AddButton(not_null<SendFilesBox*> box) {
+ 	if (!Allowed(box)) {
+ 		return;
+ 	}
+-	const auto button = box->addTopButton(box->_st.files.menu, [=] {
++	const auto &menu = box->_st.files.menu;
++	const auto &icon = st::menuIconArchive;
++	const auto area = menu.rippleAreaSize;
++	const auto centered = std::make_shared<style::IconButton>(menu);
++	centered->iconPosition = menu.rippleAreaPosition + QPoint(
++		(area - icon.width()) / 2,
++		(area - icon.height()) / 2);
++	const auto button = box->addTopButton(*centered, [=] {
+ 		Save(box, false);
+ 	});
+-	button->setIconOverride(&st::menuIconArchive, &st::menuIconArchive);
++	button->lifetime().add([centered] {});
++	button->setIconOverride(&icon, &icon);
+ 	button->setAccessibleName(Lower(u"Save as draft"_q));
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_shot.cpp b/Telegram/SourceFiles/tele/tele_shot.cpp
+index 14171f0d4b0ec690c6602858b91019cf574f1c5f..c30921c5d7e1e3182408d5d95514ad57e5b0c326 100644
+--- a/Telegram/SourceFiles/tele/tele_shot.cpp
++++ b/Telegram/SourceFiles/tele/tele_shot.cpp
+@@ -31,6 +31,7 @@
+ #include "settings/settings_common.h"
+ #include "storage/localimageloader.h"
+ #include "storage/storage_media_prepare.h"
++#include "tele/tele_docked_media.h"
+ #include "tele/tele_launch_flags.h"
+ #include "tele/tele_lowercase.h"
+ #include "tele/tele_options.h"
+@@ -1308,6 +1309,18 @@ void SendShot(
+ 	if (asFile) {
+ 		list.overrideSendImagesAsPhotos = false;
+ 	}
++	if (DockedAdd(thread, controller->uiShow(), list)) {
++		if (controller->activeChatCurrent().thread() != thread) {
++			controller->showThread(
++				thread,
++				ShowAtTheEndMsgId,
++				Window::SectionShow::Way::ClearStack);
++		}
++		if (sent) {
++			sent();
++		}
++		return;
++	}
+ 	ShowSendFilesBox(controller, thread, std::move(list), std::move(sent));
+ }
+ 
+@@ -1399,9 +1412,6 @@ void ShotBox(
+ 		st::boxScroll);
+ 	const auto panel = panelScroll->setOwnedWidget(
+ 		object_ptr<Ui::VerticalLayout>(panelScroll)).data();
+-	const auto maxHeight = std::max(
+-		st::boxMaxListHeight,
+-		controller->content()->height() * 3 / 4);
+ 
+ 	const auto previewShown = body->lifetime().make_state<int>(0);
+ 	const auto layout = [=] {
+@@ -1429,8 +1439,9 @@ void ShotBox(
+ 	}, body->lifetime());
+ 	rpl::combine(
+ 		preview->heightValue(),
+-		panel->heightValue()
+-	) | rpl::on_next([=](int previewHeight, int panelHeight) {
++		panel->heightValue(),
++		box->getDelegate()->contentHeightMaxValue()
++	) | rpl::on_next([=](int previewHeight, int panelHeight, int maxHeight) {
+ 		const auto available = std::max(maxHeight - st::lineWidth, 0);
+ 		const auto panelShown = std::min(
+ 			panelHeight,

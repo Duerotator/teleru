@@ -6,7 +6,7 @@ Subject: [PATCH] feat: attach media above the field (beta)
 ---
  Telegram/CMakeLists.txt                       |    2 +
  .../SourceFiles/dialogs/ui/dialogs_layout.cpp |    3 +
- .../SourceFiles/history/history_widget.cpp    |   46 +-
+ .../SourceFiles/history/history_widget.cpp    |   51 +-
  Telegram/SourceFiles/history/history_widget.h |    2 +
  .../history_view_compose_controls.cpp         |   59 +-
  .../controls/history_view_compose_controls.h  |    4 +
@@ -23,7 +23,7 @@ Subject: [PATCH] feat: attach media above the field (beta)
  Telegram/SourceFiles/tele/tele_options.cpp    |   36 +
  Telegram/SourceFiles/tele/tele_options.h      |    7 +
  .../SourceFiles/tele/tele_settings_io.cpp     |    2 +
- 19 files changed, 3974 insertions(+), 30 deletions(-)
+ 19 files changed, 3979 insertions(+), 30 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_docked_media.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_docked_media.h
 
@@ -62,7 +62,7 @@ index dd2fd649a725bdea61b49630090aa98b093b9dd0..fbb7b882942b76bb594bc624759194d4
  		}
  		return nullptr;
 diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
-index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6dd015c348 100644
+index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..500b9cc1a95f406d3ec4bdb96bba39be44237386 100644
 --- a/Telegram/SourceFiles/history/history_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_widget.cpp
 @@ -171,6 +171,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -121,15 +121,20 @@ index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6d
  }
  
  bool HistoryWidget::hideExtraButtons() const {
-@@ -7558,12 +7584,14 @@ void HistoryWidget::moveFieldControls() {
+@@ -7558,12 +7584,19 @@ void HistoryWidget::moveFieldControls() {
  	_fieldBarCancel->moveToRight(
  		0,
  		_field->y() - st::historySendPadding - _fieldBarCancel->height());
 -	Tele::ComposeDraftsMoveBar(
 -		_teleDrafts.get(),
-+	const auto teleBarsBottom = _fieldBarCancel->isHidden()
-+		? (_field->y() - st::historySendPadding)
-+		: _fieldBarCancel->y();
++	const auto teleBarsBottom = (_editMsgId
++			|| _replyTo
++			|| readyToForward()
++			|| _kbReplyTo
++			|| _previewDrawPreview
++			|| _suggestOptions)
++		? _fieldBarCancel->y()
++		: (_field->y() - st::historySendPadding);
 +	Tele::ComposeDraftsMoveBar(_teleDrafts.get(), width(), teleBarsBottom);
 +	Tele::ComposeDockedMove(
 +		_teleDocked.get(),
@@ -141,7 +146,7 @@ index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6d
  	if (_inlineResults) {
  		_inlineResults->moveBottom(_field->y() - st::historySendPadding);
  	}
-@@ -7700,6 +7728,8 @@ void HistoryWidget::updateFieldPlaceholder() {
+@@ -7700,6 +7733,8 @@ void HistoryWidget::updateFieldPlaceholder() {
  			return tr::lng_edit_message_text();
  		} else if (!peer) {
  			return tr::lng_message_ph();
@@ -150,7 +155,7 @@ index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6d
  		} else if ((_kbShown || _keyboard->forceReply())
  			&& !_keyboard->placeholder().isEmpty()) {
  			return rpl::single(_keyboard->placeholder());
-@@ -7913,6 +7943,8 @@ bool HistoryWidget::confirmSendingFiles(
+@@ -7913,6 +7948,8 @@ bool HistoryWidget::confirmSendingFiles(
  		return false;
  	} else if (!_peer || showSendingFilesError(list)) {
  		return false;
@@ -159,7 +164,7 @@ index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6d
  	}
  
  	const auto cursor = _field->textCursor();
-@@ -8568,6 +8600,7 @@ void HistoryWidget::updateHistoryGeometry(
+@@ -8568,6 +8605,7 @@ void HistoryWidget::updateHistoryGeometry(
  			newScrollHeight -= st::historyReplyHeight;
  		}
  		newScrollHeight -= Tele::ComposeDraftsBarHeight(_teleDrafts.get());
@@ -167,7 +172,7 @@ index 668e6a5c82999ac836f15e04c2b8f7673d9427cd..74b82cddba1033979e82ed36404b2b6d
  		if (_kbShown) {
  			newScrollHeight -= _kbScroll->height();
  		}
-@@ -9002,6 +9035,7 @@ int HistoryWidget::computeMaxFieldHeight() const {
+@@ -9002,6 +9040,7 @@ int HistoryWidget::computeMaxFieldHeight() const {
  			? st::historyReplyHeight
  			: 0)
  		- Tele::ComposeDraftsBarHeight(_teleDrafts.get())

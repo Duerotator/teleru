@@ -1,23 +1,24 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: t <t@t>
+From: nitreojs <hello@starkow.dev>
 Date: Mon, 28 Sep 2026 22:54:33 +0300
 Subject: [PATCH] feat: pin chats past the limit
 
 ---
- Telegram/CMakeLists.txt                       |   2 +
- Telegram/SourceFiles/data/data_session.cpp    |   4 +
- .../dialogs/dialogs_inner_widget.cpp          |  13 +-
- .../SourceFiles/dialogs/ui/dialogs_layout.cpp |  17 +-
- .../view/history_view_subsection_tabs.cpp     |   4 +-
- Telegram/SourceFiles/main/main_session.cpp    |   2 +
- .../SourceFiles/settings/settings_tele.cpp    |   4 +
- Telegram/SourceFiles/tele/tele_local_pins.cpp | 704 ++++++++++++++++++
- Telegram/SourceFiles/tele/tele_local_pins.h   |  61 ++
- Telegram/SourceFiles/tele/tele_options.cpp    |  15 +
- Telegram/SourceFiles/tele/tele_options.h      |   3 +
- .../SourceFiles/tele/tele_settings_io.cpp     |   1 +
- .../SourceFiles/window/window_peer_menu.cpp   |  14 +-
- 13 files changed, 834 insertions(+), 10 deletions(-)
+ Telegram/CMakeLists.txt                       |    2 +
+ Telegram/SourceFiles/data/data_session.cpp    |    4 +
+ .../SourceFiles/dialogs/dialogs_entry.cpp     |    5 +-
+ .../dialogs/dialogs_inner_widget.cpp          |    3 +
+ .../SourceFiles/dialogs/ui/dialogs_layout.cpp |   17 +-
+ .../view/history_view_subsection_tabs.cpp     |    4 +
+ Telegram/SourceFiles/main/main_session.cpp    |    2 +
+ .../SourceFiles/settings/settings_tele.cpp    |    4 +
+ Telegram/SourceFiles/tele/tele_local_pins.cpp | 1003 +++++++++++++++++
+ Telegram/SourceFiles/tele/tele_local_pins.h   |   66 ++
+ Telegram/SourceFiles/tele/tele_options.cpp    |   15 +
+ Telegram/SourceFiles/tele/tele_options.h      |    3 +
+ .../SourceFiles/tele/tele_settings_io.cpp     |    1 +
+ .../SourceFiles/window/window_peer_menu.cpp   |   14 +-
+ 14 files changed, 1135 insertions(+), 8 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_local_pins.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_local_pins.h
 
@@ -56,8 +57,31 @@ index c9755bb2a0e176c0d18af019e5d71edfbe924ac5..b98dc6ef7cd9d949d59a2514720705f0
  	const auto topic = key1.topic();
  	const auto list = topic
  		? topic->forum()->topicsList()
+diff --git a/Telegram/SourceFiles/dialogs/dialogs_entry.cpp b/Telegram/SourceFiles/dialogs/dialogs_entry.cpp
+index 1eb99adc647c72321011e059133024975d658a71..7eec631db0b3d7ded82311fc1e6a20615d32360f 100644
+--- a/Telegram/SourceFiles/dialogs/dialogs_entry.cpp
++++ b/Telegram/SourceFiles/dialogs/dialogs_entry.cpp
+@@ -27,6 +27,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "ui/ui_utility.h"
+ #include "history/history.h"
+ #include "history/history_item.h"
++#include "tele/tele_local_pins.h"
+ #include "styles/style_dialogs.h" // st::dialogsTextWidthMin
+ 
+ namespace Dialogs {
+@@ -247,7 +248,9 @@ int Entry::lookupPinnedIndex(FilterId filterId) const {
+ 
+ uint64 Entry::computeSortPosition(FilterId filterId) const {
+ 	const auto index = lookupPinnedIndex(filterId);
+-	return index ? PinnedDialogPos(index) : _sortKeyByDate;
++	return index
++		? PinnedDialogPos(Tele::PinnedSortIndex(this, filterId, index))
++		: _sortKeyByDate;
+ }
+ 
+ bool Entry::hasUnreadUnmutedForSort() const {
 diff --git a/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp b/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
-index f9f606919fa17017e23c655c0ce67564c8e1fb3a..c394423e9bfed8daf7afb4467ca1ae6256d60e8b 100644
+index f9f606919fa17017e23c655c0ce67564c8e1fb3a..495aaa9ee1df96d70c9afb93be9c47020eb867cb 100644
 --- a/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
 +++ b/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
 @@ -88,6 +88,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -68,32 +92,15 @@ index f9f606919fa17017e23c655c0ce67564c8e1fb3a..c394423e9bfed8daf7afb4467ca1ae62
  #include "tele/tele_options.h"
  #include "tele/tele_username_aliases.h"
  #include "api/api_chat_filters.h"
-@@ -2883,7 +2884,11 @@ bool InnerWidget::updateReorderPinned(QPoint localPosition) {
- 		for (auto from = _draggingIndex; from > 0; --from) {
- 			const auto height
- 				= (*(_shownList->cbegin() + promoted + from - 1))->height();
--			if (delta < crossThreshold(height)) {
-+			if (delta < crossThreshold(height)
-+				|| !Tele::PinsSwappable(
-+					_filterId,
-+					_dragging->key(),
-+					(*(_shownList->cbegin() + promoted + from - 1))->key())) {
- 				break;
- 			}
- 			delta -= height;
-@@ -2902,7 +2907,11 @@ bool InnerWidget::updateReorderPinned(QPoint localPosition) {
- 		for (auto from = _draggingIndex; from + 1 < pinnedCount; ++from) {
- 			const auto height
- 				= (*(_shownList->cbegin() + promoted + from + 1))->height();
--			if (delta < crossThreshold(height)) {
-+			if (delta < crossThreshold(height)
-+				|| !Tele::PinsSwappable(
-+					_filterId,
-+					_dragging->key(),
-+					(*(_shownList->cbegin() + promoted + from + 1))->key())) {
- 				break;
- 			}
- 			delta -= height;
+@@ -2776,6 +2777,8 @@ int InnerWidget::countPinnedIndex(Row *ofRow) {
+ void InnerWidget::savePinnedOrder() {
+ 	if (_savedSublists && _savedSublists->parentChat()) {
+ 		return;
++	} else if (Tele::KeepPinnedOrderLocal(&session())) {
++		return;
+ 	}
+ 	const auto &newOrder = pinnedChatsOrder();
+ 	if (newOrder.size() != _pinnedOnDragStart.size()) {
 diff --git a/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp b/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp
 index 2a8b17bbda840664b7a6cec624f22f84e9652130..db65954c7f5f6a387625d5ecbbaf570818fb8ba5 100644
 --- a/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp
@@ -160,7 +167,7 @@ index 2a8b17bbda840664b7a6cec624f22f84e9652130..db65954c7f5f6a387625d5ecbbaf5708
  			texttop,
  			context.width);
 diff --git a/Telegram/SourceFiles/history/view/history_view_subsection_tabs.cpp b/Telegram/SourceFiles/history/view/history_view_subsection_tabs.cpp
-index ddf00f362b908af897664a726a3f0c073ff44155..e39baeed10fb409381eafaff189775d8fd8b8ce9 100644
+index ddf00f362b908af897664a726a3f0c073ff44155..986b87070e551ea5113963f4b3a577589fd99827 100644
 --- a/Telegram/SourceFiles/history/view/history_view_subsection_tabs.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_subsection_tabs.cpp
 @@ -26,6 +26,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -171,16 +178,16 @@ index ddf00f362b908af897664a726a3f0c073ff44155..e39baeed10fb409381eafaff189775d8
  #include "ui/controls/subsection_tabs_slider_reorder.h"
  #include "ui/controls/subsection_tabs_slider.h"
  #include "ui/dynamic_image.h"
-@@ -1004,7 +1005,8 @@ void SubsectionTabs::applyReorder(
- 	if (const auto forum = _history->asForum()) {
- 		auto topicIds = QVector<MTPint>();
- 		for (const auto &item : _slice) {
--			if (item.thread->isPinnedDialog(FilterId())) {
-+			if (item.thread->isPinnedDialog(FilterId())
-+				&& !Tele::IsLocalPin(item.thread, FilterId())) {
- 				if (const auto topic = item.thread->asTopic()) {
- 					topicIds.push_back(MTP_int(topic->rootId()));
+@@ -1010,6 +1011,9 @@ void SubsectionTabs::applyReorder(
  				}
+ 			}
+ 		}
++		if (Tele::ReorderLocalTopicPins(forum, topicIds)) {
++			return;
++		}
+ 		forum->topicsList()->pinned()->applyList(forum, topicIds);
+ 		session().api().savePinnedOrder(forum);
+ 	}
 diff --git a/Telegram/SourceFiles/main/main_session.cpp b/Telegram/SourceFiles/main/main_session.cpp
 index 0e0112a93d766d3879c8443d0db152e11d00613f..c55dfdad4089ee6a2e109b7e99fd4e9228bf049d 100644
 --- a/Telegram/SourceFiles/main/main_session.cpp
@@ -218,12 +225,13 @@ index 061ff6b474cd19c70157a9a72f7e6d4b3b571716..d224a1ddc4938fbd3160494e67f070fa
  	AddGroupDivider(builder);
 diff --git a/Telegram/SourceFiles/tele/tele_local_pins.cpp b/Telegram/SourceFiles/tele/tele_local_pins.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91cde5a349f
+index 0000000000000000000000000000000000000000..787a8eebc22e9c42f9d47c363c19745fb82be64e
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_local_pins.cpp
-@@ -0,0 +1,704 @@
+@@ -0,0 +1,1003 @@
 +#include "tele/tele_local_pins.h"
 +
++#include "apiwrap.h"
 +#include "data/data_changes.h"
 +#include "data/data_channel.h"
 +#include "data/data_chat_filters.h"
@@ -253,8 +261,9 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +using namespace Storage::details;
 +
 +constexpr auto kMagic = quint32(0x7E1E9105);
-+constexpr auto kVersion = qint32(1);
++constexpr auto kVersion = qint32(2);
 +constexpr auto kLocalBase = 0x10000;
++constexpr auto kUnmappedBase = 0x8000;
 +constexpr auto kMaxLists = 1024;
 +constexpr auto kMaxItems = 4096;
 +
@@ -276,6 +285,7 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +struct Item {
 +	uint64 id = 0;
 +	uint64 hash = 0;
++	bool local = false;
 +};
 +
 +using Shown = std::pair<const Dialogs::Entry*, FilterId>;
@@ -356,6 +366,28 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	};
 +}
 +
++[[nodiscard]] std::optional<Item> ItemForKey(ListId list, Dialogs::Key key) {
++	const auto entry = key.entry();
++	const auto fits = (list.kind == ListKind::Topics)
++		? (entry->asTopic() != nullptr)
++		: (list.kind == ListKind::Saved)
++		? (entry->asSublist() != nullptr)
++		: (entry->asHistory() != nullptr);
++	return fits ? ItemFor(entry) : std::optional<Item>();
++}
++
++[[nodiscard]] auto FindItem(std::vector<Item> &items, uint64 id) {
++	return ranges::find(items, id, &Item::id);
++}
++
++struct Placed {
++	ListId list;
++	Item item;
++	not_null<Dialogs::Entry*> entry;
++	int position = 0;
++	bool local = false;
++};
++
 +class State final : public base::has_weak_ptr {
 +public:
 +	explicit State(not_null<Main::Session*> session);
@@ -373,9 +405,17 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		FilterId filterId,
 +		not_null<Dialogs::Entry*> entry1,
 +		not_null<Dialogs::Entry*> entry2);
++	[[nodiscard]] bool reorderTopics(
++		not_null<Data::Forum*> forum,
++		const QVector<MTPint> &ids);
++	[[nodiscard]] bool takeDragLocal();
 +	[[nodiscard]] bool shown(
 +		not_null<const Dialogs::Entry*> entry,
 +		FilterId filterId) const;
++	[[nodiscard]] int sortIndex(
++		not_null<const Dialogs::Entry*> entry,
++		FilterId filterId,
++		int index) const;
 +
 +private:
 +	[[nodiscard]] static base::flat_map<
@@ -385,6 +425,7 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	[[nodiscard]] QString folder() const;
 +	void read();
 +	void write() const;
++	void scheduleRefresh();
 +	void refresh();
 +	void add(ListId list, Item item);
 +	void load(ListId list, Item item);
@@ -393,14 +434,23 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		Item item,
 +		bool strict) const;
 +	[[nodiscard]] PeerData *placeholder(PeerId id, uint64 hash) const;
++	[[nodiscard]] const std::vector<Dialogs::Key> *serverOrder(
++		ListId list) const;
++	[[nodiscard]] std::vector<Item> serverItems(ListId list) const;
++	[[nodiscard]] bool settled(ListId list, const Item &item) const;
++	[[nodiscard]] bool merge(ListId list, std::vector<Item> &items) const;
 +
 +	const not_null<Main::Session*> _session;
 +	base::flat_map<ListId, std::vector<Item>> _lists;
 +	std::vector<std::pair<ListId, Item>> _applied;
++	std::vector<std::pair<ListId, Item>> _placed;
 +	base::flat_set<Shown> _shown;
++	base::flat_map<Shown, int> _positions;
 +	base::flat_set<std::pair<ListId, uint64>> _requested;
 +	bool _refreshing = false;
++	bool _scheduled = false;
 +	bool _cleared = false;
++	bool _dragLocal = false;
 +	rpl::lifetime _lifetime;
 +
 +};
@@ -417,17 +467,20 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		owner->chatsListChanges() | rpl::to_empty,
 +		owner->chatsFilters().changed(),
 +		owner->savedMessages().chatsListChanges(),
++		owner->savedMessages().sublistDestroyed() | rpl::to_empty,
 +		session->changes().historyUpdates(
 +			Data::HistoryUpdate::Flag::Folder
 +		) | rpl::to_empty
 +	) | rpl::on_next([=] {
-+		refresh();
++		scheduleRefresh();
 +	}, _lifetime);
 +
 +	owner->sessionDataAboutToBeCleared(
 +	) | rpl::on_next([=] {
 +		_cleared = true;
 +	}, _lifetime);
++
++	scheduleRefresh();
 +}
 +
 +State::~State() {
@@ -467,7 +520,8 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	file.stream >> magic >> version >> owner >> count;
 +	if (file.stream.status() != QDataStream::Ok
 +		|| magic != kMagic
-+		|| version != kVersion
++		|| version < 1
++		|| version > kVersion
 +		|| owner != _session->uniqueId()
 +		|| count > kMaxLists) {
 +		return;
@@ -485,16 +539,20 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		auto items = std::vector<Item>();
 +		items.reserve(size);
 +		for (auto j = quint32(); j != size; ++j) {
-+			auto item = Item();
++			auto item = Item{ .local = true };
 +			file.stream >> item.id >> item.hash;
++			if (version > 1) {
++				auto local = quint8();
++				file.stream >> local;
++				item.local = (local != 0);
++			}
 +			if (file.stream.status() != QDataStream::Ok) {
 +				return;
-+			} else if (item.id
-+				&& !ranges::contains(items, item.id, &Item::id)) {
++			} else if (item.id && FindItem(items, item.id) == end(items)) {
 +				items.push_back(item);
 +			}
 +		}
-+		if (!items.empty()) {
++		if (ranges::any_of(items, &Item::local)) {
 +			_lists.emplace(ListId{ ListKind(kind), id }, std::move(items));
 +		}
 +	}
@@ -508,7 +566,7 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	auto size = sizeof(quint32) * 3 + sizeof(quint64);
 +	for (const auto &[list, items] : _lists) {
 +		size += sizeof(quint8) + sizeof(quint64) + sizeof(quint32);
-+		size += items.size() * sizeof(quint64) * 2;
++		size += items.size() * (sizeof(quint64) * 2 + sizeof(quint8));
 +	}
 +	auto data = EncryptedDescriptor(size);
 +	data.stream
@@ -522,7 +580,10 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +			<< quint64(list.id)
 +			<< quint32(items.size());
 +		for (const auto &item : items) {
-+			data.stream << quint64(item.id) << quint64(item.hash);
++			data.stream
++				<< quint64(item.id)
++				<< quint64(item.hash)
++				<< quint8(item.local ? 1 : 0);
 +		}
 +	}
 +	auto file = FileWriteDescriptor(u"tele_pins"_q, folder());
@@ -582,6 +643,98 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	return nullptr;
 +}
 +
++const std::vector<Dialogs::Key> *State::serverOrder(ListId list) const {
++	const auto owner = &_session->data();
++	switch (list.kind) {
++	case ListKind::Chats: {
++		if (!list.id) {
++			return &owner->chatsList(nullptr)->pinned()->order();
++		}
++		const auto folder = owner->folderLoaded(FolderId(list.id));
++		return folder ? &folder->chatsList()->pinned()->order() : nullptr;
++	}
++	case ListKind::Filter: {
++		const auto filterId = FilterOf(list);
++		return FilterExists(owner, filterId)
++			? &owner->chatsFilters().chatsList(filterId)->pinned()->order()
++			: nullptr;
++	}
++	case ListKind::Saved:
++		return &owner->savedMessages().chatsList()->pinned()->order();
++	case ListKind::Topics: {
++		const auto peer = owner->peerLoaded(PeerId(list.id));
++		const auto forum = peer ? peer->forum() : nullptr;
++		return forum ? &forum->topicsList()->pinned()->order() : nullptr;
++	}
++	}
++	return nullptr;
++}
++
++std::vector<Item> State::serverItems(ListId list) const {
++	auto result = std::vector<Item>();
++	if (const auto order = serverOrder(list)) {
++		result.reserve(order->size());
++		for (const auto &key : *order) {
++			if (const auto item = ItemForKey(list, key)) {
++				result.push_back(*item);
++			}
++		}
++	}
++	return result;
++}
++
++bool State::settled(ListId list, const Item &item) const {
++	const auto owner = &_session->data();
++	switch (list.kind) {
++	case ListKind::Chats: {
++		const auto history = owner->historyLoaded(PeerId(item.id));
++		return history && history->folderKnown();
++	}
++	case ListKind::Filter:
++		return owner->historyLoaded(PeerId(item.id)) != nullptr;
++	case ListKind::Saved:
++		return owner->savedMessages().chatsList()->loaded()
++			&& resolve(list, item, false);
++	case ListKind::Topics:
++		return resolve(list, item, false) != nullptr;
++	}
++	return false;
++}
++
++bool State::merge(ListId list, std::vector<Item> &items) const {
++	if (!serverOrder(list)) {
++		return false;
++	}
++	const auto server = serverItems(list);
++	const auto removed = ranges::remove_if(items, [&](const Item &item) {
++		return !item.local
++			&& !ranges::contains(server, item.id, &Item::id)
++			&& settled(list, item);
++	});
++	auto changed = (removed != end(items));
++	items.erase(removed, end(items));
++	for (auto k = 0; k != int(server.size()); ++k) {
++		if (FindItem(items, server[k].id) != end(items)) {
++			continue;
++		}
++		auto position = begin(items);
++		if (k > 0) {
++			position = FindItem(items, server[k - 1].id) + 1;
++		} else {
++			for (auto j = 1; j != int(server.size()); ++j) {
++				const auto next = FindItem(items, server[j].id);
++				if (next != end(items)) {
++					position = next;
++					break;
++				}
++			}
++		}
++		items.insert(position, server[k]);
++		changed = true;
++	}
++	return changed;
++}
++
 +void State::load(ListId list, Item item) {
 +	const auto key = std::make_pair(list, item.id);
 +	if (_requested.contains(key)) {
@@ -589,7 +742,7 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	}
 +	const auto owner = &_session->data();
 +	const auto done = crl::guard(this, [=] {
-+		refresh();
++		scheduleRefresh();
 +	});
 +	switch (list.kind) {
 +	case ListKind::Chats:
@@ -625,48 +778,117 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	}
 +}
 +
++void State::scheduleRefresh() {
++	if (_scheduled) {
++		return;
++	}
++	_scheduled = true;
++	crl::on_main(this, [=] {
++		_scheduled = false;
++		refresh();
++	});
++}
++
 +void State::refresh() {
 +	if (_refreshing || _cleared) {
 +		return;
 +	}
 +	_refreshing = true;
++	auto changed = false;
++	auto now = std::vector<Placed>();
 +	auto shown = base::flat_set<Shown>();
-+	auto applied = std::vector<std::pair<ListId, Item>>();
++	auto positions = base::flat_map<Shown, int>();
 +	if (LocalPins()) {
-+		for (const auto &[list, items] : _lists) {
++		for (auto &[list, items] : _lists) {
++			changed = merge(list, items) || changed;
 +			const auto filterId = FilterOf(list);
-+			auto index = kLocalBase;
++			const auto order = serverOrder(list);
++			auto position = 0;
 +			for (const auto &item : items) {
-+				const auto entry = resolve(list, item, true);
-+				if (!entry) {
-+					load(list, item);
-+					continue;
-+				} else if (ServerPinned(entry, filterId)) {
-+					continue;
++				auto entry = resolve(list, item, false);
++				const auto server = entry
++					&& order
++					&& ranges::contains(*order, Dialogs::Key(entry));
++				if (!server) {
++					entry = item.local ? resolve(list, item, true) : nullptr;
++					if (!entry) {
++						if (item.local) {
++							load(list, item);
++						}
++						continue;
++					}
++					shown.emplace(entry, filterId);
 +				}
-+				entry->cachePinnedIndex(filterId, ++index);
-+				shown.emplace(entry, filterId);
-+				applied.emplace_back(list, item);
++				positions.emplace(Shown(entry, filterId), ++position);
++				now.push_back({
++					.list = list,
++					.item = item,
++					.entry = entry,
++					.position = position,
++					.local = !server,
++				});
 +			}
++		}
++	}
++	const auto was = std::exchange(_positions, std::move(positions));
++	_shown = std::move(shown);
++	for (const auto &one : now) {
++		if (one.local) {
++			one.entry->cachePinnedIndex(
++				FilterOf(one.list),
++				kLocalBase + one.position);
 +		}
 +	}
 +	for (const auto &[list, item] : _applied) {
 +		const auto filterId = FilterOf(list);
 +		const auto entry = resolve(list, item, false);
 +		if (entry
-+			&& !shown.contains(Shown(entry, filterId))
++			&& !_shown.contains(Shown(entry, filterId))
 +			&& !ServerPinned(entry, filterId)) {
 +			entry->cachePinnedIndex(filterId, 0);
 +		}
 +	}
-+	_applied = std::move(applied);
-+	_shown = std::move(shown);
++	const auto resort = [&](not_null<Dialogs::Entry*> entry, ListId list) {
++		const auto key = Shown(entry, FilterOf(list));
++		const auto i = was.find(key);
++		const auto j = _positions.find(key);
++		const auto before = (i != end(was)) ? i->second : 0;
++		const auto after = (j != end(_positions)) ? j->second : 0;
++		if (before != after) {
++			entry->updateChatListSortPosition();
++		}
++	};
++	for (const auto &[list, item] : _placed) {
++		if (const auto entry = resolve(list, item, false)) {
++			resort(entry, list);
++		}
++	}
++	_placed.clear();
++	_applied.clear();
++	for (const auto &one : now) {
++		resort(one.entry, one.list);
++		_placed.emplace_back(one.list, one.item);
++		if (one.local) {
++			_applied.emplace_back(one.list, one.item);
++		}
++	}
++	if (changed) {
++		write();
++	}
 +	_refreshing = false;
 +}
 +
 +void State::add(ListId list, Item item) {
-+	auto &items = _lists[list];
-+	if (!ranges::contains(items, item.id, &Item::id)) {
++	auto i = _lists.find(list);
++	if (i == end(_lists)) {
++		i = _lists.emplace(list, serverItems(list)).first;
++	}
++	auto &items = i->second;
++	const auto j = FindItem(items, item.id);
++	if (j != end(items)) {
++		j->local = true;
++	} else {
++		item.local = true;
 +		items.push_back(item);
 +	}
 +	write();
@@ -686,23 +908,26 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		return false;
 +	}
 +	const auto item = ItemFor(entry);
-+	const auto pinned = entry->isPinnedDialog(filterId);
-+	if (pinned) {
++	if (entry->isPinnedDialog(filterId)) {
 +		const auto i = _lists.find(*list);
 +		if (i == end(_lists)) {
 +			return false;
 +		}
 +		auto &items = i->second;
-+		const auto j = ranges::find(items, item.id, &Item::id);
-+		if (j == end(items)) {
++		const auto j = FindItem(items, item.id);
++		if (j == end(items) || !j->local) {
 +			return false;
 +		}
-+		items.erase(j);
-+		if (items.empty()) {
++		const auto server = ServerPinned(entry, filterId);
++		if (server) {
++			j->local = false;
++		} else {
++			items.erase(j);
++		}
++		if (ranges::none_of(items, &Item::local)) {
 +			_lists.erase(i);
 +		}
 +		write();
-+		const auto server = ServerPinned(entry, filterId);
 +		refresh();
 +		return !server;
 +	}
@@ -737,37 +962,107 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +		FilterId filterId,
 +		not_null<Dialogs::Entry*> entry1,
 +		not_null<Dialogs::Entry*> entry2) {
-+	const auto server1 = ServerPinned(entry1, filterId);
-+	const auto server2 = ServerPinned(entry2, filterId);
-+	if (server1 && server2) {
++	if (!LocalPins()) {
 +		return false;
-+	} else if (server1 || server2) {
-+		return true;
 +	}
 +	const auto list = ListFor(entry1, filterId);
 +	if (!list || list != ListFor(entry2, filterId)) {
-+		return true;
++		return false;
 +	}
 +	const auto i = _lists.find(*list);
 +	if (i == end(_lists)) {
-+		return true;
++		return false;
 +	}
++	const auto server = ServerPinned(entry1, filterId)
++		&& ServerPinned(entry2, filterId);
 +	auto &items = i->second;
-+	const auto a = ranges::find(items, ItemFor(entry1).id, &Item::id);
-+	const auto b = ranges::find(items, ItemFor(entry2).id, &Item::id);
++	const auto a = FindItem(items, ItemFor(entry1).id);
++	const auto b = FindItem(items, ItemFor(entry2).id);
 +	if (a == end(items) || b == end(items)) {
-+		return true;
++		return !server;
 +	}
 +	std::iter_swap(a, b);
++	if (!server) {
++		_dragLocal = true;
++	}
 +	write();
 +	refresh();
++	return !server;
++}
++
++bool State::reorderTopics(
++		not_null<Data::Forum*> forum,
++		const QVector<MTPint> &ids) {
++	if (!LocalPins()) {
++		return false;
++	}
++	const auto list = ListId{ ListKind::Topics, forum->peer()->id.value };
++	const auto i = _lists.find(list);
++	if (i == end(_lists)) {
++		return false;
++	}
++	auto &items = i->second;
++	auto before = std::vector<uint64>();
++	for (const auto &item : items) {
++		const auto entry = resolve(list, item, false);
++		if (entry && _positions.contains(Shown(entry, FilterId()))) {
++			before.push_back(item.id);
++		}
++	}
++	auto after = ranges::views::all(
++		ids
++	) | ranges::views::transform([](const MTPint &id) {
++		return uint64(int64(id.v));
++	}) | ranges::to_vector;
++	if (ranges::is_permutation(before, after)) {
++		const auto local = [&](uint64 id) {
++			const auto topic = forum->topicFor(MsgId(int64(id)));
++			return topic && _shown.contains(Shown(topic, FilterId()));
++		};
++		auto crossed = false;
++		auto server = QVector<MTPint>();
++		for (auto k = 0; k != int(after.size()); ++k) {
++			if ((local(before[k]) || local(after[k]))
++				&& (before[k] != after[k])) {
++				crossed = true;
++			}
++			if (!local(after[k])) {
++				server.push_back(MTP_int(int(int64(after[k]))));
++			}
++		}
++		const auto copy = items;
++		auto next = begin(after);
++		for (auto &item : items) {
++			if (ranges::contains(before, item.id)) {
++				item = *ranges::find(copy, *next++, &Item::id);
++			}
++		}
++		write();
++		if (!crossed) {
++			forum->topicsList()->pinned()->applyList(forum, server);
++			_session->api().savePinnedOrder(forum);
++		}
++	}
++	refresh();
 +	return true;
++}
++
++bool State::takeDragLocal() {
++	return std::exchange(_dragLocal, false);
 +}
 +
 +bool State::shown(
 +		not_null<const Dialogs::Entry*> entry,
 +		FilterId filterId) const {
 +	return _shown.contains(Shown(entry, filterId));
++}
++
++int State::sortIndex(
++		not_null<const Dialogs::Entry*> entry,
++		FilterId filterId,
++		int index) const {
++	const auto i = _positions.find(Shown(entry, filterId));
++	return (i != end(_positions)) ? i->second : (index + kUnmappedBase);
 +}
 +
 +void Erode(QImage &image, int radius) {
@@ -844,6 +1139,7 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	return cached.image;
 +}
 +
++
 +} // namespace
 +
 +void SetupLocalPins(not_null<Main::Session*> session) {
@@ -876,14 +1172,6 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	};
 +}
 +
-+bool PinsSwappable(
-+		FilterId filterId,
-+		Dialogs::Key key1,
-+		Dialogs::Key key2) {
-+	return ServerPinned(key1.entry(), filterId)
-+		== ServerPinned(key2.entry(), filterId);
-+}
-+
 +bool ReorderLocalPins(
 +		FilterId filterId,
 +		Dialogs::Key key1,
@@ -893,17 +1181,35 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +	return state && state->reorder(filterId, entry, key2.entry());
 +}
 +
-+bool IsLocalPin(
++bool ReorderLocalTopicPins(
++		not_null<Data::Forum*> forum,
++		const QVector<MTPint> &ids) {
++	const auto state = State::Find(&forum->session());
++	return state && state->reorderTopics(forum, ids);
++}
++
++bool KeepPinnedOrderLocal(not_null<Main::Session*> session) {
++	const auto state = State::Find(session);
++	return state && state->takeDragLocal();
++}
++
++int PinnedSortIndex(
 +		not_null<const Dialogs::Entry*> entry,
-+		FilterId filterId) {
++		FilterId filterId,
++		int index) {
 +	const auto state = State::Find(&entry->session());
-+	return state && state->shown(entry, filterId);
++	return state
++		? state->sortIndex(entry, filterId, index)
++		: (index + kUnmappedBase);
 +}
 +
 +LocalPinPaint::LocalPinPaint(
 +		not_null<Dialogs::Entry*> entry,
-+		FilterId filterId)
-+: _was(std::exchange(PaintingLocal, IsLocalPin(entry, filterId))) {
++		FilterId filterId) {
++	const auto state = State::Find(&entry->session());
++	_was = std::exchange(
++		PaintingLocal,
++		state && state->shown(entry, filterId));
 +}
 +
 +LocalPinPaint::~LocalPinPaint() {
@@ -928,11 +1234,15 @@ index 0000000000000000000000000000000000000000..ab672f0ebcb845da4442575e01b1e91c
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_local_pins.h b/Telegram/SourceFiles/tele/tele_local_pins.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..76730661fe69b53dca9739c3b81dac6c1c912f7d
+index 0000000000000000000000000000000000000000..c690af682de985a247ecbddaa272158571ab2d98
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_local_pins.h
-@@ -0,0 +1,61 @@
+@@ -0,0 +1,66 @@
 +#pragma once
++
++namespace Data {
++class Forum;
++} // namespace Data
 +
 +namespace Dialogs {
 +class Entry;
@@ -961,17 +1271,18 @@ index 0000000000000000000000000000000000000000..76730661fe69b53dca9739c3b81dac6c
 +	Fn<void()> onToggled);
 +[[nodiscard]] Fn<void(const MTP::Error&)> LocalPinFallback(
 +	not_null<Dialogs::Entry*> entry);
-+[[nodiscard]] bool PinsSwappable(
-+	FilterId filterId,
-+	Dialogs::Key key1,
-+	Dialogs::Key key2);
 +[[nodiscard]] bool ReorderLocalPins(
 +	FilterId filterId,
 +	Dialogs::Key key1,
 +	Dialogs::Key key2);
-+[[nodiscard]] bool IsLocalPin(
++[[nodiscard]] bool ReorderLocalTopicPins(
++	not_null<Data::Forum*> forum,
++	const QVector<MTPint> &ids);
++[[nodiscard]] bool KeepPinnedOrderLocal(not_null<Main::Session*> session);
++[[nodiscard]] int PinnedSortIndex(
 +	not_null<const Dialogs::Entry*> entry,
-+	FilterId filterId);
++	FilterId filterId,
++	int index);
 +
 +class LocalPinPaint final {
 +public:

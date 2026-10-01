@@ -112,7 +112,11 @@ every tele setting is an upstream `base::options` option. they are stored in `td
 | page | path | builder |
 |---|---|---|
 | interface | `tele/interface` | `FillInterface` |
-| chats and messages | `tele/chats` | `FillChats` |
+| chats | `tele/chats` | `FillChats` |
+| messages | `tele/messages` | `FillMessages` |
+| sending | `tele/sending` | `FillSending` |
+| notifications | `tele/notifications` | `FillNotifications` |
+| menus | `tele/menus` | `FillMenus` |
 | privacy | `tele/privacy` | `FillPrivacy` |
 | profiles and ids | `tele/profiles` | `FillProfiles` |
 | bots | `tele/bots` | `FillBots` |
@@ -120,10 +124,21 @@ every tele setting is an upstream `base::options` option. they are stored in `td
 | new in tele | `tele/new` | `FillNew` |
 
 - each page is split into groups with `AddGroupTitle` and `AddGroupDivider`.
-- `AddOptionToggle(builder, id, keywords, parent)` adds a switch for a toggle option: its name and description come from the option, and the description plus `keywords` feed the search. `parent` names the option (or `Off(id)` for an option that must be off) the row depends on: the row stays hidden until it's met. other row types (choices, boxes, lists) have their own `Add*` helpers in the same file.
+- `AddOptionToggle(builder, id, keywords, parent, children)` adds a switch for a toggle option: its name and description come from the option, and the description plus `keywords` feed the search. `parent` names the option (or `Off(id)` for an option that must be off) the row depends on: the row stays hidden until it's met. passing `children` makes the row a collapsible group: it shows how many child switches are on, its text expands or collapses the children, and its switch is a master switch that disables them without touching their values. other row types (choices, boxes, lists) have their own `Add*` helpers in the same file.
+- a link or search hit for a row on another page opens the page that holds it now, and a hit inside a collapsed group expands it first.
 - `tele/tele_new_settings.*` keeps the ids of every setting and page this build has in the internal `tele-known-settings` option. a build that brings ids it hasn't seen lists them on the new page until it's opened.
 - every row registers a search entry, so both the tele search and the main settings search find it.
 - `SetupLink` gives a row a right-click "copy link" that opens a `tg://settings/...` deep link highlighting it.
+
+### menus
+
+tele rearranges seven menus: the message menu, the chat ⋯ menu, the chat list row, the folder tab, the profile ⋯ menu, the send menu and the field's right-click menu.
+
+- `tele/tele_menu_registry.*` lists every item each menu can show: a key, label, icon, the texts that identify upstream items, the contexts it appears in, and the option that gates tele items. each menu also has four layouts as text: tele's default, upstream order, minimal and power user.
+- `tele/tele_menu_layout.*` holds the model (items, separators, submenus, hidden flags), its text form and the `tele-menu-layouts` option, which stores only the menus that differ from the default. keys a saved layout doesn't know go to the end of their neighbour's group.
+- `tele/tele_menu_apply.*` runs once after upstream fills a menu. it identifies items (tele items are tagged when added, upstream ones matched by text), then rebuilds the menu in layout order around the same `QAction`s. rows with custom widgets and upstream submenus stay at the top level in their upstream order. alt+right-click on a menu opens its editor instead.
+- `tele/tele_menu_editor.*` is the editor box: the layout as a list on the left, a live preview with a context switcher on the right.
+- a tele item shows only while its feature's option is on.
 
 ### lowercase
 
@@ -224,7 +239,7 @@ the text of each item comes from README. a row has to match this exactly, on one
 
 | where | category |
 |---|---|
-| `tele → <page>` or `tele → <page> → <row>`, optionally followed by `, off`, `, on`, `, off, needs a restart` | the page: `interface`, `chats and messages`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates` or `debug` |
+| `tele → <page>` or `tele → <page> → <row>`, optionally followed by `, off`, `, on`, `, off, needs a restart` | the page: `interface`, `chats`, `messages`, `sending`, `notifications`, `menus`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates` or `debug` |
 | `always on` | `everywhere` |
 | `with N` | the category of patch N, for fixes and extensions of another patch. in the app's changelog the location becomes patch N's `tele → …` path without its default, and `see N` / `(see N)` references are dropped, since patch numbers mean nothing there |
 | anything else | `other` |

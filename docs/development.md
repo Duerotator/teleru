@@ -118,12 +118,12 @@ to drop a patch, remove its commit (`git rebase -i`) and export again.
 every patch has one row in the table in `README.md`, under the heading of the release that introduces it. release notes and the in-app what's new are generated from these rows, so the format is strict:
 
 ```
-| [109](patches/tdesktop/0109-feat-your-subject.patch) | what it does, in one or two short lowercase sentences | tele → chats and messages, off |
+| [109](patches/tdesktop/0109-feat-your-subject.patch) | what it does, in one or two short lowercase sentences | tele → chats, off |
 ```
 
 - the link has to be the exact file name `export` wrote.
 - "what it does" is written for users: what they see and where, not how it's implemented.
-- "where to toggle" is `tele → <page>` (optionally `→ <row>`) followed by the default (`off`, `on`, `off, needs a restart`), or `always on`, or `with N` for a patch that extends patch N. the page names are the ones in the app: `interface`, `chats and messages`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates`, `debug`. see [release notes](architecture.md#release-notes) for how this becomes a category.
+- "where to toggle" is `tele → <page>` (optionally `→ <row>`) followed by the default (`off`, `on`, `off, needs a restart`), or `always on`, or `with N` for a patch that extends patch N. the page names are the ones in the app: `interface`, `chats`, `messages`, `sending`, `notifications`, `menus`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates`, `debug`. see [release notes](architecture.md#release-notes) for how this becomes a category.
 - new rows go at the end of the table of the next release. if the newest section belongs to a release that is already out, start a new section above it: `### [tele N](https://github.com/nitreojs/tele/releases/tag/<UPSTREAM>-tele.N)` with the next release number.
 - update the count in `<summary>all N patches, newest release first</summary>`.
 - if the feature changes what a launch flag turns off, or the tele server protocol, update those README sections too.

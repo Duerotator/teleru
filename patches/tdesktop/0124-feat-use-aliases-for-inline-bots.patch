@@ -1,5 +1,5 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: t <t@t>
+From: nitreojs <hello@starkow.dev>
 Date: Mon, 28 Sep 2026 22:19:37 +0300
 Subject: [PATCH] feat: use aliases for inline bots
 
@@ -34,7 +34,7 @@ index 0547c9a1da1dcad930c8ccb1c1b421dc7bb3633e..24086b0eafcc572bf9d9950229efc184
  						result.bot = user;
  					} else {
 diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
-index 18de48eeb6a9b3716401d0426d4668fc68ccd03a..47954f50b9bfd026062e4cc48668782c9acc942a 100644
+index 4b6df68606b24c104a5a2c0a7c4e4f4733ca6edc..6954465f465a018a193fc30260013743e3e31e16 100644
 --- a/Telegram/SourceFiles/history/history_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_widget.cpp
 @@ -178,6 +178,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

@@ -1,5 +1,5 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: t <t@t>
+From: nitreojs <hello@starkow.dev>
 Date: Mon, 28 Sep 2026 21:26:06 +0300
 Subject: [PATCH] feat: send right away on double enter
 
@@ -15,7 +15,7 @@ Subject: [PATCH] feat: send right away on double enter
  8 files changed, 75 insertions(+), 2 deletions(-)
 
 diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
-index da5337212b1d314097d194c8979dfe6a757e1330..18de48eeb6a9b3716401d0426d4668fc68ccd03a 100644
+index 8b50b3f47c3defe68dbaefb5092a50774ceca4ff..4b6df68606b24c104a5a2c0a7c4e4f4733ca6edc 100644
 --- a/Telegram/SourceFiles/history/history_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_widget.cpp
 @@ -177,6 +177,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

@@ -62,8 +62,8 @@ def changes(args):
     return now, paths, rows, added, changed, dropped
 
 
-CATEGORIES = ('interface', 'chats and messages', 'privacy', 'profiles and ids', 'bots', 'server', 'backup',
-              'updates', 'debug', 'everywhere', 'other')
+CATEGORIES = ('interface', 'chats', 'messages', 'sending', 'notifications', 'menus', 'privacy',
+              'profiles and ids', 'bots', 'server', 'backup', 'updates', 'debug', 'everywhere', 'other')
 
 
 def category(where, wheres, seen=()):

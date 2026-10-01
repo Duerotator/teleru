@@ -1,5 +1,5 @@
 From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
-From: t <t@t>
+From: nitreojs <hello@starkow.dev>
 Date: Mon, 28 Sep 2026 20:11:18 +0300
 Subject: [PATCH] feat: caption docked media and bring it to parity with the
  send box
@@ -14,12 +14,12 @@ Subject: [PATCH] feat: caption docked media and bring it to parity with the
  Telegram/SourceFiles/tele/tele_docked_media.h |   45 +
  Telegram/SourceFiles/tele/tele_drafts.cpp     |  224 +++-
  Telegram/SourceFiles/tele/tele_drafts.h       |   35 +-
- Telegram/SourceFiles/tele/tele_drafts_box.cpp |  112 +-
+ Telegram/SourceFiles/tele/tele_drafts_box.cpp |  164 ++-
  .../SourceFiles/tele/tele_drafts_compose.cpp  |   45 +-
  .../SourceFiles/tele/tele_drafts_compose.h    |    4 +-
  .../SourceFiles/tele/tele_drafts_section.cpp  |   69 +-
  Telegram/SourceFiles/tele/tele_options.cpp    |    6 +-
- 14 files changed, 1498 insertions(+), 81 deletions(-)
+ 14 files changed, 1536 insertions(+), 95 deletions(-)
 
 diff --git a/Telegram/SourceFiles/apiwrap.cpp b/Telegram/SourceFiles/apiwrap.cpp
 index b2c2d212b81e6804499bb0109e3c01e69f218254..6766ee89f330541932326ae34b94871cf3dfbd8a 100644
@@ -72,7 +72,7 @@ index c5a7f6839ca8a79caf3037031273a0a6d5afac95..dd1b9617e7bd70dd91f0573866133213
  	enqueueNextPrepare();
  	if (_list.files.size() > count) {
 diff --git a/Telegram/SourceFiles/history/history_widget.cpp b/Telegram/SourceFiles/history/history_widget.cpp
-index 74b82cddba1033979e82ed36404b2b6dd015c348..da5337212b1d314097d194c8979dfe6a757e1330 100644
+index 500b9cc1a95f406d3ec4bdb96bba39be44237386..8b50b3f47c3defe68dbaefb5092a50774ceca4ff 100644
 --- a/Telegram/SourceFiles/history/history_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_widget.cpp
 @@ -5427,7 +5427,9 @@ void HistoryWidget::setupSendMenu(
@@ -2176,7 +2176,7 @@ index dae7eb07c6be5debf95626c6cf871286494b764c..cb66da10e06fbfccee35eee2d0969d99
  	not_null<Main::Session*> session,
  	DraftsThread thread);
 diff --git a/Telegram/SourceFiles/tele/tele_drafts_box.cpp b/Telegram/SourceFiles/tele/tele_drafts_box.cpp
-index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab412d871a4e 100644
+index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..a6a4f3eae1cfbd7549ab2820034608628f731106 100644
 --- a/Telegram/SourceFiles/tele/tele_drafts_box.cpp
 +++ b/Telegram/SourceFiles/tele/tele_drafts_box.cpp
 @@ -5,6 +5,7 @@
@@ -2195,7 +2195,7 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
  #include "tele/tele_lowercase.h"
  #include "ui/boxes/confirm_box.h"
  #include "ui/chat/attach/attach_prepare.h"
-@@ -96,16 +98,20 @@ void AddInfoLine(
+@@ -96,30 +98,97 @@ void AddInfoLine(
  [[nodiscard]] QString FilesLine(const SavedDraft &draft) {
  	auto names = QStringList();
  	for (const auto &file : draft.files) {
@@ -2207,6 +2207,26 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
  	return Lower(u"Files: %1"_q).arg(names.join(u", "_q));
  }
  
++[[nodiscard]] Ui::PreparedList PrepareDraftList(
++		const QStringList &paths,
++		bool premium) {
++	auto result = Ui::PreparedList();
++	const auto chunk = Ui::MaxAlbumItems();
++	for (auto from = 0; from < paths.size(); from += chunk) {
++		auto part = Storage::PrepareMediaList(
++			paths.mid(from, chunk),
++			st::sendMediaPreviewSize,
++			premium);
++		if (part.error != Ui::PreparedList::Error::None) {
++			return part;
++		}
++		for (auto &file : part.files) {
++			result.files.push_back(std::move(file));
++		}
++	}
++	return result;
++}
++
  bool SendDraftFiles(
 -		not_null<Main::Session*> session,
 +		std::shared_ptr<ChatHelpers::Show> show,
@@ -2214,11 +2234,21 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
  		const QStringList &paths,
 +		const QStringList &covers,
  		Api::SendAction action) {
+-	auto list = Storage::PrepareMediaList(
+-		paths,
+-		st::sendMediaPreviewSize,
+-		session->premium());
+-	if (list.error != Ui::PreparedList::Error::None
+-		|| list.files.size() != draft.files.size()) {
 +	const auto session = &show->session();
- 	auto list = Storage::PrepareMediaList(
- 		paths,
- 		st::sendMediaPreviewSize,
-@@ -117,9 +123,41 @@ bool SendDraftFiles(
++	const auto peer = action.history->peer;
++	auto list = PrepareDraftList(paths, session->premium());
++	if (Data::ShowSendError(show, peer, list, std::nullopt)) {
++		return false;
++	} else if (list.files.size() != draft.files.size()) {
++		show->showToast(tr::lng_send_media_invalid_files(tr::now));
+ 		return false;
+ 	}
  	const auto way = Ui::SendFilesWay::FromSerialized(
  		draft.filesWay
  	).value_or(Ui::SendFilesWay());
@@ -2241,7 +2271,7 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
 +	}
 +	Storage::ApplyModifications(list, false);
 +	const auto compress = way.sendImagesAsPhotos();
-+	const auto broadcast = action.history->peer->asBroadcast();
++	const auto broadcast = peer->asBroadcast();
 +	const auto price = (draft.price > 0
 +		&& broadcast
 +		&& broadcast->canPostPaidMedia()
@@ -2258,12 +2288,28 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
 +			? draft.files[i].ttl
 +			: 0;
 +		perFile = perFile || !draft.files[i].caption.text.isEmpty();
++	}
++	auto groupsWay = way;
++	if (ranges::any_of(list.files, &Ui::PreparedFile::ttlSeconds)) {
++		groupsWay.setGroupFiles(false);
++	}
++	auto bundle = Ui::PrepareFilesBundle(
++		Ui::DivideByGroups(std::move(list), groupsWay, false),
++		way,
++		false);
++	if (Data::ShowSendError(show, peer, *bundle)) {
++		return false;
  	}
  	auto caption = draft.text;
  	const auto limit = Data::PremiumLimits(session).captionLengthCurrent();
-@@ -134,18 +172,23 @@ bool SendDraftFiles(
- 		way,
- 		false);
+@@ -129,23 +198,24 @@ bool SendDraftFiles(
+ 		message.webPage = draft.webpage;
+ 		session->api().sendMessage(std::move(message));
+ 	}
+-	auto bundle = Ui::PrepareFilesBundle(
+-		Ui::DivideByGroups(std::move(list), way, false),
+-		way,
+-		false);
  	if (!bundle->groups.empty()) {
 -		auto &group = bundle->groups.back();
 +		auto &group = perFile
@@ -2288,7 +2334,7 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
  	const auto type = way.sendImagesAsPhotos()
  		? SendMediaType::Photo
  		: SendMediaType::File;
-@@ -232,14 +275,35 @@ bool SendDraft(
+@@ -232,19 +302,37 @@ bool SendDraft(
  		return true;
  	}
  	const auto copy = *draft;
@@ -2319,16 +2365,22 @@ index 19e5a61025cbbc74245eaaaaccfa1873ee183fcb..abd2b18c279873414d72e8fbddf2ab41
  			return;
  		}
 -		if (!SendDraftFiles(session, copy, paths, action)) {
+-			controller->showToast(Lower(
+-				u"Couldn't prepare the files of this draft."_q));
+-			return;
 +		const auto paths = all.mid(0, int(copy.files.size()));
 +		auto covers = QStringList();
 +		for (const auto index : coverAt) {
 +			covers.push_back((index >= 0) ? all[index] : QString());
 +		}
-+		if (!SendDraftFiles(show, copy, paths, covers, action)) {
- 			controller->showToast(Lower(
- 				u"Couldn't prepare the files of this draft."_q));
- 			return;
-@@ -642,14 +706,36 @@ void EditDraft(
++		if (SendDraftFiles(show, copy, paths, covers, action)) {
++			sent();
+ 		}
+-		sent();
+ 	}));
+ 	return true;
+ }
+@@ -642,14 +730,36 @@ void EditDraft(
  		}
  		return;
  	}
