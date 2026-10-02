@@ -289,14 +289,14 @@ jobs:
         run: |
           call tele\ci\msvc.cmd || exit /b 1
           cd /d %TBUILD%\tdesktop\Telegram
-          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=ProgramDatabase -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
+          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT= -D CMAKE_EXE_LINKER_FLAGS=/MAP -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
           cmake --build ..\out --config Release --parallel --target Telegram
 
       - name: Package
         shell: bash
         run: |
           7z a -tzip "tele-$RELEASE_TAG-win64.zip" "$TBUILD/tdesktop/out/Release/tele.exe" > /dev/null
-          7z a -tzip -mx=9 "tele-$RELEASE_TAG-win64-symbols.zip" "$TBUILD/tdesktop/out/Release/tele.pdb" > /dev/null
+          7z a -tzip -mx=9 "tele-$RELEASE_TAG-win64-symbols.zip" "$TBUILD/tdesktop/out/Release/tele.map" > /dev/null
 
       - name: Attest the build
         uses: actions/attest@v4

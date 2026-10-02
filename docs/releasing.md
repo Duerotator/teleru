@@ -53,7 +53,7 @@ the release notes list the new, changed and dropped patches with their README ro
 ## signing and attestation
 
 - **update feeds.** each feed names the release, its build number, the zip url and the sha256 of the zip and of the executable inside it. it's signed with an ed25519 key that only exists as a repository secret, and the signature is verified against `ci/update-public-key.pem` before the release is created. the app has the matching public key built in and refuses a feed that doesn't verify, a download that doesn't match the hashes, and urls outside this repository's releases.
-- **debug symbols.** each release also carries `tele-<tag>-<platform>-symbols.zip`: `tele.pdb` on windows, the symbol table of the unstripped binary on linux and macos. nobody needs them to run tele; they turn a crash dump into function names and source lines.
+- **debug symbols.** each release also carries `tele-<tag>-<platform>-symbols.zip`: the linker map `tele.map` on windows, the symbol table of the unstripped binary on linux and macos. nobody needs them to run tele; they turn the addresses in a crash dump into function names.
 - **build provenance.** every zip and the dmg are attested in the job that compiled them, with github's `actions/attest`. the attestation stays valid when the files are published later from that run. anyone can check a download:
 
   ```
