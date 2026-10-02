@@ -289,7 +289,7 @@ jobs:
         run: |
           call tele\ci\msvc.cmd || exit /b 1
           cd /d %TBUILD%\tdesktop\Telegram
-          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
+          call configure.bat -G "Ninja Multi-Config" -D CMAKE_CONFIGURATION_TYPES=Release -D CMAKE_MSVC_DEBUG_INFORMATION_FORMAT=ProgramDatabase -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON -D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF -D TDESKTOP_API_ID=%API_ID% -D TDESKTOP_API_HASH=%API_HASH% -D TELE_BUILD=%TELE_BUILD% || exit /b 1
           cmake --build ..\out --config Release --parallel --target Telegram
 
       - name: Package
