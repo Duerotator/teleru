@@ -28,7 +28,7 @@ gh attestation verify tele-<version>-win64.zip --repo nitreojs/tele
 
 ## patches
 
-everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats, messages, sending, notifications, menus (beta), privacy, profiles and ids, bots and debug, with server, backup and updates on the page itself. the search at the top of the page, and the main settings search, find every tele setting. backup exports your tele settings to a file you can give to anyone, and imports one with a preview of what changes.
+everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats, messages, sending, notifications, menus (beta), privacy, profiles and ids, bots and debug, with server, backup and updates on the page itself. the search at the top of the page, and the main settings search, find every tele setting. backup exports your tele settings to a file you can give to anyone, and imports one with a preview of what changes. it covers tele's switches and lists, not telegram's own settings (like interface scale) or data kept per account (local pins, pinned sets, bookmarks, local folders). to move everything to another folder or pc, copy the whole `tdata` folder next to tele.
 
 <details>
 <summary>all 178 patches, newest release first</summary>
