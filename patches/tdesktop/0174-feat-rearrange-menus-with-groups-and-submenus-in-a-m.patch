@@ -15,12 +15,12 @@ Subject: [PATCH] feat: rearrange menus with groups and submenus in a menu
  Telegram/SourceFiles/tele/tele_counters.cpp   |    2 +
  .../tele/tele_download_folders.cpp            |   34 +-
  Telegram/SourceFiles/tele/tele_ghost.cpp      |   31 +-
- Telegram/SourceFiles/tele/tele_menu_apply.cpp | 1016 ++++++++
- Telegram/SourceFiles/tele/tele_menu_apply.h   |   72 +
- .../SourceFiles/tele/tele_menu_editor.cpp     | 2053 +++++++++++++++++
+ Telegram/SourceFiles/tele/tele_menu_apply.cpp | 1047 ++++++++
+ Telegram/SourceFiles/tele/tele_menu_apply.h   |   79 +
+ .../SourceFiles/tele/tele_menu_editor.cpp     | 2160 +++++++++++++++++
  Telegram/SourceFiles/tele/tele_menu_editor.h  |   17 +
- .../SourceFiles/tele/tele_menu_layout.cpp     |  505 ++++
- Telegram/SourceFiles/tele/tele_menu_layout.h  |   59 +
+ .../SourceFiles/tele/tele_menu_layout.cpp     |  557 +++++
+ Telegram/SourceFiles/tele/tele_menu_layout.h  |   66 +
  Telegram/SourceFiles/tele/tele_menu_order.cpp |  740 ------
  Telegram/SourceFiles/tele/tele_menu_order.h   |   15 -
  .../SourceFiles/tele/tele_menu_registry.cpp   | 1508 ++++++++++++
@@ -37,7 +37,7 @@ Subject: [PATCH] feat: rearrange menus with groups and submenus in a menu
  .../ui/widgets/chat_filters_tabs_strip.cpp    |    2 +
  .../window/window_filters_menu.cpp            |    2 +
  .../SourceFiles/window/window_peer_menu.cpp   |    9 +-
- 32 files changed, 5546 insertions(+), 947 deletions(-)
+ 32 files changed, 5750 insertions(+), 947 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_apply.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_apply.h
  create mode 100644 Telegram/SourceFiles/tele/tele_menu_editor.cpp
@@ -202,7 +202,7 @@ index ce272085675ed4e345c5ed9b1f0aaadbe2ed7c9e..7666a6407fd42bb8a18dbcc42b320148
  	if (maybeShow) {
  		return AttachSendMenuEffect(
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index ec8470823bc6e05a018a9a0aa79a16a0058de033..3948e51f6bc874dc402b31d475984fc23a0a2b6e 100644
+index 1e93c256f75296d562d5575ae6cedaa3bd15a993..e195e957aaa1e9344d416fb1369240374e663999 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -38,7 +38,8 @@
@@ -215,7 +215,7 @@ index ec8470823bc6e05a018a9a0aa79a16a0058de033..3948e51f6bc874dc402b31d475984fc2
  #include "tele/tele_mtp_inspector.h"
  #include "tele/tele_mtp_log.h"
  #include "tele/tele_new_settings.h"
-@@ -1278,30 +1279,50 @@ void AddTitle(SectionBuilder &builder) {
+@@ -1312,30 +1313,50 @@ void AddTitle(SectionBuilder &builder) {
  	AddAbout(builder, windowOption.id(), windowDescription);
  }
  
@@ -287,7 +287,7 @@ index ec8470823bc6e05a018a9a0aa79a16a0058de033..3948e51f6bc874dc402b31d475984fc2
  }
  
  struct ButtonChoice {
-@@ -3333,7 +3354,7 @@ void FillRoot(SectionBuilder &builder) {
+@@ -3367,7 +3388,7 @@ void FillRoot(SectionBuilder &builder) {
  		FillNotifications);
  	add(
  		u"menus"_q,
@@ -296,7 +296,7 @@ index ec8470823bc6e05a018a9a0aa79a16a0058de033..3948e51f6bc874dc402b31d475984fc2
  		st::menuIconReorder,
  		{ u"context"_q, u"right click"_q, u"message menu"_q },
  		FillMenus);
-@@ -3375,9 +3396,10 @@ const std::vector<Category> &Categories() {
+@@ -3409,9 +3430,10 @@ const std::vector<Category> &Categories() {
  	if (id.isEmpty()) {
  		return nullptr;
  	}
@@ -508,10 +508,10 @@ index ccc1adea686eded6e18fe1b3ae1b2b6bfc6f9454..01779aefcf7b04d7c504c01f1c29b5a8
  QString NormalizeGhostChats(const QString &value) {
 diff --git a/Telegram/SourceFiles/tele/tele_menu_apply.cpp b/Telegram/SourceFiles/tele/tele_menu_apply.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b856904cff
+index 0000000000000000000000000000000000000000..c550197ba3970d73f79699be7a9fcc17d836aec3
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_apply.cpp
-@@ -0,0 +1,1016 @@
+@@ -0,0 +1,1047 @@
 +#include "tele/tele_menu_apply.h"
 +
 +#include "base/event_filter.h"
@@ -611,6 +611,7 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +	Type type = Type::Element;
 +	int element = -1;
 +	const style::MenuSeparator *separator = nullptr;
++	MenuSeparatorStyle style = MenuSeparatorStyle::Auto;
 +	bool styled = false;
 +	QString title;
 +	const style::icon *icon = nullptr;
@@ -619,6 +620,7 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +
 +struct Context {
 +	const MenuInfo &info;
++	const style::Menu &st;
 +	std::vector<Element> &elements;
 +	base::flat_map<QString, std::vector<int>> byKey;
 +};
@@ -797,7 +799,10 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +		Context &context) {
 +	for (const auto &entry : layout) {
 +		if (entry.type == MenuEntry::Type::Separator) {
-+			out.push_back({ .type = Node::Type::Separator });
++			out.push_back({
++				.type = Node::Type::Separator,
++				.style = entry.separator,
++			});
 +		} else if (entry.type == MenuEntry::Type::Submenu) {
 +			if (entry.hidden) {
 +				HideAll(entry.entries, context);
@@ -955,35 +960,40 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +		}
 +		++i;
 +	}
-+	auto result = std::vector<Node>();
-+	result.reserve(list.size());
-+	for (auto &node : list) {
-+		if (node.type != Node::Type::Separator) {
-+			result.push_back(std::move(node));
-+		} else if (!result.empty()
-+			&& result.back().type != Node::Type::Separator) {
-+			result.push_back(std::move(node));
-+		} else if (!result.empty() && node.styled) {
-+			result.back() = std::move(node);
++	const auto resolve = [&](const Node &node, const Node &next) {
++		if (node.styled && node.separator) {
++			return node.separator;
 +		}
-+	}
-+	if (!result.empty() && result.back().type == Node::Type::Separator) {
-+		result.pop_back();
-+	}
-+	for (auto i = 0; i + 1 < int(result.size()); ++i) {
-+		auto &node = result[i];
-+		if (node.type != Node::Type::Separator || node.styled) {
-+			continue;
-+		}
-+		const auto &next = result[i + 1];
 +		const auto item = (next.type == Node::Type::Element)
 +			? context.elements[next.element].item
 +			: -1;
 +		const auto expanded = (item >= 0)
 +			&& (context.info.items[item].flags & MenuItemFlag::Expanded);
-+		node.separator = (expanded && top)
-+			? &st::expandedMenuSeparator
-+			: nullptr;
++		return &MenuSeparatorFor(context.st, node.style, expanded, top);
++	};
++	auto result = std::vector<Node>();
++	auto run = std::vector<Node>();
++	result.reserve(list.size());
++	for (auto &node : list) {
++		if (node.type == Node::Type::Separator) {
++			run.push_back(std::move(node));
++			continue;
++		} else if (!run.empty() && !result.empty()) {
++			auto thickest = (const style::MenuSeparator*)nullptr;
++			for (const auto &separator : run) {
++				const auto resolved = resolve(separator, node);
++				if (!thickest || resolved->width > thickest->width) {
++					thickest = resolved;
++				}
++			}
++			result.push_back({
++				.type = Node::Type::Separator,
++				.separator = thickest,
++				.styled = true,
++			});
++		}
++		run.clear();
++		result.push_back(std::move(node));
 +	}
 +	list = std::move(result);
 +}
@@ -1368,6 +1378,23 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +	QPointer<QAction> last;
 +};
 +
++const style::MenuSeparator &MenuSeparatorFor(
++		const style::Menu &st,
++		MenuSeparatorStyle style,
++		bool expandedNext,
++		bool top) {
++	const auto &thick = st::expandedMenuSeparator;
++	switch (style) {
++	case MenuSeparatorStyle::Thick: return thick;
++	case MenuSeparatorStyle::Thin:
++		return (st.separator.width >= thick.width)
++			? st::defaultMenuSeparator
++			: st.separator;
++	case MenuSeparatorStyle::Auto: break;
++	}
++	return (top && expandedNext) ? thick : st.separator;
++}
++
 +void FitMenuToggle(not_null<Ui::Menu::Toggle*> item) {
 +	QObject::connect(item->action(), &QAction::changed, item, [=] {
 +		FitToggleNow(item);
@@ -1428,7 +1455,11 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +			args.kind,
 +			RefineContext(args, info, elements));
 +	}
-+	auto context = Context{ .info = info, .elements = elements };
++	auto context = Context{
++		.info = info,
++		.st = raw->st(),
++		.elements = elements,
++	};
 +	for (auto i = 0; i != int(elements.size()); ++i) {
 +		if (elements[i].item >= 0) {
 +			context.byKey[info.items[elements[i].item].key].push_back(i);
@@ -1530,10 +1561,10 @@ index 0000000000000000000000000000000000000000..2c83328ceaa375d62d261f7c2852e8b8
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_menu_apply.h b/Telegram/SourceFiles/tele/tele_menu_apply.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..ac99ac0cf712349c04e6dbffeedb6fc446629672
+index 0000000000000000000000000000000000000000..266d048d3e2710a47f561a1960be30195284ae7e
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_apply.h
-@@ -0,0 +1,72 @@
+@@ -0,0 +1,79 @@
 +#pragma once
 +
 +#include "tele/tele_menu_layout.h"
@@ -1541,6 +1572,8 @@ index 0000000000000000000000000000000000000000..ac99ac0cf712349c04e6dbffeedb6fc4
 +
 +namespace style {
 +struct ComposeIcons;
++struct Menu;
++struct MenuSeparator;
 +} // namespace style
 +
 +namespace Dialogs {
@@ -1562,6 +1595,11 @@ index 0000000000000000000000000000000000000000..ac99ac0cf712349c04e6dbffeedb6fc4
 +
 +namespace Tele {
 +
++[[nodiscard]] const style::MenuSeparator &MenuSeparatorFor(
++	const style::Menu &st,
++	MenuSeparatorStyle style,
++	bool expandedNext,
++	bool top);
 +void FitMenuToggle(not_null<Ui::Menu::Toggle*> item);
 +QAction *TagMenuAction(
 +	QAction *action,
@@ -1608,10 +1646,10 @@ index 0000000000000000000000000000000000000000..ac99ac0cf712349c04e6dbffeedb6fc4
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_menu_editor.cpp b/Telegram/SourceFiles/tele/tele_menu_editor.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a70d1445b9
+index 0000000000000000000000000000000000000000..08360c1c01ff3ab69a51bbd1a30e7ad0ce393a71
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_editor.cpp
-@@ -0,0 +1,2053 @@
+@@ -0,0 +1,2160 @@
 +#include "tele/tele_menu_editor.h"
 +
 +#include "base/options.h"
@@ -1621,6 +1659,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +#include "core/shortcuts.h"
 +#include "lang/lang_keys.h"
 +#include "tele/tele_lowercase.h"
++#include "tele/tele_menu_apply.h"
 +#include "tele/tele_menu_registry.h"
 +#include "ui/layers/generic_box.h"
 +#include "ui/painter.h"
@@ -1639,6 +1678,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +#include "styles/style_chat.h"
 +#include "styles/style_chat_helpers.h"
 +#include "styles/style_layers.h"
++#include "styles/style_media_player.h"
 +#include "styles/style_menu_icons.h"
 +#include "styles/style_widgets.h"
 +
@@ -1773,6 +1813,37 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	}
 +}
 +
++[[nodiscard]] bool ExpandedNext(
++		MenuKind kind,
++		const MenuLayout &list,
++		int index) {
++	for (auto j = index + 1; j < int(list.size()); ++j) {
++		const auto &next = list[j];
++		if (next.type == MenuEntry::Type::Separator || next.hidden) {
++			continue;
++		} else if (next.type == MenuEntry::Type::Item) {
++			const auto item = LookupMenuItem(kind, next.key);
++			return item && (item->flags & MenuItemFlag::Expanded);
++		}
++		return false;
++	}
++	return false;
++}
++
++[[nodiscard]] bool SeparatorThick(
++		MenuKind kind,
++		MenuLayout &layout,
++		const Path &path) {
++	const auto &list = Container(layout, Parent(path));
++	const auto &entry = list[path.back()];
++	const auto &resolved = MenuSeparatorFor(
++		PreviewStyle(kind).menu,
++		entry.separator,
++		ExpandedNext(kind, list, path.back()),
++		path.size() == 1);
++	return (resolved.width >= st::expandedMenuSeparator.width);
++}
++
 +[[nodiscard]] bool FeatureOn(const MenuItemInfo &item) {
 +	if (!item.gate) {
 +		return true;
@@ -1884,10 +1955,12 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	void finishDrag();
 +	void changed();
 +	void toggleHidden(const Path &path);
++	void setSeparatorStyle(const Path &path, MenuSeparatorStyle style);
 +	void moveTo(const Path &from, Path parent, int index);
 +	void takeOut(const Path &path);
 +	void remove(const Path &path);
 +	void startRename(const Path &path);
++	void showPath(const Path &path);
 +	void finishRename(bool save);
 +	void showRowMenu(int index, QPoint global);
 +	void autoscroll();
@@ -1993,6 +2066,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +}
 +
 +void LayoutList::refresh() {
++	const auto scrollTop = _scroll ? _scroll->scrollTop() : 0;
 +	finishRename(false);
 +	if (_dragging) {
 +		finishDrag();
@@ -2016,7 +2090,19 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	};
 +	flatten(flatten, _state->layout);
 +	resize(width(), std::max(int(_rows.size()), 1) * rowHeight());
++	if (_scroll && _scroll->scrollTop() != scrollTop) {
++		_scroll->scrollToY(scrollTop);
++	}
 +	update();
++}
++
++void LayoutList::showPath(const Path &path) {
++	const auto i = ranges::find(_rows, path, &Row::path);
++	if (!_scroll || i == end(_rows)) {
++		return;
++	}
++	const auto index = int(i - begin(_rows));
++	_scroll->scrollToY(index * rowHeight(), (index + 1) * rowHeight());
 +}
 +
 +void LayoutList::changed() {
@@ -2041,11 +2127,14 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +		top + (height - st::stickersReorderIcon.height()) / 2,
 +		width());
 +	if (row.type == Type::Separator) {
++		const auto band = SeparatorThick(_state->kind, _state->layout, row.path)
++			? st::expandedMenuSeparator.width
++			: st::lineWidth;
 +		p.fillRect(
 +			left,
-+			top + (height - st::lineWidth) / 2,
++			top + (height - band) / 2,
 +			width() - left - skip,
-+			st::lineWidth,
++			band,
 +			st::menuSeparatorFg);
 +		return;
 +	}
@@ -2408,12 +2497,16 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	const auto drop = *_drop;
 +	auto &layout = _state->layout;
 +	if (_separatorDrag) {
-+		Insert(
++		const auto inserted = Insert(
 +			layout,
 +			drop.parent,
 +			drop.index,
-+			MenuEntry{ .type = Type::Separator });
++			MenuEntry{
++				.type = Type::Separator,
++				.separator = MenuSeparatorStyle::Thin,
++			});
 +		changed();
++		showPath(inserted);
 +		return;
 +	} else if (_pressed < 0 || _pressed >= int(_rows.size())) {
 +		return;
@@ -2443,8 +2536,13 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	if (!Find(layout, from)
 +		|| (!parent.empty() && !IsSubmenu(layout, parent))) {
 +		return;
-+	} else if (Move(_state->layout, from, std::move(parent), index)) {
++	} else if (const auto moved = Move(
++			_state->layout,
++			from,
++			std::move(parent),
++			index)) {
 +		changed();
++		showPath(*moved);
 +	}
 +}
 +
@@ -2454,6 +2552,17 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	}
 +	auto &data = At(_state->layout, path);
 +	data.hidden = !data.hidden;
++	changed();
++}
++
++void LayoutList::setSeparatorStyle(
++		const Path &path,
++		MenuSeparatorStyle style) {
++	const auto found = Find(_state->layout, path);
++	if (!found || found->type != Type::Separator) {
++		return;
++	}
++	At(_state->layout, path).separator = style;
 +	changed();
 +}
 +
@@ -2566,6 +2675,20 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +			data.hidden ? Lower(u"Show"_q) : Lower(u"Hide"_q),
 +			[=] { toggleHidden(path); },
 +			data.hidden ? &st::menuIconShowInChat : &st::menuIconStealth);
++	} else {
++		const auto thick = SeparatorThick(
++			_state->kind,
++			_state->layout,
++			path);
++		const auto check = [](bool checked) {
++			return checked ? &st::mediaPlayerMenuCheck : nullptr;
++		};
++		_menu->addAction(Lower(u"Thin"_q), [=] {
++			setSeparatorStyle(path, MenuSeparatorStyle::Thin);
++		}, check(!thick));
++		_menu->addAction(Lower(u"Thick"_q), [=] {
++			setSeparatorStyle(path, MenuSeparatorStyle::Thick);
++		}, check(thick));
 +	}
 +	auto submenus = std::vector<Path>();
 +	auto prefix = Path();
@@ -2989,6 +3112,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +	base::flat_map<QAction*, Path> _mainPaths;
 +	std::vector<Level> _levels;
 +	bool _pending = false;
++	bool _restoring = false;
 +	bool _strip = false;
 +
 +};
@@ -3123,8 +3247,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +		if (entry.hidden) {
 +			continue;
 +		} else if (entry.type == Type::Separator) {
-+			if (!result.empty()
-+				&& result.back().entry->type != Type::Separator) {
++			if (!result.empty()) {
 +				result.push_back({ &entry, path });
 +			}
 +			continue;
@@ -3156,17 +3279,31 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +		base::flat_map<QAction*, Path> &paths,
 +		bool top) {
 +	const auto shown = visible(list, prefix, top);
++	auto thickest = (const style::MenuSeparator*)nullptr;
 +	for (auto i = 0; i != int(shown.size()); ++i) {
 +		const auto &[entry, path] = shown[i];
 +		if (entry->type == Type::Separator) {
-+			const auto &next = *shown[i + 1].entry;
++			auto j = i + 1;
++			while (shown[j].entry->type == Type::Separator) {
++				++j;
++			}
++			const auto &next = *shown[j].entry;
 +			const auto item = (next.type == Type::Item)
 +				? LookupMenuItem(_state->kind, next.key)
 +				: nullptr;
-+			const auto expanded = top
-+				&& item
++			const auto expanded = item
 +				&& (item->flags & MenuItemFlag::Expanded);
-+			menu->addSeparator(expanded ? &st::expandedMenuSeparator : nullptr);
++			const auto &resolved = MenuSeparatorFor(
++				_st,
++				entry->separator,
++				expanded,
++				top);
++			if (!thickest || resolved.width > thickest->width) {
++				thickest = &resolved;
++			}
++			if (j == i + 1) {
++				menu->addSeparator(base::take(thickest));
++			}
 +			continue;
 +		}
 +		const auto icon = EntryIcon(_state->kind, *entry);
@@ -3282,7 +3419,7 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +		.top = top,
 +	});
 +	place();
-+	if (_scroll && !raw->isHidden()) {
++	if (_scroll && !_restoring && !raw->isHidden()) {
 +		const auto rect = raw->frame();
 +		_scroll->scrollToY(rect.y(), rect.y() + rect.height());
 +		_scroll->scrollToX(rect.x(), rect.x() + rect.width());
@@ -3321,6 +3458,9 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +}
 +
 +void Preview::refresh() {
++	const auto scrollTop = _scroll ? _scroll->scrollTop() : 0;
++	const auto scrollLeft = _scroll ? _scroll->scrollLeft() : 0;
++	_restoring = true;
 +	auto chain = std::vector<Path>();
 +	for (const auto &level : _levels) {
 +		chain.push_back(level.path);
@@ -3339,6 +3479,11 @@ index 0000000000000000000000000000000000000000..729c106592072cc7f2ac49a68b24d1a7
 +		}
 +	}
 +	place();
++	_restoring = false;
++	if (_scroll) {
++		_scroll->scrollToY(scrollTop);
++		_scroll->scrollToX(scrollLeft);
++	}
 +}
 +
 +void Preview::place() {
@@ -3690,10 +3835,10 @@ index 0000000000000000000000000000000000000000..048b283ca4ec5dc3cc271ff73d940676
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_menu_layout.cpp b/Telegram/SourceFiles/tele/tele_menu_layout.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188a12ad234
+index 0000000000000000000000000000000000000000..5122f3b4336654a6295386704eaa97bdb622f161
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_layout.cpp
-@@ -0,0 +1,505 @@
+@@ -0,0 +1,557 @@
 +#include "tele/tele_menu_layout.h"
 +
 +#include "tele/tele_menu_registry.h"
@@ -3781,6 +3926,13 @@ index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188
 +		if (peek() == '|') {
 +			++_index;
 +			entry.type = MenuEntry::Type::Separator;
++			if (peek() == '-') {
++				++_index;
++				entry.separator = MenuSeparatorStyle::Thin;
++			} else if (peek() == '=') {
++				++_index;
++				entry.separator = MenuSeparatorStyle::Thick;
++			}
 +			return true;
 +		} else if (peek() == '-') {
 +			++_index;
@@ -3858,6 +4010,11 @@ index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188
 +		first = false;
 +		if (entry.type == MenuEntry::Type::Separator) {
 +			out.append('|');
++			if (entry.separator == MenuSeparatorStyle::Thin) {
++				out.append('-');
++			} else if (entry.separator == MenuSeparatorStyle::Thick) {
++				out.append('=');
++			}
 +			continue;
 +		} else if (entry.hidden) {
 +			out.append('-');
@@ -4080,6 +4237,33 @@ index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188
 +	return false;
 +}
 +
++void ExplicitSeparators(MenuKind kind, MenuLayout &layout, bool top) {
++	for (auto i = 0; i != int(layout.size()); ++i) {
++		auto &entry = layout[i];
++		if (entry.type == MenuEntry::Type::Submenu) {
++			ExplicitSeparators(kind, entry.entries, false);
++			continue;
++		} else if (entry.type != MenuEntry::Type::Separator
++			|| entry.separator != MenuSeparatorStyle::Auto) {
++			continue;
++		}
++		auto expanded = false;
++		for (auto j = i + 1; j != int(layout.size()); ++j) {
++			const auto &next = layout[j];
++			if (next.type == MenuEntry::Type::Separator) {
++				continue;
++			} else if (next.type == MenuEntry::Type::Item) {
++				const auto item = LookupMenuItem(kind, next.key);
++				expanded = item && (item->flags & MenuItemFlag::Expanded);
++			}
++			break;
++		}
++		entry.separator = (top && expanded)
++			? MenuSeparatorStyle::Thick
++			: MenuSeparatorStyle::Thin;
++	}
++}
++
 +} // namespace
 +
 +std::optional<MenuLayout> ParseMenuLayout(const QString &text) {
@@ -4094,15 +4278,28 @@ index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188
 +
 +MenuLayout MenuPresetLayout(MenuKind kind, MenuPreset preset) {
 +	const auto &info = LookupMenu(kind);
++	const auto styled = [&](MenuLayout layout) {
++		ExplicitSeparators(kind, layout, true);
++		return layout;
++	};
 +	switch (preset) {
 +	case MenuPreset::Default:
-+		return Resolve(kind, ParseOrEmpty(info.defaults), Missing::Visible);
++		return styled(Resolve(
++			kind,
++			ParseOrEmpty(info.defaults),
++			Missing::Visible));
 +	case MenuPreset::Upstream:
 +		return Resolve(kind, ParseOrEmpty(info.upstream), Missing::Visible);
 +	case MenuPreset::Minimal:
-+		return Resolve(kind, ParseOrEmpty(info.minimal), Missing::Hidden);
++		return styled(Resolve(
++			kind,
++			ParseOrEmpty(info.minimal),
++			Missing::Hidden));
 +	case MenuPreset::Power:
-+		return Resolve(kind, ParseOrEmpty(info.power), Missing::Visible);
++		return styled(Resolve(
++			kind,
++			ParseOrEmpty(info.power),
++			Missing::Visible));
 +	}
 +	Unexpected("Preset in Tele::MenuPresetLayout.");
 +}
@@ -4201,10 +4398,10 @@ index 0000000000000000000000000000000000000000..dd9fef671c444a6ccc16301fb9a14188
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_menu_layout.h b/Telegram/SourceFiles/tele/tele_menu_layout.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..c160ca4631f24ed8576b150e5f694457c0734939
+index 0000000000000000000000000000000000000000..d5c3bd51559076712f00d1e07c638fea4bce9eb4
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_menu_layout.h
-@@ -0,0 +1,59 @@
+@@ -0,0 +1,66 @@
 +#pragma once
 +
 +namespace Tele {
@@ -4219,6 +4416,12 @@ index 0000000000000000000000000000000000000000..c160ca4631f24ed8576b150e5f694457
 +	Field,
 +};
 +
++enum class MenuSeparatorStyle : uchar {
++	Auto,
++	Thin,
++	Thick,
++};
++
 +struct MenuEntry {
 +	enum class Type : uchar {
 +		Item,
@@ -4226,6 +4429,7 @@ index 0000000000000000000000000000000000000000..c160ca4631f24ed8576b150e5f694457
 +		Submenu,
 +	};
 +	Type type = Type::Item;
++	MenuSeparatorStyle separator = MenuSeparatorStyle::Auto;
 +	QString key;
 +	QString title;
 +	QString icon;

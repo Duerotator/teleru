@@ -8,10 +8,10 @@ Subject: [PATCH] fix: send mkv files as videos
  1 file changed, 1 insertion(+)
 
 diff --git a/Telegram/SourceFiles/storage/localimageloader.cpp b/Telegram/SourceFiles/storage/localimageloader.cpp
-index 9410bd4d0ce4858f317ffc2c63275bce1a5e87ad..c400e737409aac36ef6cd933e9b9473a400c45b6 100644
+index 3c7f3a8a841be21144e4b294ae5ab02beba28779..6e7b651c2c4848fc2001e8ac6b1d90b4706cf39e 100644
 --- a/Telegram/SourceFiles/storage/localimageloader.cpp
 +++ b/Telegram/SourceFiles/storage/localimageloader.cpp
-@@ -634,6 +634,7 @@ bool FileLoadTask::IsVideoFile(
+@@ -635,6 +635,7 @@ bool FileLoadTask::IsVideoFile(
  		u".mov"_q,
  		u".m4v"_q,
  		u".webm"_q,

@@ -369,7 +369,7 @@ index fcfa48c504e30df6ce4ef9f7b0b41af493902c36..ccc1adea686eded6e18fe1b3ae1b2b6b
  		.text = Lower(u"Ghost mode in this chat"_q),
  		.handler = nullptr,
 diff --git a/Telegram/SourceFiles/tele/tele_gif_video.cpp b/Telegram/SourceFiles/tele/tele_gif_video.cpp
-index 2ff15d64339e63da5a5ef2dd14f49b4782991dbc..bc57fae2e13b43601ee2b6f68fee905f5b3d3388 100644
+index d0ba9479b3028766f7812afc466e1c32f32177c2..73c09b4056d5811f982757308c4fb2260fc9b1a8 100644
 --- a/Telegram/SourceFiles/tele/tele_gif_video.cpp
 +++ b/Telegram/SourceFiles/tele/tele_gif_video.cpp
 @@ -20,6 +20,7 @@
@@ -380,7 +380,7 @@ index 2ff15d64339e63da5a5ef2dd14f49b4782991dbc..bc57fae2e13b43601ee2b6f68fee905f
  #include "tele/tele_send_files.h"
  #include "ui/chat/attach/attach_prepare.h"
  #include "ui/layers/show.h"
-@@ -182,7 +183,7 @@ bool SendsAsGif(const Ui::PreparedFile &file, bool album) {
+@@ -191,7 +192,7 @@ bool SendsAsGif(const Ui::PreparedFile &file, bool album) {
  	if (const auto video = LookupVideo(file)) {
  		return video->modifications.gif && (!album || video->hasAudio);
  	}
@@ -388,8 +388,8 @@ index 2ff15d64339e63da5a5ef2dd14f49b4782991dbc..bc57fae2e13b43601ee2b6f68fee905f
 +	return !album && GifVideo() && IsGifImage(file);
  }
  
- void AddSendAsGifAction(
-@@ -191,7 +192,7 @@ void AddSendAsGifAction(
+ bool SendsAsSilentVideo(const Ui::PreparedFileInformation &information) {
+@@ -208,7 +209,7 @@ void AddSendAsGifAction(
  		bool available,
  		bool album,
  		Fn<void()> toggle) {
@@ -398,7 +398,7 @@ index 2ff15d64339e63da5a5ef2dd14f49b4782991dbc..bc57fae2e13b43601ee2b6f68fee905f
  		return;
  	}
  	const auto video = LookupVideo(file);
-@@ -223,7 +224,9 @@ void AddResendAsGifAction(
+@@ -243,7 +244,9 @@ void AddResendAsGifAction(
  		not_null<Ui::PopupMenu*> menu,
  		not_null<Window::SessionController*> controller,
  		HistoryItem *item) {
@@ -409,7 +409,7 @@ index 2ff15d64339e63da5a5ef2dd14f49b4782991dbc..bc57fae2e13b43601ee2b6f68fee905f
  	if (!document || OfflineForLaunch()) {
  		return;
  	}
-@@ -259,6 +262,7 @@ void AddPanelGifAsVideoAction(
+@@ -279,6 +282,7 @@ void AddPanelGifAsVideoAction(
  		|| !peer
  		|| !document->isGifv()
  		|| !Loadable(document)

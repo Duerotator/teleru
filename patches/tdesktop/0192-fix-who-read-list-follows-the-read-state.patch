@@ -1,0 +1,371 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Fri, 2 Oct 2026 12:56:45 +0300
+Subject: [PATCH] fix: who read list follows the read state
+
+---
+ Telegram/SourceFiles/api/api_who_reacted.cpp  |   7 +-
+ .../SourceFiles/tele/tele_who_reacted.cpp     | 188 ++++++++++++++----
+ Telegram/SourceFiles/tele/tele_who_reacted.h  |  45 +++++
+ Telegram/SourceFiles/tele/tele_who_read.cpp   |   4 +
+ 4 files changed, 202 insertions(+), 42 deletions(-)
+
+diff --git a/Telegram/SourceFiles/api/api_who_reacted.cpp b/Telegram/SourceFiles/api/api_who_reacted.cpp
+index 1c2c5eb471ba533c3a95788e61aba7d1393bc1bc..45c6a87bd62119aacf9639fcf6e035a7c570a1b0 100644
+--- a/Telegram/SourceFiles/api/api_who_reacted.cpp
++++ b/Telegram/SourceFiles/api/api_who_reacted.cpp
+@@ -285,6 +285,7 @@ struct State {
+ 		}
+ 		const auto context = PreparedContextAt(weak.get(), session);
+ 		auto &entry = context->cacheRead(item);
++		Tele::RestartWhoRead(weak.get(), item, entry);
+ 		if (entry.requestId) {
+ 		} else if (const auto user = item->history()->peer->asUser()) {
+ 			entry.requestId = session->api().request(
+@@ -431,7 +432,7 @@ struct State {
+ -> rpl::producer<PeersWithReactions> {
+ 	return rpl::combine(
+ 		Tele::RefreshedWhoReacted(item, WhoReactedIds(item, {}, context)),
+-		WhoReadIds(item, context)
++		Tele::RefreshedWhoRead(item, WhoReadIds(item, context))
+ 	) | rpl::map([=](PeersWithReactions &&reacted, Peers &&read) {
+ 		if (reacted.state == WhoReadState::Unknown
+ 			|| read.state == WhoReadState::Unknown) {
+@@ -618,7 +619,9 @@ rpl::producer<Ui::WhoReadContent> WhoReacted(
+ 		auto idsWithReactions = (resolveWhoRead && resolveWhoReacted)
+ 			? WhoReadOrReactedIds(item, context)
+ 			: resolveWhoRead
+-			? (WhoReadIds(item, context) | rpl::map(WithEmptyReactions))
++			? (Tele::RefreshedWhoRead(
++				item,
++				WhoReadIds(item, context)) | rpl::map(WithEmptyReactions))
+ 			: Tele::RefreshedWhoReacted(
+ 				item,
+ 				WhoReactedIds(item, reaction, context));
+diff --git a/Telegram/SourceFiles/tele/tele_who_reacted.cpp b/Telegram/SourceFiles/tele/tele_who_reacted.cpp
+index 2f1ebdfc5d6608aeb3954616c18844d0934c5d3d..168df6a59d2071161105fce38d518391d601627c 100644
+--- a/Telegram/SourceFiles/tele/tele_who_reacted.cpp
++++ b/Telegram/SourceFiles/tele/tele_who_reacted.cpp
+@@ -1,7 +1,12 @@
+ #include "tele/tele_who_reacted.h"
+ 
++#include "api/api_chat_participants.h"
++#include "api/api_who_reacted.h"
+ #include "apiwrap.h"
+ #include "base/timer.h"
++#include "data/data_changes.h"
++#include "data/data_channel.h"
++#include "data/data_chat.h"
+ #include "data/data_message_reaction_id.h"
+ #include "data/data_message_reactions.h"
+ #include "data/data_session.h"
+@@ -13,6 +18,8 @@ namespace Tele {
+ namespace {
+ 
+ constexpr auto kRefreshDelay = crl::time(1000);
++constexpr auto kEmptyReuse = crl::time(3000);
++constexpr auto kMembersRequestDelay = crl::time(30000);
+ 
+ struct Counted {
+ 	Data::ReactionId id;
+@@ -54,64 +61,81 @@ struct Counted {
+ 	return result;
+ }
+ 
+-} // namespace
++[[nodiscard]] auto WhoReadRequested()
++-> base::flat_map<std::pair<QWidget*, HistoryItem*>, crl::time> & {
++	static auto result = base::flat_map<
++		std::pair<QWidget*, HistoryItem*>,
++		crl::time>();
++	return result;
++}
+ 
+-void ReactionSendFinished(
+-		not_null<Data::Session*> owner,
+-		FullMsgId itemId,
+-		bool success) {
+-	if (const auto item = owner->message(itemId)) {
+-		if (!success) {
+-			item->updateReactionsUnknown();
+-		}
+-		SendsFinished().fire_copy(item);
+-	}
++[[nodiscard]] auto MembersRequested()
++-> base::flat_map<not_null<PeerData*>, crl::time> & {
++	static auto result = base::flat_map<not_null<PeerData*>, crl::time>();
++	return result;
+ }
+ 
+-void CancelWhoReactedRequest(
+-		not_null<Main::Session*> session,
+-		mtpRequestId &requestId) {
+-	if (const auto id = base::take(requestId)) {
+-		session->api().request(id).cancel();
++template <typename Key>
++void Prune(
++		base::flat_map<Key, crl::time> &map,
++		crl::time now,
++		crl::time delay) {
++	for (auto i = begin(map); i != end(map);) {
++		if (now - i->second >= delay) {
++			i = map.erase(i);
++		} else {
++			++i;
++		}
+ 	}
+ }
+ 
+-rpl::producer<> WhoReactedRefreshes(not_null<HistoryItem*> item) {
++[[nodiscard]] rpl::producer<> ReactionsChanges(not_null<HistoryItem*> item) {
+ 	return [=](auto consumer) {
+-		struct State {
+-			std::vector<Counted> snapshot;
+-			crl::time fired = 0;
+-			base::Timer timer;
+-			bool removed = false;
+-		};
+ 		auto lifetime = rpl::lifetime();
+-		const auto state = lifetime.make_state<State>();
+-		const auto fire = [=] {
+-			state->fired = crl::now();
+-			consumer.put_next({});
+-		};
+-		state->snapshot = Snapshot(item);
+-		state->timer.setCallback(fire);
+-
+-		const auto owner = &item->history()->owner();
++		const auto snapshot = lifetime.make_state<std::vector<Counted>>(
++			Snapshot(item));
+ 		rpl::merge(
+-			owner->itemDataChanges(
++			item->history()->owner().itemDataChanges(
+ 			) | rpl::filter([=](not_null<HistoryItem*> changed) {
+-				if (changed != item || state->removed) {
++				if (changed != item) {
+ 					return false;
+ 				}
+ 				auto now = Snapshot(item);
+-				if (now == state->snapshot) {
++				if (now == *snapshot) {
+ 					return false;
+ 				}
+-				state->snapshot = std::move(now);
++				*snapshot = std::move(now);
+ 				return true;
+ 			}) | rpl::to_empty,
+ 			SendsFinished().events(
+ 			) | rpl::filter([=](not_null<HistoryItem*> finished) {
+-				return (finished == item) && !state->removed;
++				return (finished == item);
+ 			}) | rpl::to_empty
+ 		) | rpl::on_next([=] {
++			consumer.put_next({});
++		}, lifetime);
++		return lifetime;
++	};
++}
++
++[[nodiscard]] rpl::producer<> Refreshes(
++		not_null<HistoryItem*> item,
++		rpl::producer<> changes) {
++	return [=](auto consumer) {
++		struct State {
++			crl::time fired = 0;
++			base::Timer timer;
++			rpl::lifetime changes;
++		};
++		auto lifetime = rpl::lifetime();
++		const auto state = lifetime.make_state<State>();
++		const auto fire = [=] {
++			state->fired = crl::now();
++			consumer.put_next({});
++		};
++		state->timer.setCallback(fire);
++
++		rpl::duplicate(changes) | rpl::on_next([=] {
+ 			if (state->timer.isActive()) {
+ 				return;
+ 			}
+@@ -121,13 +145,13 @@ rpl::producer<> WhoReactedRefreshes(not_null<HistoryItem*> item) {
+ 			} else {
+ 				fire();
+ 			}
+-		}, lifetime);
++		}, state->changes);
+ 
+-		owner->itemRemoved(
++		item->history()->owner().itemRemoved(
+ 		) | rpl::filter([=](not_null<const HistoryItem*> removed) {
+ 			return (removed == item);
+ 		}) | rpl::on_next([=] {
+-			state->removed = true;
++			state->changes.destroy();
+ 			state->timer.cancel();
+ 		}, lifetime);
+ 
+@@ -136,4 +160,88 @@ rpl::producer<> WhoReactedRefreshes(not_null<HistoryItem*> item) {
+ 	};
+ }
+ 
++} // namespace
++
++void ReactionSendFinished(
++		not_null<Data::Session*> owner,
++		FullMsgId itemId,
++		bool success) {
++	if (const auto item = owner->message(itemId)) {
++		if (!success) {
++			item->updateReactionsUnknown();
++		}
++		SendsFinished().fire_copy(item);
++	}
++}
++
++void CancelWhoReactedRequest(
++		not_null<Main::Session*> session,
++		mtpRequestId &requestId) {
++	if (const auto id = base::take(requestId)) {
++		session->api().request(id).cancel();
++	}
++}
++
++rpl::producer<> WhoReactedRefreshes(not_null<HistoryItem*> item) {
++	return Refreshes(item, ReactionsChanges(item));
++}
++
++bool RestartWhoReadRequest(
++		not_null<QWidget*> context,
++		not_null<HistoryItem*> item,
++		mtpRequestId &requestId) {
++	CancelWhoReactedRequest(&item->history()->session(), requestId);
++	const auto now = crl::now();
++	auto &requested = WhoReadRequested();
++	Prune(requested, now, kEmptyReuse);
++	const auto key = std::make_pair(context.get(), item.get());
++	const auto stale = !requested.contains(key);
++	requested[key] = now;
++	return stale;
++}
++
++rpl::producer<> WhoReadRefreshes(not_null<HistoryItem*> item) {
++	const auto history = item->history();
++	const auto peer = history->peer;
++	if (peer->isUser()) {
++		return Refreshes(item, rpl::never<>());
++	}
++	const auto changes = &history->session().changes();
++	return Refreshes(item, rpl::merge(
++		changes->historyUpdates(
++			history,
++			Data::HistoryUpdate::Flag::OutboxRead
++		) | rpl::to_empty,
++		changes->peerUpdates(
++			peer,
++			Data::PeerUpdate::Flag::Members
++		) | rpl::to_empty));
++}
++
++void LoadWhoReadPeers(
++		not_null<HistoryItem*> item,
++		const std::vector<Api::WhoReadPeer> &list) {
++	const auto peer = item->history()->peer;
++	const auto owner = &peer->owner();
++	const auto unknown = ranges::any_of(list, [&](
++			const Api::WhoReadPeer &entry) {
++		return !owner->peerLoaded(entry.peer);
++	});
++	if (!unknown) {
++		return;
++	}
++	const auto now = crl::now();
++	auto &requested = MembersRequested();
++	Prune(requested, now, kMembersRequestDelay);
++	if (requested.contains(peer)) {
++		return;
++	}
++	requested.emplace(peer, now);
++	if (const auto channel = peer->asMegagroup()) {
++		peer->session().api().chatParticipants().requestLast(channel);
++	} else if (const auto chat = peer->asChat()) {
++		peer->session().api().requestFullPeer(chat);
++	}
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_who_reacted.h b/Telegram/SourceFiles/tele/tele_who_reacted.h
+index 4d8ac88d7cecd43e0b36261df8294a33607a928b..67587e8af31a0e7f5fc0ee2836de329f675d9a10 100644
+--- a/Telegram/SourceFiles/tele/tele_who_reacted.h
++++ b/Telegram/SourceFiles/tele/tele_who_reacted.h
+@@ -3,6 +3,11 @@
+ #include "data/data_msg_id.h"
+ 
+ class HistoryItem;
++class QWidget;
++
++namespace Api {
++struct WhoReadPeer;
++} // namespace Api
+ 
+ namespace Data {
+ class Session;
+@@ -37,4 +42,44 @@ template <typename Value>
+ 	}) | rpl::flatten_latest();
+ }
+ 
++[[nodiscard]] bool RestartWhoReadRequest(
++	not_null<QWidget*> context,
++	not_null<HistoryItem*> item,
++	mtpRequestId &requestId);
++
++template <typename Entry>
++void RestartWhoRead(
++		not_null<QWidget*> context,
++		not_null<HistoryItem*> item,
++		Entry &entry) {
++	using Value = std::decay_t<decltype(entry.data.current())>;
++	using State = decltype(Value::state);
++	const auto stale = RestartWhoReadRequest(context, item, entry.requestId);
++	const auto &current = entry.data.current();
++	if (stale && current.state == State::Empty && current.list.empty()) {
++		entry.data = Value{ .state = State::Unknown };
++	}
++}
++
++[[nodiscard]] rpl::producer<> WhoReadRefreshes(not_null<HistoryItem*> item);
++
++void LoadWhoReadPeers(
++	not_null<HistoryItem*> item,
++	const std::vector<Api::WhoReadPeer> &list);
++
++template <typename Value>
++[[nodiscard]] rpl::producer<Value> RefreshedWhoRead(
++		not_null<HistoryItem*> item,
++		rpl::producer<Value> ids) {
++	return WhoReadRefreshes(
++		item
++	) | rpl::map([=]() -> rpl::producer<Value> {
++		return rpl::duplicate(
++			ids
++		) | rpl::before_next([=](const Value &value) {
++			LoadWhoReadPeers(item, value.list);
++		});
++	}) | rpl::flatten_latest();
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_who_read.cpp b/Telegram/SourceFiles/tele/tele_who_read.cpp
+index d79e8b10b27f5890eecd11cba055342cfcb31d21..df74fe611f2c923933b1faabb420df9621801dda 100644
+--- a/Telegram/SourceFiles/tele/tele_who_read.cpp
++++ b/Telegram/SourceFiles/tele/tele_who_read.cpp
+@@ -32,6 +32,10 @@ QString SeenReactedText(const Ui::WhoReadContent &content) {
+ 	if (content.state == Ui::WhoReadState::Unknown
+ 		|| !WithReadReceipts(content.type)) {
+ 		return QString();
++	} else if (content.participants.empty()
++		&& content.fullReadCount > 0
++		&& content.fullReactionsCount == 0) {
++		return SeenPart(content.type, content.fullReadCount);
+ 	}
+ 	auto reactors = base::flat_set<uint64>();
+ 	auto readers = base::flat_set<uint64>();

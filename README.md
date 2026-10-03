@@ -31,7 +31,31 @@ gh attestation verify tele-<version>-win64.zip --repo nitreojs/tele
 everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats, messages, sending, notifications, menus (beta), privacy, profiles and ids, bots and debug, with server, backup and updates on the page itself. the search at the top of the page, and the main settings search, find every tele setting. backup exports your tele settings to a file you can give to anyone, and imports one with a preview of what changes. it covers tele's switches and lists, not telegram's own settings (like interface scale) or data kept per account (local pins, pinned sets, bookmarks, local folders). to move everything to another folder or pc, copy the whole `tdata` folder next to tele.
 
 <details>
-<summary>all 178 patches, newest release first</summary>
+<summary>all 197 patches, newest release first</summary>
+
+### [tele 13](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.13)
+
+| # | what it does | where to toggle |
+|---|---|---|
+| [179](patches/tdesktop/0179-feat-sticker-captions.patch) | show the text attached to stickers in a bubble under them, and send or edit stickers with a caption | tele → chats, off |
+| [180](patches/tdesktop/0180-feat-inline-calcmula-results-after.patch) | type an expression and = to see the calcmula result greyed out after it, → or tab inserts it | with 46 |
+| [181](patches/tdesktop/0181-fix-stop-the-chat-list-repainting-while-idle.patch) | the chat list no longer repaints all the time while idle, which froze tele after a few hours | always on |
+| [182](patches/tdesktop/0182-fix-send-large-crash-dumps-zipped.patch) | crash dumps over 20 mb are sent zipped, and a report says why when its dump couldn't be attached | always on |
+| [183](patches/tdesktop/0183-feat-copy-or-delete-aliases-from-their-menu.patch) | right-click an alias in a profile or a message to copy or delete it, or open the profile | with 72 |
+| [184](patches/tdesktop/0184-fix-userpics-in-compact-chat-list-rows.patch) | userpics with a story ring or a badge show correctly in compact chat list rows | always on |
+| [185](patches/tdesktop/0185-feat-preview-chats-in-the-chat-area.patch) | alt+click or holding a userpic opens the chat read-only in the chat area, leaving messages unread | tele → interface, off |
+| [186](patches/tdesktop/0186-feat-keep-deleted-messages-and-edit-history-after-a-.patch) | kept deleted messages and edit history survive a restart, encrypted, for 1, 7 or 30 days or forever | with 19 |
+| [187](patches/tdesktop/0187-fix-who-reacted-list-matches-the-reaction-count.patch) | the list of who reacted matches the reaction count | always on |
+| [188](patches/tdesktop/0188-feat-send-several-gifts-at-once.patch) | send several copies of a gift at once, each with the same caption | tele → profiles and ids, off |
+| [189](patches/tdesktop/0189-feat-dim-hidden-gifts-and-select-several.patch) | hidden gifts are dimmed with a clear badge, and a select mode shows, hides, pins and transfers several gifts at once | tele → profiles and ids, off |
+| [190](patches/tdesktop/0190-feat-search-gifts.patch) | search a profile's collectible gifts by name, number, model, backdrop or symbol, with filter chips | tele → profiles and ids, off |
+| [191](patches/tdesktop/0191-feat-local-password-for-stars-and-gift-actions.patch) | a local password before transferring, converting, selling, upgrading, buying or sending gifts, paid reactions, paid media and subscriptions, each switchable | tele → privacy |
+| [192](patches/tdesktop/0192-fix-who-read-list-follows-the-read-state.patch) | the list of who read your message follows the read state, and readers that aren't loaded yet show up instead of nobody viewed | always on |
+| [193](patches/tdesktop/0193-fix-show-a-chat-s-data-center-from-its-first-photo.patch) | a group's or channel's data center comes from its first photo, marked uncertain when its photos disagree | with 23 |
+| [194](patches/tdesktop/0194-feat-more-bulk-gift-actions.patch) | the gift select mode also sells, removes from sale, converts to stars and adds to a collection, and says why an action doesn't fit the selection | with 189 |
+| [195](patches/tdesktop/0195-feat-page-keys-in-lists-and-safer-box-edges.patch) | page up, page down, home and end scroll lists and boxes, and a click just outside a box no longer closes it | tele → interface, off |
+| [196](patches/tdesktop/0196-feat-search-filter-and-export-star-transactions.patch) | search, filter, total and export star and ton transactions to csv | tele → interface, off |
+| [197](patches/tdesktop/0197-feat-filter-long-lists-by-date.patch) | filter star and ton transactions, shared media and profile gifts by a day or a date range | tele → interface, off |
 
 ### [tele 12](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.12)
 
@@ -82,8 +106,8 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [170](patches/tdesktop/0170-fix-show-tele-menu-items-only-when-their-feature-is-.patch) | tele's menu items only show while their feature is on, and each one can be turned off | always on |
 | [171](patches/tdesktop/0171-feat-regex-search-in-loaded-history.patch) | a .* button in the chat search finds messages by regex among the loaded ones, without asking the server | tele → chats, off |
 | [172](patches/tdesktop/0172-feat-regroup-tele-settings-pages.patch) | tele settings are split into interface, chats, messages, sending, notifications, menus, privacy, profiles and ids, bots and debug. old links still work | always on |
-| [173](patches/tdesktop/0173-feat-collapsible-sub-toggles-in-tele-settings.patch) | a setting with sub-settings folds them away, shows how many are on and switches them all off without forgetting them | always on |
-| [174](patches/tdesktop/0174-feat-rearrange-menus-with-groups-and-submenus-in-a-m.patch) | tele's own layout for the message, chat, profile, chat list, folder, send and field menus, with groups and submenus. an editor rearranges, hides and groups items with a live preview and presets, alt+right-click opens it from a menu | tele → menus |
+| [173](patches/tdesktop/0173-feat-collapsible-sub-toggles-in-tele-settings.patch) | a setting with sub-settings folds them away, shows how many are on and switches them all off without forgetting them. turning one on with nothing selected turns all of them on | always on |
+| [174](patches/tdesktop/0174-feat-rearrange-menus-with-groups-and-submenus-in-a-m.patch) | tele's own layout for the message, chat, profile, chat list, folder, send and field menus, with groups, submenus and thin or thick separators. an editor rearranges, hides and groups items with a live preview and presets, alt+right-click opens it from a menu | tele → menus |
 | [175](patches/tdesktop/0175-feat-hide-phone-numbers-in-profiles.patch) | the mobile row is hidden in every profile, yours included | tele → profiles and ids, off |
 | [176](patches/tdesktop/0176-feat-choose-how-quoted-names-of-deleted-messages-lin.patch) | the name in a quote of a deleted message can link to the author's profile or mention them | with 19 |
 | [177](patches/tdesktop/0177-fix-land-the-send-animation-where-the-message-really.patch) | the sending animation lands on the message even when another message arrives during it | always on |
@@ -128,7 +152,7 @@ everything tele adds lives in settings → tele, right below the language row, g
 | [92](patches/tdesktop/0092-fix-name-the-item-Copy-Callback-Data-like-telegram-d.patch) | the menu item is called copy callback data, like in telegram | with 28 |
 | [93](patches/tdesktop/0093-feat-usernames-from-the-tele-server.patch) | the tele server can give accounts extra @usernames, see [running your own server](#running-your-own-server). a server username wins over the real one, your own aliases win over both | tele → server, on |
 | [94](patches/tdesktop/0094-fix-open-custom-emoji-in-rich-and-emoji-only-message.patch) | custom emoji in rich messages and in emoji-only messages open their pack on click, and every pack is counted | always on |
-| [95](patches/tdesktop/0095-feat-send-gifs-as-videos-and-videos-as-gifs.patch) | send gifs as videos and videos as gifs: in the send box, from a message's menu, and with right-click in the gif panel | always on |
+| [95](patches/tdesktop/0095-feat-send-gifs-as-videos-and-videos-as-gifs.patch) | send gifs as videos and videos as gifs: in the send box, from a message's menu, and with right-click in the gif panel. a gif becomes a video without re-encoding, a video becomes a gif by dropping its sound | tele → sending, on |
 | [96](patches/tdesktop/0096-feat-keep-drafts-on-this-device.patch) | drafts stay on this device and never go to the cloud. a button clears the ones already there | tele → privacy, off |
 | [97](patches/tdesktop/0097-feat-send-scheduled-messages-on-time.patch) | scheduled messages are sent by tele itself at the set time while it's online | tele → sending, off |
 | [98](patches/tdesktop/0098-feat-show-id-and-dc-in-one-row.patch) | when both are shown, the dc goes next to the id in one profile row | tele → profiles and ids, off |

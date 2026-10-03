@@ -4,12 +4,12 @@ Date: Wed, 30 Sep 2026 08:57:20 +0300
 Subject: [PATCH] feat: collapsible sub-toggles in tele settings
 
 ---
- .../SourceFiles/settings/settings_tele.cpp    | 775 ++++++++++++++----
+ .../SourceFiles/settings/settings_tele.cpp    | 809 +++++++++++++++---
  Telegram/SourceFiles/tele/tele_options.cpp    |  11 +-
- 2 files changed, 644 insertions(+), 142 deletions(-)
+ 2 files changed, 678 insertions(+), 142 deletions(-)
 
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0058de033 100644
+index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..1e93c256f75296d562d5575ae6cedaa3bd15a993 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -49,12 +49,15 @@
@@ -37,13 +37,14 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  #include "styles/style_menu_icons.h"
  #include "styles/style_layers.h"
  #include "styles/style_settings.h"
-@@ -238,13 +243,24 @@ const base::flat_set<QString> *Picked = nullptr;
+@@ -238,13 +243,26 @@ const base::flat_set<QString> *Picked = nullptr;
  	return !Picked || Picked->contains(id);
  }
  
 +void ApplySubRow(
 +	not_null<Ui::RpWidget*> owner,
 +	Fn<void(std::optional<QColor>)> apply);
++void BlockClicksWhenDisabled(not_null<Ui::AbstractButton*> button);
 +
  Button *AddButton(
  		SectionBuilder &builder,
@@ -54,6 +55,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  		? builder.addButton(std::move(args))
  		: nullptr;
 +	if (button) {
++		BlockClicksWhenDisabled(button);
 +		ApplySubRow(button, [=](std::optional<QColor> color) {
 +			button->setDisabled(color.has_value());
 +			button->setColorOverride(color);
@@ -63,7 +65,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  }
  
  void AddSkip(SectionBuilder &builder) {
-@@ -293,6 +309,42 @@ struct Parent {
+@@ -293,6 +311,42 @@ struct Parent {
  	return result;
  }
  
@@ -106,7 +108,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  [[nodiscard]] bool Current(rpl::producer<bool> value) {
  	auto result = false;
  	auto lifetime = rpl::lifetime();
-@@ -339,9 +391,12 @@ struct Parent {
+@@ -339,9 +393,12 @@ struct Parent {
  	if (i == end(Parents())) {
  		return rpl::single(true);
  	}
@@ -120,7 +122,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  		list.push_back(ShownValue(
  			session,
  			QString::fromLatin1(requirement.id)));
-@@ -360,17 +415,61 @@ struct Parent {
+@@ -360,17 +417,91 @@ struct Parent {
  	if (i == end(Parents())) {
  		return nullptr;
  	}
@@ -158,6 +160,36 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
 +	}) | rpl::distinct_until_changed();
 +}
 +
++void BlockClicksWhenDisabled(not_null<Ui::AbstractButton*> button) {
++	if (!CurrentSubRow) {
++		return;
++	}
++	base::install_event_filter(button, [=](not_null<QEvent*> e) {
++		if (!button->isDisabled()) {
++			return base::EventFilterResult::Continue;
++		}
++		switch (e->type()) {
++		case QEvent::MouseButtonPress:
++		case QEvent::MouseButtonRelease:
++		case QEvent::MouseButtonDblClick:
++			return (static_cast<QMouseEvent*>(e.get())->button()
++				== Qt::RightButton)
++				? base::EventFilterResult::Continue
++				: base::EventFilterResult::Cancel;
++		case QEvent::KeyPress:
++		case QEvent::KeyRelease:
++			switch (static_cast<QKeyEvent*>(e.get())->key()) {
++			case Qt::Key_Space:
++			case Qt::Key_Return:
++			case Qt::Key_Enter:
++				return base::EventFilterResult::Cancel;
++			}
++			break;
++		}
++		return base::EventFilterResult::Continue;
++	});
++}
++
 +void ApplySubRow(
 +		not_null<Ui::RpWidget*> owner,
 +		Fn<void(std::optional<QColor>)> apply) {
@@ -183,7 +215,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  void AddAncestors(base::flat_set<QString> &ids, const QString &id) {
  	const auto i = Parents().find(id);
  	if (i == end(Parents())) {
-@@ -413,14 +512,29 @@ void WithParent(
+@@ -413,14 +544,29 @@ void WithParent(
  		add();
  		return;
  	}
@@ -214,7 +246,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  }
  
  [[nodiscard]] Requirement GhostSwitches() {
-@@ -440,6 +554,8 @@ void WithParent(
+@@ -440,6 +586,8 @@ void WithParent(
  struct OptionRow {
  	object_ptr<Ui::RpWidget> widget;
  	not_null<Button*> button;
@@ -223,7 +255,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  };
  
  [[nodiscard]] OptionRow CreateOptionRow(
-@@ -479,7 +595,27 @@ struct OptionRow {
+@@ -479,7 +627,27 @@ struct OptionRow {
  		button->resize(size);
  	}, button->lifetime());
  	button->show();
@@ -252,7 +284,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  }
  
  void AddOptionToggleRow(
-@@ -495,28 +631,36 @@ void AddOptionToggleRow(
+@@ -495,28 +663,37 @@ void AddOptionToggleRow(
  		const auto controller = ctx.controller;
  		auto row = CreateOptionRow(ctx.container, name, description);
  		const auto button = row.button;
@@ -293,6 +325,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
 +				restart();
  			}
  		}, button->lifetime());
++		BlockClicksWhenDisabled(button);
 +		ApplySubRow(button, [=](std::optional<QColor> color) {
 +			button->setDisabled(color.has_value());
 +			button->setColorOverride(color);
@@ -306,7 +339,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  		SetupLink(button, option.id());
  		return SectionBuilder::WidgetToAdd{
  			.widget = std::move(row.widget),
-@@ -532,16 +676,333 @@ void AddOptionToggleRow(
+@@ -532,16 +709,334 @@ void AddOptionToggleRow(
  	});
  }
  
@@ -517,6 +550,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
 +				wrap->toggle(!wrap->toggled(), anim::type::normal);
 +			}
 +		});
++		BlockClicksWhenDisabled(toggleButton);
 +		ApplySubRow(root, [=](std::optional<QColor> color) {
 +			toggleButton->setDisabled(color.has_value());
 +			if (title) {
@@ -642,7 +676,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  }
  
  void AddAbout(
-@@ -552,11 +1013,16 @@ void AddAbout(
+@@ -552,11 +1047,16 @@ void AddAbout(
  		return;
  	}
  	builder.add([&](const WidgetContext &ctx) {
@@ -663,7 +697,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  			.margin = st::settingsExperimentalAboutPadding,
  		};
  	}, nullptr);
-@@ -2011,17 +2477,20 @@ void FillChats(SectionBuilder &builder) {
+@@ -2011,17 +2511,20 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionNoGestures,
@@ -695,7 +729,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Call buttons"_q);
  	AddCallButtons(builder);
-@@ -2030,17 +2499,20 @@ void FillChats(SectionBuilder &builder) {
+@@ -2030,17 +2533,20 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionHideSimilar,
@@ -726,7 +760,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Chat features"_q);
  	AddOptionToggle(
-@@ -2086,39 +2558,45 @@ void FillMessages(SectionBuilder &builder) {
+@@ -2086,39 +2592,45 @@ void FillMessages(SectionBuilder &builder) {
  		builder,
  		::Tele::kOptionReadLog,
  		{ u"seen"_q, u"read receipt"_q });
@@ -740,7 +774,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
 -	AddOptionToggle(
 -		builder,
 -		::Tele::kOptionKeepDeletedSaved,
- 		{},
+-		{},
 -		::Tele::kOptionKeepDeleted);
 -	AddOptionToggle(
 -		builder,
@@ -750,7 +784,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
 -	AddOptionToggle(
 -		builder,
 -		::Tele::kOptionDeletedIcon,
--		{},
+ 		{},
 -		::Tele::kOptionKeepDeleted);
 -	AddButtonChoice(
 -		builder,
@@ -801,7 +835,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddOptionToggle(builder, ::Tele::kOptionCopyProtected);
  	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Bookmarks"_q);
-@@ -2174,17 +2652,20 @@ void FillSending(SectionBuilder &builder) {
+@@ -2174,17 +2686,20 @@ void FillSending(SectionBuilder &builder) {
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionQueueBehindMedia,
@@ -833,7 +867,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddOptionToggle(builder, ::Tele::kOptionSentToBottom);
  	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Uploads"_q);
-@@ -2220,12 +2701,18 @@ void FillSending(SectionBuilder &builder) {
+@@ -2220,12 +2735,18 @@ void FillSending(SectionBuilder &builder) {
  		builder,
  		::Tele::kOptionVoiceNoFade,
  		{ u"fade"_q, u"record"_q, u"audio"_q });
@@ -842,9 +876,9 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  		builder,
 -		::Tele::kOptionCalcmulaPreview,
 +		::Tele::kOptionCalcmula,
++		{},
  		{},
 -		::Tele::kOptionCalcmula);
-+		{},
 +		[&] {
 +			AddOptionToggle(
 +				builder,
@@ -855,7 +889,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionTranslateOut,
-@@ -2235,22 +2722,25 @@ void FillSending(SectionBuilder &builder) {
+@@ -2235,22 +2756,25 @@ void FillSending(SectionBuilder &builder) {
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionConfirmSend,
@@ -897,7 +931,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Scheduled messages"_q);
  	AddOptionToggle(builder, ::Tele::kOptionPunctualScheduled);
-@@ -2276,22 +2766,25 @@ void FillNotifications(SectionBuilder &builder) {
+@@ -2276,22 +2800,25 @@ void FillNotifications(SectionBuilder &builder) {
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionHideCounters,
@@ -939,7 +973,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionCounterAccounts,
-@@ -2349,12 +2842,14 @@ void FillPrivacy(SectionBuilder &builder) {
+@@ -2349,12 +2876,14 @@ void FillPrivacy(SectionBuilder &builder) {
  		builder,
  		::Tele::kOptionGhostRead,
  		{},
@@ -960,7 +994,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..ec8470823bc6e05a018a9a0aa79a16a0
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionGhostTyping,
-@@ -2422,17 +2917,23 @@ void FillPrivacy(SectionBuilder &builder) {
+@@ -2422,17 +2951,23 @@ void FillPrivacy(SectionBuilder &builder) {
  void FillProfiles(SectionBuilder &builder) {
  	AddSkip(builder);
  	AddGroupTitle(builder, u"Peer IDs"_q);

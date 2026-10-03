@@ -12,10 +12,10 @@ Subject: [PATCH] feat: choose how quoted names of deleted messages link
  5 files changed, 103 insertions(+), 9 deletions(-)
 
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index 3b66055f59774809a8095db0709d4698bbf63222..cf54fca5cfeb6e73f5b33936c7e3e98752443d36 100644
+index 411c0f6242a4609f2282eaa8b618316916492c54..05f0c6aed93799c31aa3eb90af0f1aead8965997 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
-@@ -2617,6 +2617,19 @@ void FillMessages(SectionBuilder &builder) {
+@@ -2651,6 +2651,19 @@ void FillMessages(SectionBuilder &builder) {
  				},
  				{ u"reply"_q, u"quote"_q, u"deleted"_q },
  				::Tele::kOptionKeepDeleted);

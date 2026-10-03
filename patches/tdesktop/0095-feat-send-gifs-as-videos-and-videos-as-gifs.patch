@@ -9,15 +9,17 @@ Subject: [PATCH] feat: send gifs as videos and videos as gifs
  .../chat_helpers/gifs_list_widget.cpp         |   6 +
  .../history/history_inner_widget.cpp          |   5 +
  .../view/history_view_context_menu.cpp        |   2 +
- Telegram/SourceFiles/tele/tele_gif_video.cpp  | 288 ++++++++++++++++++
- Telegram/SourceFiles/tele/tele_gif_video.h    |  43 +++
+ .../SourceFiles/storage/localimageloader.cpp  |   8 +-
+ Telegram/SourceFiles/tele/tele_gif_video.cpp  | 308 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_gif_video.h    |  46 +++
  Telegram/SourceFiles/tele/tele_send_files.cpp | 129 ++++++++
  Telegram/SourceFiles/tele/tele_send_files.h   |  28 ++
  Telegram/SourceFiles/tele/tele_shot.cpp       | 100 +-----
  .../ui/chat/attach/attach_album_thumbnail.cpp |   7 +-
  .../ui/chat/attach/attach_album_thumbnail.h   |   2 +
+ .../ui/chat/attach/attach_prepare.h           |   1 +
  .../attach/attach_single_media_preview.cpp    |   4 +-
- 13 files changed, 529 insertions(+), 101 deletions(-)
+ 15 files changed, 558 insertions(+), 104 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_gif_video.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_gif_video.h
  create mode 100644 Telegram/SourceFiles/tele/tele_send_files.cpp
@@ -142,12 +144,55 @@ index fc9c53c0f79a4846e1388f94ca083f95c3ca5509..36ff5b4b1d0e51841a9a208f5b13ffbc
  	Tele::InsertMessageTools(
  		result.get(),
  		list->controller()->uiShow(),
+diff --git a/Telegram/SourceFiles/storage/localimageloader.cpp b/Telegram/SourceFiles/storage/localimageloader.cpp
+index 9410bd4d0ce4858f317ffc2c63275bce1a5e87ad..3c7f3a8a841be21144e4b294ae5ab02beba28779 100644
+--- a/Telegram/SourceFiles/storage/localimageloader.cpp
++++ b/Telegram/SourceFiles/storage/localimageloader.cpp
+@@ -42,6 +42,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "mainwidget.h"
+ #include "mainwindow.h"
+ #include "main/main_session.h"
++#include "tele/tele_gif_video.h"
+ 
+ #include <QtCore/QBuffer>
+ #include <QtGui/QImageWriter>
+@@ -991,6 +992,7 @@ void FileLoadTask::process(ProcessArgs &&args) {
+ 			auto coverHeight = video->thumbnail.height();
+ 			auto realSeconds = video->duration / 1000.;
+ 			const auto gif = video->modifications.gif && !_forceFile;
++			const auto silent = Tele::SendsAsSilentVideo(*_information);
+ 			const auto convertForGif = gif
+ 				&& video->isGifv
+ 				&& (filemime != u"video/mp4"_q);
+@@ -1005,11 +1007,11 @@ void FileLoadTask::process(ProcessArgs &&args) {
+ 						video->modifications,
+ 						video->thumbnail.size(),
+ 						video->duration,
+-						video->hasAudio))) {
++						video->hasAudio || silent))) {
+ 				auto source = Editor::ComposeVideoSource(
+ 					_filepath,
+ 					video->modifications,
+-					{},
++					{ .removeAudio = silent },
+ 					false);
+ 				source.bytes = _filepath.isEmpty() ? _content : QByteArray();
+ 				const auto target = Media::Encode::TranscodedSize(
+@@ -1063,7 +1065,7 @@ void FileLoadTask::process(ProcessArgs &&args) {
+ 				if (video->supportsStreaming) {
+ 					flags |= MTPDdocumentAttributeVideo::Flag::f_supports_streaming;
+ 				}
+-				if (gif) {
++				if (gif || silent) {
+ 					flags |= MTPDdocumentAttributeVideo::Flag::f_nosound;
+ 				}
+ 				const auto startTs = _result->videoCoverOffset;
 diff --git a/Telegram/SourceFiles/tele/tele_gif_video.cpp b/Telegram/SourceFiles/tele/tele_gif_video.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b4782991dbc
+index 0000000000000000000000000000000000000000..d0ba9479b3028766f7812afc466e1c32f32177c2
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_gif_video.cpp
-@@ -0,0 +1,288 @@
+@@ -0,0 +1,308 @@
 +#include "tele/tele_gif_video.h"
 +
 +#include "data/data_chat_participant_status.h"
@@ -190,18 +235,27 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +		: nullptr;
 +}
 +
++[[nodiscard]] bool Transcodable(const Ui::PreparedFile &file) {
++	const auto size = file.path.isEmpty()
++		? int64(file.content.size())
++		: file.size;
++	return (size < Media::Encode::MaxTranscodeSourceSize());
++}
++
 +[[nodiscard]] bool IsGifImage(const Ui::PreparedFile &file) {
 +	const auto image = file.information
 +		? std::get_if<Image>(&file.information->media)
 +		: nullptr;
-+	const auto size = file.path.isEmpty()
-+		? int64(file.content.size())
-+		: file.size;
 +	return image
 +		&& image->animated
 +		&& (file.information->filemime == u"image/gif"_q)
 +		&& (!file.path.isEmpty() || !file.content.isEmpty())
-+		&& (size < Media::Encode::MaxTranscodeSourceSize());
++		&& Transcodable(file);
++}
++
++void SetSendAsGif(Video &video, bool gif) {
++	video.modifications.gif = gif;
++	video.silentVideo = !gif && !video.hasAudio;
 +}
 +
 +[[nodiscard]] bool ConvertGifToVideo(Ui::PreparedFile &file) {
@@ -274,7 +328,7 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +		|| !file.canEditVideo()) {
 +		return result;
 +	}
-+	video->modifications.gif = toGif;
++	SetSendAsGif(*video, toGif);
 +	result.files.push_back(std::move(file));
 +	return result;
 +}
@@ -335,6 +389,14 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +	return !album && IsGifImage(file);
 +}
 +
++bool SendsAsSilentVideo(const Ui::PreparedFileInformation &information) {
++	const auto video = std::get_if<Video>(&information.media);
++	return video
++		&& video->silentVideo
++		&& !video->modifications.gif
++		&& !video->hasAudio;
++}
++
 +void AddSendAsGifAction(
 +		not_null<Ui::PopupMenu*> menu,
 +		const Ui::PreparedFile &file,
@@ -346,7 +408,10 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +	}
 +	const auto video = LookupVideo(file);
 +	if (video) {
-+		if (!file.canEditVideo() || (album && !video->hasAudio)) {
++		const auto toGif = !video->modifications.gif && video->hasAudio;
++		if (!file.canEditVideo()
++			|| (album && !video->hasAudio)
++			|| (toGif && !Transcodable(file))) {
 +			return;
 +		}
 +	} else if (!IsGifImage(file)) {
@@ -363,7 +428,7 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +		Ui::PreparedFile &file,
 +		std::shared_ptr<Ui::Show> show) {
 +	if (const auto video = LookupVideo(file)) {
-+		video->modifications.gif = !video->modifications.gif;
++		SetSendAsGif(*video, !video->modifications.gif);
 +	} else if (IsGifImage(file) && !ConvertGifToVideo(file)) {
 +		show->showToast(Lower(u"Couldn't read this GIF as a video."_q));
 +	}
@@ -438,10 +503,10 @@ index 0000000000000000000000000000000000000000..2ff15d64339e63da5a5ef2dd14f49b47
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_gif_video.h b/Telegram/SourceFiles/tele/tele_gif_video.h
 new file mode 100644
-index 0000000000000000000000000000000000000000..0a517a731d79551c7b46ef8d791d07cce7d65cc1
+index 0000000000000000000000000000000000000000..46178d68f5ccd2e5b8084f0f81f47c93d59eef53
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_gif_video.h
-@@ -0,0 +1,43 @@
+@@ -0,0 +1,46 @@
 +#pragma once
 +
 +class DocumentData;
@@ -454,6 +519,7 @@ index 0000000000000000000000000000000000000000..0a517a731d79551c7b46ef8d791d07cc
 +
 +namespace Ui {
 +struct PreparedFile;
++struct PreparedFileInformation;
 +class PopupMenu;
 +class Show;
 +} // namespace Ui
@@ -465,6 +531,8 @@ index 0000000000000000000000000000000000000000..0a517a731d79551c7b46ef8d791d07cc
 +namespace Tele {
 +
 +[[nodiscard]] bool SendsAsGif(const Ui::PreparedFile &file, bool album);
++[[nodiscard]] bool SendsAsSilentVideo(
++	const Ui::PreparedFileInformation &information);
 +void AddSendAsGifAction(
 +	not_null<Ui::PopupMenu*> menu,
 +	const Ui::PreparedFile &file,
@@ -853,6 +921,18 @@ index daacecb6137a7bfc9c0dd7ba1592c33c7a22d32c..bfbcd78005081a8402811c49726de63f
  	const int _videoQuality = 0;
  	const crl::time _ttlSeconds = 0;
  	QPixmap _albumImage;
+diff --git a/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h b/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
+index d7004aa3fdfb9713435333a1bc1eba251dee6e69..d995da7850d04e7b535e4adf892631b17b54b31a 100644
+--- a/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
++++ b/Telegram/SourceFiles/ui/chat/attach/attach_prepare.h
+@@ -45,6 +45,7 @@ struct PreparedFileInformation {
+ 		bool isWebmSticker = false;
+ 		bool supportsStreaming = false;
+ 		bool hasAudio = false;
++		bool silentVideo = false;
+ 		crl::time duration = -1;
+ 		// Always the raw frame at |modifications.cover|, never modified.
+ 		QImage thumbnail;
 diff --git a/Telegram/SourceFiles/ui/chat/attach/attach_single_media_preview.cpp b/Telegram/SourceFiles/ui/chat/attach/attach_single_media_preview.cpp
 index 639b976976fe95d0d3116d18f54d0cc9a5082019..54d8e9ae77c21f8c17831a0549e77c75022c5e35 100644
 --- a/Telegram/SourceFiles/ui/chat/attach/attach_single_media_preview.cpp

@@ -36,10 +36,10 @@ index 919c5ca2761a74324eae44104192e493205b65bc..7f91a50892bd01d6154b6d517479786c
  				st::infoProfileLabeledPadding,
  				st::popupMenuWithIcons).text;
 diff --git a/Telegram/SourceFiles/settings/settings_tele.cpp b/Telegram/SourceFiles/settings/settings_tele.cpp
-index 3948e51f6bc874dc402b31d475984fc23a0a2b6e..3b66055f59774809a8095db0709d4698bbf63222 100644
+index e195e957aaa1e9344d416fb1369240374e663999..411c0f6242a4609f2282eaa8b618316916492c54 100644
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
-@@ -2963,6 +2963,10 @@ void FillProfiles(SectionBuilder &builder) {
+@@ -2997,6 +2997,10 @@ void FillProfiles(SectionBuilder &builder) {
  		::Info::Profile::kOptionShowPeerIdBelowAbout,
  	});
  	AddOptionToggle(builder, ::Tele::kOptionNoPhoneInHeader);

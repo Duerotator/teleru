@@ -1,0 +1,298 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Fri, 2 Oct 2026 13:20:15 +0300
+Subject: [PATCH] fix: show a chat's data center from its first photo
+
+---
+ Telegram/SourceFiles/tele/tele_peer_id.cpp | 195 ++++++++++++++++++---
+ 1 file changed, 170 insertions(+), 25 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_peer_id.cpp b/Telegram/SourceFiles/tele/tele_peer_id.cpp
+index d4141c19615b0f0bda750ea4d1f81ae903068a7b..0272da92a51fb9d1c48f6d2e6d56effc1869aee5 100644
+--- a/Telegram/SourceFiles/tele/tele_peer_id.cpp
++++ b/Telegram/SourceFiles/tele/tele_peer_id.cpp
+@@ -2,7 +2,13 @@
+ 
+ #include "base/options.h"
+ #include "data/data_changes.h"
++#include "data/data_chat.h"
++#include "data/data_media_types.h"
+ #include "data/data_peer.h"
++#include "data/data_photo.h"
++#include "data/data_session.h"
++#include "data/data_shared_media.h"
++#include "history/history_item.h"
+ #include "info/profile/info_profile_actions.h"
+ #include "lang/lang_tag.h"
+ #include "main/main_session.h"
+@@ -22,6 +28,22 @@ namespace {
+ 
+ constexpr auto kLinkIndex = uint16(1);
+ constexpr auto kChannelShift = int64(1000000000000LL);
++constexpr auto kPhotoHistoryLimit = 500;
++
++struct PeerDcInfo {
++	int dc = 0;
++	bool uncertain = false;
++
++	friend inline bool operator==(
++		const PeerDcInfo &,
++		const PeerDcInfo &) = default;
++};
++
++struct PhotoHistory {
++	int oldest = 0;
++	base::flat_set<int> dcs;
++	bool complete = false;
++};
+ 
+ class CopyClickHandler final : public ClickHandler {
+ public:
+@@ -64,6 +86,65 @@ private:
+ 	return file ? file->dcId() : 0;
+ }
+ 
++[[nodiscard]] int PhotoDc(not_null<PhotoData*> photo) {
++	for (const auto size : {
++		Data::PhotoSize::Large,
++		Data::PhotoSize::Thumbnail,
++		Data::PhotoSize::Small,
++	}) {
++		const auto &data = photo->location(size).file().data;
++		if (const auto file = std::get_if<StorageFileLocation>(&data)) {
++			if (const auto dc = file->dcId()) {
++				return dc;
++			}
++		}
++	}
++	return 0;
++}
++
++[[nodiscard]] PhotoHistory ParsePhotoHistory(
++		not_null<PeerData*> peer,
++		const SparseIdsMergedSlice &slice) {
++	auto result = PhotoHistory{ .complete = (slice.skippedAfter() == 0) };
++	for (auto i = 0, count = slice.size(); i != count; ++i) {
++		const auto item = peer->owner().message(slice[i]);
++		const auto media = item ? item->media() : nullptr;
++		const auto photo = media ? media->photo() : nullptr;
++		if (const auto dc = photo ? PhotoDc(photo) : 0) {
++			if (!result.oldest) {
++				result.oldest = dc;
++			}
++			result.dcs.emplace(dc);
++		}
++	}
++	return result;
++}
++
++[[nodiscard]] rpl::producer<std::optional<PhotoHistory>> PhotoHistoryValue(
++		not_null<PeerData*> peer) {
++	const auto migrated = peer->migrateFrom();
++	const auto migratedPeerId = migrated ? migrated->id : PeerId();
++	return SharedMediaMergedViewer(
++		&peer->session(),
++		SharedMediaMergedKey(
++			SparseIdsMergedSlice::Key(
++				peer->id,
++				MsgId(),
++				PeerId(),
++				migratedPeerId,
++				(migrated ? (MsgId(1) - ServerMaxMsgId) : MsgId(1))),
++			Storage::SharedMediaType::ChatPhoto),
++		0,
++		kPhotoHistoryLimit
++	) | rpl::map([=](
++			SparseIdsMergedSlice &&slice) -> std::optional<PhotoHistory> {
++		if (!slice.fullCount()) {
++			return std::nullopt;
++		}
++		return ParsePhotoHistory(peer, slice);
++	});
++}
++
+ [[nodiscard]] QString DcLocation(not_null<PeerData*> peer, int dc) {
+ 	if (peer->session().isTestMode()) {
+ 		return QString();
+@@ -85,13 +166,56 @@ private:
+ 		: u"%1, %2"_q.arg(dc).arg(Lower(location));
+ }
+ 
+-[[nodiscard]] rpl::producer<int> PeerDcValue(not_null<PeerData*> peer) {
+-	return peer->session().changes().peerFlagsValue(
+-		peer,
+-		Data::PeerUpdate::Flag::Photo
+-	) | rpl::map([=](const Data::PeerUpdate &) {
+-		return PeerDc(peer);
+-	}) | rpl::distinct_until_changed();
++[[nodiscard]] PeerDcInfo ComputePeerDc(
++		not_null<PeerData*> peer,
++		const std::optional<PhotoHistory> &history) {
++	const auto current = PeerDc(peer);
++	if (!current || !history) {
++		return { .dc = current };
++	}
++	if (!history->oldest) {
++		return { .dc = current, .uncertain = true };
++	}
++	return {
++		.dc = history->oldest,
++		.uncertain = !history->complete
++			|| (history->dcs.size() > 1)
++			|| (current != history->oldest),
++	};
++}
++
++[[nodiscard]] rpl::producer<PeerDcInfo> PeerDcValue(
++		not_null<PeerData*> peer) {
++	using History = std::optional<PhotoHistory>;
++	return ShowDcValue(
++	) | rpl::map([=](bool shown) -> rpl::producer<PeerDcInfo> {
++		if (!shown) {
++			return rpl::single(PeerDcInfo());
++		}
++		const auto photo = [=] {
++			return peer->session().changes().peerFlagsValue(
++				peer,
++				Data::PeerUpdate::Flag::Photo
++			) | rpl::to_empty;
++		};
++		return rpl::combine(
++			photo(),
++			photo() | rpl::map([=] {
++				return !peer->isUser() && PeerDc(peer);
++			}) | rpl::distinct_until_changed(
++			) | rpl::map([=](bool load) -> rpl::producer<History> {
++				return load
++					? PhotoHistoryValue(peer)
++					: rpl::single(History());
++			}) | rpl::flatten_latest()
++		) | rpl::map([=](rpl::empty_value, const History &history) {
++			return ComputePeerDc(peer, history);
++		});
++	}) | rpl::flatten_latest() | rpl::distinct_until_changed();
++}
++
++[[nodiscard]] QString UncertainText() {
++	return Lower(u"uncertain"_q);
+ }
+ 
+ [[nodiscard]] rpl::producer<bool> ShowPeerIdValue() {
+@@ -106,20 +230,19 @@ private:
+ 	});
+ }
+ 
+-[[nodiscard]] rpl::producer<int> MergedDcValue(not_null<PeerData*> peer) {
++[[nodiscard]] rpl::producer<PeerDcInfo> MergedDcValue(
++		not_null<PeerData*> peer) {
+ 	return rpl::combine(
+ 		MergeIdDcValue(),
+ 		ShowDcValue(),
+ 		PeerDcValue(peer)
+-	) | rpl::map([](bool merge, bool show, int dc) {
+-		return (merge && show) ? dc : 0;
++	) | rpl::map([](bool merge, bool show, PeerDcInfo info) {
++		return (merge && show) ? info : PeerDcInfo();
+ 	}) | rpl::distinct_until_changed();
+ }
+ 
+-void CopyDc(
+-		not_null<PeerData*> peer,
+-		base::weak_ptr<Window::SessionController> weak) {
+-	TextUtilities::SetClipboardText({ QString::number(PeerDc(peer)) });
++void CopyDc(int dc, base::weak_ptr<Window::SessionController> weak) {
++	TextUtilities::SetClipboardText({ QString::number(dc) });
+ 	if (const auto strong = weak.get()) {
+ 		strong->showToast({
+ 			.text = { Lower(u"DC copied to clipboard."_q) },
+@@ -150,13 +273,22 @@ rpl::producer<TextWithEntities> PeerIdTextValue(not_null<PeerData*> peer) {
+ 		ShowPeerIdValue(),
+ 		PeerIdValue(peer),
+ 		MergedDcValue(peer)
+-	) | rpl::map([=](bool shown, const QString &id, int dc) {
++	) | rpl::map([=](
++			bool shown,
++			const QString &id,
++			PeerDcInfo info) {
+ 		if (!shown) {
+ 			return TextWithEntities();
+ 		}
+ 		return Ui::Text::Link(
+-			(dc
+-				? u"%1 (%2%3)"_q.arg(id, Lower(u"DC"_q), DcText(peer, dc))
++			(info.dc
++				? u"%1 (%2%3%4)"_q.arg(
++					id,
++					Lower(u"DC"_q),
++					DcText(peer, info.dc),
++					(info.uncertain
++						? u", "_q + UncertainText()
++						: QString()))
+ 				: id),
+ 			kLinkIndex);
+ 	});
+@@ -183,8 +315,8 @@ void SetupPeerIdLabel(
+ 			std::make_shared<CopyClickHandler>(FormatPeerId(peer), copy));
+ 	}, label->lifetime());
+ 	const auto mergedDc = label->lifetime().make_state<int>(0);
+-	MergedDcValue(peer) | rpl::on_next([=](int dc) {
+-		*mergedDc = dc;
++	MergedDcValue(peer) | rpl::on_next([=](PeerDcInfo info) {
++		*mergedDc = info.dc;
+ 	}, label->lifetime());
+ 	label->setContextMenuHook([=](
+ 			Ui::FlatLabel::ContextMenuRequest request) {
+@@ -192,7 +324,7 @@ void SetupPeerIdLabel(
+ 			request.menu->addAction(Lower(u"Copy ID"_q), copy);
+ 			if (*mergedDc) {
+ 				request.menu->addAction(Lower(u"Copy DC"_q), [=] {
+-					CopyDc(peer, weak);
++					CopyDc(*mergedDc, weak);
+ 				});
+ 			}
+ 		} else {
+@@ -207,11 +339,20 @@ rpl::producer<TextWithEntities> PeerDcTextValue(not_null<PeerData*> peer) {
+ 		MergeIdDcValue(),
+ 		ShowPeerIdValue(),
+ 		PeerDcValue(peer)
+-	) | rpl::map([=](bool shown, bool merge, bool idShown, int dc) {
+-		if (!shown || (merge && idShown) || !dc) {
++	) | rpl::map([=](
++			bool shown,
++			bool merge,
++			bool idShown,
++			PeerDcInfo info) {
++		if (!shown || (merge && idShown) || !info.dc) {
+ 			return TextWithEntities();
+ 		}
+-		return Ui::Text::Link(DcText(peer, dc), kLinkIndex);
++		const auto text = DcText(peer, info.dc);
++		return Ui::Text::Link(
++			(info.uncertain
++				? u"%1 (%2)"_q.arg(text, UncertainText())
++				: text),
++			kLinkIndex);
+ 	});
+ }
+ 
+@@ -220,14 +361,18 @@ void SetupPeerDcLabel(
+ 		not_null<PeerData*> peer,
+ 		not_null<Window::SessionController*> controller) {
+ 	const auto weak = base::make_weak(controller);
++	const auto dc = label->lifetime().make_state<int>(0);
+ 	const auto copy = [=] {
+-		CopyDc(peer, weak);
++		CopyDc(*dc, weak);
+ 	};
++	PeerDcValue(peer) | rpl::on_next([=](PeerDcInfo info) {
++		*dc = info.dc;
++	}, label->lifetime());
+ 	PeerDcTextValue(peer) | rpl::on_next([=] {
+ 		label->setLink(
+ 			kLinkIndex,
+ 			std::make_shared<CopyClickHandler>(
+-				QString::number(PeerDc(peer)),
++				QString::number(*dc),
+ 				copy));
+ 	}, label->lifetime());
+ 	label->setContextMenuHook([=](
