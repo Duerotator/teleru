@@ -31,7 +31,28 @@ gh attestation verify tele-<version>-win64.zip --repo nitreojs/tele
 everything tele adds lives in settings → tele, right below the language row, grouped into pages: interface, chats, messages, sending, notifications, menus (beta), privacy, profiles and ids, bots and debug, with server, backup and updates on the page itself. the search at the top of the page, and the main settings search, find every tele setting. backup exports your tele settings to a file you can give to anyone, and imports one with a preview of what changes. it covers tele's switches and lists, not telegram's own settings (like interface scale) or data kept per account (local pins, pinned sets, bookmarks, local folders). to move everything to another folder or pc, copy the whole `tdata` folder next to tele.
 
 <details>
-<summary>all 197 patches, newest release first</summary>
+<summary>all 213 patches, newest release first</summary>
+
+### [tele 14](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.14)
+
+| # | what it does | where to toggle |
+|---|---|---|
+| [198](patches/tdesktop/0198-fix-show-oversized-stickers-as-files-like-the-server.patch) | a .tgs sticker telegram would turn into a file (over 64 kb, not 512×512, wrong fps or too long) shows as a file to you too, like everyone else sees it | always on |
+| [199](patches/tdesktop/0199-feat-mtproto-console.patch) | an mtproto console: call any api method with your own session in text, json or json5, with autocomplete, schema hints, validation, a result tree and history. destructive methods ask first, star methods ask for the local password | tele → debug, ctrl+alt+m |
+| [200](patches/tdesktop/0200-feat-show-the-media-s-data-center-in-the-media-viewe.patch) | the media viewer shows which data center the open photo, video or file is stored on | with 23 |
+| [201](patches/tdesktop/0201-feat-gift-studio.patch) | a gift studio: build any collectible from real parts (collection, model, backdrop, symbol, number) on a live cover in several layouts, and export png, mp4, gif or a tgs sticker that passes telegram's checks, with text as outlines. favorites, sweeps and contact sheets, parts from @GiftChanges (api.changes.tg) | tele → profiles and ids, gift menus |
+| [202](patches/tdesktop/0202-feat-fake-gift-upgrades.patch) | fake upgrades: the real upgrade box and spin for any upgradable gift, with the model, backdrop and symbol rolled locally by rarity and the real next number. nothing is sent and no stars are spent | tele → profiles and ids, on |
+| [203](patches/tdesktop/0203-feat-quote-rich-messages.patch) | select part of a rich message and pick quote and reply: the rich editor opens with the selection as a blockquote. a quote without an author no longer disappears when it's sent | tele → messages, on |
+| [204](patches/tdesktop/0204-feat-select-service-messages.patch) | select service messages (joins, pins, photo changes) like normal ones and delete them in bulk | always on |
+| [205](patches/tdesktop/0205-feat-mark-gift-studio-tgs-exports.patch) | tgs stickers from the gift studio carry an invisible mark saying they were made with tele's gift studio. it holds no user, account, device or time data | with 201 |
+| [206](patches/tdesktop/0206-fix-hide-the-upgraded-gift-s-number-and-model-until-.patch) | while a gift upgrade spins, its number and model roll and stay hidden until it lands, like on mobile | always on |
+| [207](patches/tdesktop/0207-feat-send-crash-reports-without-a-dump.patch) | after a crash, sending the report is offered even without a dump, from another version or after a graphics crash, with the reason in the window and in the report | always on |
+| [208](patches/tdesktop/0208-feat-report-freezes.patch) | when tele freezes for 15 seconds it writes a dump, and the next launch offers to send a freeze report (windows and linux) | always on |
+| [209](patches/tdesktop/0209-feat-gift-grid-builder.patch) | a gift grid builder: fill a profile-like grid cell by cell with collectibles or regular gifts, custom ribbons, pins and hidden marks, drag to reorder, save grids, and export png, gif or mp4 with an optional profile frame | tele → profiles and ids |
+| [210](patches/tdesktop/0210-feat-notification-centre.patch) | a notification centre in the main menu: tele toasts, updates, sent crash reports, online alerts and server notices in one list, kept per account for 30 days | tele → notifications, on |
+| [211](patches/tdesktop/0211-feat-rate-limit-notices.patch) | rate limits show a toast with a countdown from 5 seconds, a bar above the chat list from a minute, and a notice when they end, instead of a silent hang | with 210 |
+| [212](patches/tdesktop/0212-feat-server-notices.patch) | notices from the tele server in the notification centre, optionally as a one-time coloured toast | tele → server, on |
+| [213](patches/tdesktop/0213-feat-copy-a-gift-collection-s-link.patch) | right-click a gift collection in a profile to copy its link or share it | always on |
 
 ### [tele 13](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.13)
 
@@ -323,11 +344,19 @@ start tele with any of these to keep it off the network on its own for that laun
 
 the flags stay on when tele restarts itself, like after an update. on windows, add them to a shortcut after `tele.exe`; on linux, `./tele -teleoffline`; on macos, `open -a tele --args -teleoffline`. a shortcut with `-noteleserver` keeps even the very first launch away from the tele server. to turn the server off for good, empty its field in settings.
 
+### gift studio
+
+tgs files exported from the gift studio carry an invisible mark that says they were made with tele's gift studio. it holds nothing about you: no user, account, device or time.
+
 ### tele server
 
 tele can pull extra account data, like checkmarks, custom verification, scam / fake marks and support marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off. "clear cached data" drops the list tele saved, so the marks disappear until the next fetch.
 
-the same server takes crash reports. after a crash, tele offers to send the report: a short text with the version, platform and the crash reason, plus a minidump of the crashed process. you can look at it first and untick your username. with the server field empty, nothing is offered.
+the same server takes crash reports. after a crash, tele offers to send the report: a short text with the version, platform and the crash reason, plus a minidump of the crashed process. you can look at it first and untick your username. tele also offers it when there's no dump, when the crash happened in another version, or after a graphics crash. with the server field empty, nothing is offered.
+
+on windows and linux, tele also catches freezes: when the main thread is stuck for 15 seconds, a watchdog writes a minidump. next launch, tele says it froze last time and offers to send that report the same way.
+
+the server can also post notices. they show up in the notification centre (main menu → notifications), and some also as a one-time toast. turn them off with settings → tele → server → notifications from the server. they need the notification centre on.
 
 #### running your own server
 
@@ -389,10 +418,41 @@ to keep it that way:
 
 tele also rejects a list over 4 MiB or with more than 100000 entries, and then keeps using the last good one. it sends `If-None-Match` with `"<hex sha256 of the body it has>"`, so answering `304` when that matches the current body saves traffic, and a server can't tag clients with its own etags.
 
+the same json can carry an optional `notices` array next to `peers`:
+
+```json
+"notices": [{
+  "id": "tele-14",
+  "rev": 0,
+  "type": "info",
+  "title": "tele 14 is out",
+  "text": "update from settings",
+  "entities": [{ "type": "bold", "offset": 0, "length": 6 }],
+  "photo": { "url": "/v1/notices/tele-14/photo?rev=0", "width": 1280, "height": 720 },
+  "buttons": [{ "text": "release notes", "url": "https://github.com/nitreojs/tele/releases" }],
+  "toast": true,
+  "builds": { "min": 13, "max": null },
+  "platforms": ["windows", "linux"],
+  "users": null,
+  "from": 1791000000,
+  "until": 1792000000
+}]
+```
+
+- `id` is 1 to 64 latin letters, digits and dashes. `rev` is a whole number from 0. bump it when you edit a notice: tele replaces the old entry in the notification centre, but toasts each id only once.
+- `type` is `info`, `success`, `warning` or `critical`, and picks the colour of the toast. `toast: true` shows the toast; otherwise the notice only goes to the notification centre.
+- `title` or `text` must not be empty. `text` is cut at 4096 characters and `entities` at 256. entities work like the bot api: `offset` and `length` count utf-16 units.
+- `photo` is optional. its `url` is relative to the server (`/…`, not `//…`) and serves a jpeg or png up to 1 MB.
+- `buttons` are at most 2, and their urls start with `http://`, `https://` or `tg://`.
+- `builds`, `platforms`, `users`, `from` and `until` are optional filters. `builds.min` and `builds.max` are tele build numbers, each can be null. `platforms` are `windows`, `linux` and `macos`. `from` and `until` are unix seconds.
+- `users` are keys made exactly like the keys in `peers`, with the same salt, costs and scope, so the list doesn't say who a notice is for. null means everyone.
+- tele reads at most 64 notices. a notice that leaves the feed stays in the notification centre history.
+
 crash reports are optional. tele speaks the same protocol as telegram's own crash server, at `<server>/v1/crash.php`:
 
 - `GET ?act=query_report&apiid=…&version=…&dmp=0|1&platform=…` answers `Report` as plain text when the server wants the report. anything else makes tele say thanks and send nothing.
-- `POST ?act=report` is `multipart/form-data` with `platform` (like `Windows64Bit`, `Linux`, `MacOS`), `version` (like `7002009`), `report` (the report text) and, when there is one, `dump` (a zip with one `.dmp` minidump, under 20 MiB). answer `Done`.
+- `POST ?act=report` is `multipart/form-data` with `platform` (like `Windows64Bit`, `Linux`, `MacOS`), `version` (like `7002009`), `report` (the report text) and, when there is one, `dump` (a zip with one `.dmp` minidump, under 20 MiB). answer `Done`, or `Done <id>` to have tele show "crash report #id sent".
+- when there's no dump, the crash came from another version or the report is a freeze, the report text starts with `Tele-Note: <reason>` lines, like `Tele-Note: freeze 15 s`. freeze reports come through the same endpoint.
 - answer `404` to both if you don't collect crashes.
 
 ## contributing

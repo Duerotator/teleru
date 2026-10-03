@@ -152,6 +152,12 @@ tele rearranges seven menus: the message menu, the chat ⋯ menu, the chat list 
 
 `tele/tele_badges.*` downloads the public badge list from the server in the `tele-server-url` option and applies checkmarks, custom verification, scam, fake and support marks and extra usernames. `tele/tele_crash.*` routes crash reports to the same server. the protocol is documented in the README section [tele server](../README.md#tele-server). the client only downloads a list and never tells the server which accounts it looks at.
 
+the badge json can carry a `notices` array. `tele/tele_badges.cpp` (`ParseFeed`) parses it, and `tele/tele_server_notices.*` filters notices by build, platform, user key and time, fetches photos and shows toasts. they land in the notification centre, `tele/tele_notices*.*`: a per-account encrypted history (30 days, 300 entries) behind main menu → notifications, which also logs tele toasts, rate limits, updates, sent crash and freeze reports and online alerts.
+
+rate limits come from one hook in `mtproto/mtp_instance.cpp` (`rpcErrorOccured`) that feeds a flood-wait stream in `tele/tele_rate_limits.*`: a toast with a countdown from 5 s, a chat list bar from 60 s, and a notice when it ends.
+
+`tele/tele_freeze_watchdog.*` runs a watchdog thread that writes a minidump when the main thread is stuck for 15 s (windows: `MiniDumpWriteDump`, linux: breakpad `WriteMinidump`, not on macos) and leaves a `tdata/freeze` marker. next launch offers it like a crash report, with a `Tele-Note: freeze N s` line.
+
 ### self-updater and the signed feed
 
 `tele/tele_updater.*` checks `https://github.com/nitreojs/tele/releases/latest/download/tele-update-<platform>.json`, where the platform is `win64`, `linux64` or `macos`. the file is `{"feed": base64(json), "signature": base64(ed25519 signature of those bytes)}`. the inner json holds `tag`, `base` (upstream `AppVersion`), `counter` (the release number), `url`, `zip_sha256` and `exe_sha256`.
