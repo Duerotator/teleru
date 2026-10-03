@@ -962,7 +962,7 @@ index 14132d2bb693c39f72172e33b24da85093531e10..06424990bcb9571827a2d369c5f14ed0
  			strong->sending = 0;
  			strong->box->closeBox();
 diff --git a/Telegram/SourceFiles/tele/tele_gift_studio.cpp b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
-index 24e19b1b842785a08edf3ca6c60d5adb022b6fd2..aec9d41f802fbd246137b64ff7959870f1630098 100644
+index ff0010f3d68f52fdf968683b4972b86bc5ddc873..3a9ae5974c11d66104a790a1e5ec3afe8f70adfb 100644
 --- a/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 +++ b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 @@ -25,6 +25,7 @@

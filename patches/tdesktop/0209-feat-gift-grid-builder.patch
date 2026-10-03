@@ -4574,7 +4574,7 @@ index 5ef1563ce0c9241df924c3fe4868c02d7aca5a0d..663c68276933e75a95900abace52d2c9
  void SetupGiftSelection(
  	not_null<Ui::RpWidget*> list,
 diff --git a/Telegram/SourceFiles/tele/tele_gift_studio.cpp b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
-index f74098c42e194ed041eae077b93c327fc5288ace..24e19b1b842785a08edf3ca6c60d5adb022b6fd2 100644
+index ed59f564b3a70d2bc8d71b34001e4b6bfe7415ae..ff0010f3d68f52fdf968683b4972b86bc5ddc873 100644
 --- a/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 +++ b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 @@ -13,6 +13,7 @@

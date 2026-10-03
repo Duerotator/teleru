@@ -629,7 +629,7 @@ index 0000000000000000000000000000000000000000..6aa6ded316f0fe07b72023239f9c1d6f
 +
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_gift_studio.cpp b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
-index 22e9390ddb6813dd44080d7902dd56bd3959e887..f74098c42e194ed041eae077b93c327fc5288ace 100644
+index 191d01652dc6973c76c090f4c005aaf227157c2c..ed59f564b3a70d2bc8d71b34001e4b6bfe7415ae 100644
 --- a/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 +++ b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 @@ -2,6 +2,7 @@

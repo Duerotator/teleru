@@ -453,7 +453,7 @@ index 8329bec627cb628bfd5cdd5ed1f35dfb518b6417..2e70bbcfa03aa65948f13f351465c389
  	GiftListSearch(
 diff --git a/Telegram/SourceFiles/tele/tele_gift_studio.cpp b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..22e9390ddb6813dd44080d7902dd56bd3959e887
+index 0000000000000000000000000000000000000000..191d01652dc6973c76c090f4c005aaf227157c2c
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_gift_studio.cpp
 @@ -0,0 +1,3239 @@
@@ -515,7 +515,7 @@ index 0000000000000000000000000000000000000000..22e9390ddb6813dd44080d7902dd56bd
 +#include <QtGui/QGuiApplication>
 +#include <QtWidgets/QApplication>
 +#include <QtWidgets/QLineEdit>
-+#include <QtWidgets/QShortcut>
++#include <QShortcut>
 +#include <QtWidgets/QTextEdit>
 +
 +#include <atomic>
