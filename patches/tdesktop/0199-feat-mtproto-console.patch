@@ -19,9 +19,9 @@ Subject: [PATCH] feat: mtproto console
  .../tele/tele_mtp_console_requests.h          |   99 +
  .../SourceFiles/tele/tele_mtp_inspector.cpp   |   62 +-
  .../SourceFiles/tele/tele_mtp_inspector.h     |    3 +
- Telegram/SourceFiles/tele/tele_tl_runtime.cpp | 1245 ++++++
+ Telegram/SourceFiles/tele/tele_tl_runtime.cpp | 1249 ++++++
  Telegram/SourceFiles/tele/tele_tl_runtime.h   |  101 +
- 17 files changed, 7061 insertions(+), 30 deletions(-)
+ 17 files changed, 7065 insertions(+), 30 deletions(-)
  create mode 100644 Telegram/Resources/tele_html/mtp_console.css
  create mode 100644 Telegram/Resources/tele_html/mtp_console.html
  create mode 100644 Telegram/Resources/tele_html/mtp_console.js
@@ -5969,10 +5969,10 @@ index e7bd5810e264ec9391a77f51664aecde1c256700..01cad26a0aab8765b2fcaea9bea55a73
  	const QString &query = QString());
 diff --git a/Telegram/SourceFiles/tele/tele_tl_runtime.cpp b/Telegram/SourceFiles/tele/tele_tl_runtime.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..e538d3522a6d5e6c4a57f5bccd579e3d6ef81e56
+index 0000000000000000000000000000000000000000..09d28cd1a7a7e595c59b156ac4bb862f02662550
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_tl_runtime.cpp
-@@ -0,0 +1,1245 @@
+@@ -0,0 +1,1249 @@
 +#include "tele/tele_tl_runtime.h"
 +
 +#include "tele/tele_mtp_dump.h"
@@ -5981,6 +5981,9 @@ index 0000000000000000000000000000000000000000..e538d3522a6d5e6c4a57f5bccd579e3d
 +#include <charconv>
 +#include <cstring>
 +#include <optional>
++
++#include <QtCore/QByteArray>
++#include <QtCore/QLocale>
 +
 +namespace Tele::TlRuntime {
 +namespace {
@@ -6610,13 +6613,12 @@ index 0000000000000000000000000000000000000000..e538d3522a6d5e6c4a57f5bccd579e3d
 +	}
 +	const auto &text = value.text;
 +	if (type == "double") {
-+		auto result = 0.;
 +		const auto trimmed = Trim(text);
-+		const auto end = trimmed.data() + trimmed.size();
-+		const auto parsed = std::from_chars(trimmed.data(), end, result);
-+		if (value.type == Value::Type::Word
-+			|| parsed.ec != std::errc()
-+			|| parsed.ptr != end) {
++		auto ok = false;
++		const auto result = QByteArray(
++			trimmed.data(),
++			int(trimmed.size())).toDouble(&ok);
++		if (value.type == Value::Type::Word || trimmed.empty() || !ok) {
 +			return fail("expected double, got " + text);
 +		}
 +		auto bits = std::uint64_t();
@@ -6936,12 +6938,14 @@ index 0000000000000000000000000000000000000000..e538d3522a6d5e6c4a57f5bccd579e3d
 +		const auto bits = get64();
 +		auto value = 0.;
 +		std::memcpy(&value, &bits, sizeof(value));
-+		char buffer[64] = { 0 };
-+		const auto end = std::to_chars(
-+			buffer,
-+			buffer + sizeof(buffer),
-+			value).ptr;
-+		AppendScalar(_out, "DOUBLE", std::string_view(buffer, end - buffer));
++		const auto formatted = QByteArray::number(
++			value,
++			'g',
++			QLocale::FloatingPointShortest);
++		AppendScalar(
++			_out,
++			"DOUBLE",
++			std::string_view(formatted.constData(), formatted.size()));
 +	} else {
 +		auto hex = std::string();
 +		AppendHex(hex, _data.substr(_offset, size));
