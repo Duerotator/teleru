@@ -983,6 +983,15 @@ def translate_menu_registry(path: Path):
     path.write_text(text, encoding="utf-8", newline="\n")
     print(f"tele_menu_registry.cpp: Translated {count_menus} context menu items.")
 
+def fix_prepare_script(tdesktop: Path):
+    prepare_py = tdesktop / "Telegram" / "build" / "prepare" / "prepare.py"
+    if prepare_py.is_file():
+        text = prepare_py.read_text(encoding="utf-8")
+        if "mingw-w64-x86_64-diffutils" in text:
+            text = text.replace("mingw-w64-x86_64-diffutils", "diffutils")
+            prepare_py.write_text(text, encoding="utf-8", newline="\n")
+            print("Fixed prepare.py: replaced mingw-w64-x86_64-diffutils with diffutils.")
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python translate_ru.py <path_to_tdesktop>")
@@ -995,6 +1004,7 @@ def main():
     settings_file = tdesktop / "Telegram" / "SourceFiles" / "settings" / "settings_tele.cpp"
     menu_file = tdesktop / "Telegram" / "SourceFiles" / "tele" / "tele_menu_registry.cpp"
     
+    fix_prepare_script(tdesktop)
     translate_options_file(options_file)
     translate_settings_file(settings_file)
     translate_menu_registry(menu_file)
