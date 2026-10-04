@@ -535,19 +535,19 @@ index 3c15fb50ad899906cfc4b7b38cf6099fc284a6a7..a8cef47068bb361e8c9691863f4a9e81
  const char kOptionCopyEmojiId[] = "tele-copy-emoji-id";
  const char kOptionCopyMarkdown[] = "tele-copy-markdown";
 @@ -710,6 +711,13 @@ base::options::toggle CalcmulaPreviewOption({
- 	.name = "Предпросмотр подсчетов калькулятора при вводе",
+ 	.name = "Preview calcmula results while typing",
  });
  
 +base::options::toggle CalcmulaInlineOption({
 +	.id = kOptionCalcmulaInline,
-+	.name = "Результаты калькулятора после знака =",
-+	.description = "Нажатие стрелки вправо или Tab вставляет результат вычислений калькулятора.",
++	.name = "Inline results after =",
++	.description = "Right arrow or Tab inserts the result.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle TranslateOutOption({
  	.id = kOptionTranslateOut,
- 	.name = "Переводить перед отправкой",
+ 	.name = "Translate before sending",
 @@ -1852,6 +1860,10 @@ bool CalcmulaPreview() {
  	return CalcmulaPreviewOption.value();
  }

@@ -59,12 +59,12 @@ index add2a4fd5c70bf836f653e0c7a3f7ebc9cb0468c..ddd12bc6e59967f91e82c4c223ec9091
  
 +base::options::toggle NoCollectibleTooltipOption({
 +	.id = kOptionNoCollectibleTooltip,
-+	.name = "Скрыть подсказки коллекционных статусов",
++	.name = "No tooltip for collectible statuses",
 +});
 +
  base::options::toggle PeerIdsWithoutSpacesOption({
  	.id = kOptionPeerIdsWithoutSpaces,
- 	.name = "ID без пробелов",
+ 	.name = "IDs without spaces",
 @@ -1215,6 +1221,10 @@ bool SeeTgButton() {
  	return SeeTgButtonOption.value();
  }

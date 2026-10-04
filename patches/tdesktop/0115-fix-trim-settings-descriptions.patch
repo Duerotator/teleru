@@ -130,11 +130,11 @@ index 0ac2e8d279d7c38d5ee553de3921d1669dbf948b..3375c1a9255c742f93e12226ac3819c2
 +		{ u"formatted"_q });
  	AddOptionToggle(builder, ::Tele::kOptionDockedAttachments);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
 @@ -1754,7 +1769,10 @@ void FillPrivacy(SectionBuilder &builder) {
  	AddGhostChats(builder);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Истории"_q);
+ 	AddGroupTitle(builder, u"Stories"_q);
 -	AddOptionToggle(builder, ::Tele::kOptionHideStories);
 +	AddOptionToggle(
 +		builder,
@@ -142,7 +142,7 @@ index 0ac2e8d279d7c38d5ee553de3921d1669dbf948b..3375c1a9255c742f93e12226ac3819c2
 +		{ u"rings"_q, u"userpics"_q });
  	AddOptionToggle(builder, ::Tele::kOptionInvisibleStories);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
 @@ -1765,7 +1783,10 @@ void FillPrivacy(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionHideIgnored);
  	AddGroupDivider(builder);
@@ -158,7 +158,7 @@ index 0ac2e8d279d7c38d5ee553de3921d1669dbf948b..3375c1a9255c742f93e12226ac3819c2
 @@ -1777,7 +1798,7 @@ void FillProfiles(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionBotApiPeerIds);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Профили"_q);
+ 	AddGroupTitle(builder, u"Profiles"_q);
 -	AddOptionToggle(builder, ::Tele::kOptionShowDc);
 +	AddOptionToggle(builder, ::Tele::kOptionShowDc, { u"dc"_q });
  	AddOptionToggle(builder, ::Tele::kOptionMergeIdDc);
@@ -216,7 +216,7 @@ index 0ac2e8d279d7c38d5ee553de3921d1669dbf948b..3375c1a9255c742f93e12226ac3819c2
  	if (button) {
  		SetupLink(button, u"tele-mtp-inspector"_q);
 @@ -2002,9 +2032,6 @@ void AddBackup(SectionBuilder &builder) {
- 		u"Импорт настроек..."_q,
+ 		u"Import settings..."_q,
  		::Tele::ImportSettingsBox,
  		{ u"backup"_q, u"restore"_q, u"load"_q, u"file"_q });
 -	AddAbout(builder, u"tele-export-settings"_q, ::Tele::Lower(
@@ -319,7 +319,7 @@ index d1af9e8183c186cd2fd2f0bdb238c9701ac516f1..68acf9a786bd70802eba967a93f591b4
  	const auto error = patternInner->add(
  		object_ptr<Ui::SlideWrap<Ui::FlatLabel>>(
 @@ -312,9 +312,8 @@ void LinkRewritesBox(not_null<Ui::GenericBox*> box) {
- 	box->setTitle(rpl::single(Lower(u"Автозамена ссылок"_q)));
+ 	box->setTitle(rpl::single(Lower(u"Link rewrites"_q)));
  	box->addRow(object_ptr<Ui::FlatLabel>(
  		box,
 -		Lower(u"Links you paste into a message are rewritten by the first "
@@ -378,7 +378,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -98,8 +98,6 @@ namespace {
  base::options::toggle HideStoriesOption({
  	.id = kOptionHideStories,
- 	.name = "Скрыть истории",
+ 	.name = "Hide stories",
 -	.description = "No stories bar, no rings around userpics, no stories in "
 -		"profiles.",
  	.restartRequired = true,
@@ -387,7 +387,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -119,7 +117,6 @@ base::options::toggle GhostOption({
  base::options::toggle GhostInMenuOption({
  	.id = kOptionGhostInMenu,
- 	.name = "Режим невидимки в главном меню",
+ 	.name = "Ghost mode in the main menu",
 -	.description = "A quick switch for ghost mode in the left menu.",
  });
  
@@ -405,7 +405,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -243,7 +239,7 @@ base::options::option<QString> GroupCallButtonOption({
  base::options::toggle BubbleBadgesOption({
  	.id = kOptionBubbleBadges,
- 	.name = "Бейджи рядом с именами",
+ 	.name = "Badges next to names in messages",
 -	.description = "Checkmarks and custom verification next to sender names.",
 +	.description = "Checkmarks and custom verification.",
  });
@@ -414,7 +414,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -272,8 +268,6 @@ base::options::toggle OpenLinksInAppsOption({
  base::options::option<QString> AppLinksOption({
  	.id = kOptionAppLinks,
- 	.name = "Открывать ссылки в приложениях",
+ 	.name = "Open links in apps",
 -	.description = "Spotify, Steam, Discord, Zoom and more open in their "
 -		"desktop app or in one you choose, instead of the browser.",
  });
@@ -423,7 +423,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -295,8 +289,7 @@ base::options::toggle CleanSentLinksOption({
  base::options::option<QString> LinkPreviewsOption({
  	.id = kOptionLinkPreviews,
- 	.name = "Автоматический предпросмотр ссылок",
+ 	.name = "Automatic link previews",
 -	.description = "A preview you add by hand, from the field's right-click "
 -		"menu or the preview options, is always sent.",
 +	.description = "Previews you add by hand are always sent.",
@@ -433,7 +433,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -320,8 +313,8 @@ base::options::toggle StaticUserpicsListOption({
  base::options::toggle ChatListNoReorderAnimationOption({
  	.id = kOptionChatListNoReorderAnimation,
- 	.name = "Мгновенное перемещение чатов в списке",
+ 	.name = "Move chats instantly in the list",
 -	.description = "No two-second pause in reordering while the mouse moves "
 -		"over the list. Still held while a chat is pressed.",
 +	.description = "No pause while the mouse is over the list, except while "
@@ -444,25 +444,25 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -333,44 +326,40 @@ base::options::toggle StaticUserpicsChatsOption({
  base::options::toggle HideMentionsButtonOption({
  	.id = kOptionHideMentionsButton,
- 	.name = "Скрыть кнопку перехода к упоминаниям (@)",
--	.description = "Скрыть кнопку @ над полем ввода при наличии непрочитанных упоминаний.",
+ 	.name = "Hide the mentions button",
+-	.description = "No @ button above the input field for unread mentions.",
  });
  
  base::options::toggle HideReactionsButtonOption({
  	.id = kOptionHideReactionsButton,
- 	.name = "Скрыть кнопку перехода к реакциям (❤️)",
--	.description = "Скрыть кнопку ❤️ над полем ввода при наличии непрочитанных реакций.",
+ 	.name = "Hide the reactions button",
+-	.description = "No heart button above the input field for unread reactions.",
  });
  
  base::options::toggle EmojiPanelClickOption({
  	.id = kOptionEmojiPanelClick,
- 	.name = "Открывать панель эмодзи только по клику",
--	.description = "Наведение курсора на кнопку эмодзи больше не открывает панель стикеров и GIF автоматически (только по клику).",
+ 	.name = "Open the emoji panel by click only",
+-	.description = "Hovering the emoji button no longer opens stickers and GIFs.",
  });
  
  base::options::toggle AttachMenuClickOption({
  	.id = kOptionAttachMenuClick,
- 	.name = "Открывать меню вложений только по клику",
+ 	.name = "Open the attach menu by click only",
 -	.description = "Hovering the paperclip no longer opens the attach menu. "
 -		"Applies to chats you open after switching it.",
 +	.description = "Applies to chats opened after the change.",
@@ -470,7 +470,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
--	.name = "Показывать ID подарков",
+-	.name = "Show gift IDs",
 -	.description = "In collectible gift cards, click to copy.",
 +	.name = "IDs on collectible gifts",
 +	.description = "Click to copy.",
@@ -494,14 +494,14 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -387,14 +376,12 @@ base::options::toggle BotApiPeerIdsOption({
  base::options::toggle ShowDcOption({
  	.id = kOptionShowDc,
- 	.name = "Показывать дата-центр",
+ 	.name = "Show data center",
 -	.description = "A DC row in profiles, known from the profile photo.",
 +	.description = "Known from the profile photo.",
  });
  
  base::options::toggle MergeIdDcOption({
  	.id = kOptionMergeIdDc,
- 	.name = "ID и дата-центр в одной строке",
+ 	.name = "ID and DC in one row",
 -	.description = "When both are shown, the DC goes next to the ID"
 -		" in the same row.",
  });
@@ -510,7 +510,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -418,7 +405,7 @@ base::options::option<QString> IgnoredUsersOption({
  base::options::toggle MessageSecondsOption({
  	.id = kOptionMessageSeconds,
- 	.name = "Секунды во времени сообщений",
+ 	.name = "Show seconds in message times",
 -	.description = "Service messages like joins and pins also show their time.",
 +	.description = "Service messages show their time too.",
  });
@@ -519,7 +519,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -449,7 +436,6 @@ base::options::option<QString> DeletedReplyOption({
  base::options::toggle RevealSpoilersOption({
  	.id = kOptionRevealSpoilers,
- 	.name = "Автоматически раскрывать спойлеры",
+ 	.name = "Reveal spoilers automatically",
 -	.description = "Text and media spoilers in chats and the chat list.",
  });
  
@@ -527,7 +527,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -467,9 +453,7 @@ base::options::toggle ScreenshotSecretMediaOption({
  base::options::toggle AllowScreenCaptureOption({
  	.id = kOptionAllowScreenCapture,
- 	.name = "Не блокировать захват экрана",
+ 	.name = "Never block screen capture",
 -	.description = "Tele windows never hide from screenshots, screen "
 -		"recording or screen sharing (NVIDIA, OBS, Discord), even for "
 -		"protected chats and disappearing media.",
@@ -538,7 +538,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -495,9 +479,7 @@ base::options::toggle CalcmulaOption({
  base::options::toggle CalcmulaPreviewOption({
  	.id = kOptionCalcmulaPreview,
- 	.name = "Предпросмотр подсчетов калькулятора при вводе",
+ 	.name = "Preview calcmula results while typing",
 -	.description = "Shows the result above the input field, like "
 -		"@calcmulabot inline. Only when \"Calculate with calcmula.app\" "
 -		"is on too.",
@@ -549,7 +549,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -509,8 +491,7 @@ base::options::toggle CopyEmojiIdOption({
  base::options::toggle ShotOption({
  	.id = kOptionShot,
- 	.name = "Шот в меню сообщений",
+ 	.name = "Shot in the message menu",
 -	.description = "Selected messages or one message can be saved as a "
 -		"picture.",
 +	.description = "Saves messages as a picture.",
@@ -559,7 +559,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -530,8 +511,8 @@ base::options::option<QString> ServerUrlOption({
  base::options::toggle ServerUsernamesOption({
  	.id = kOptionServerUsernames,
- 	.name = "Имена пользователей с сервера tele",
+ 	.name = "Usernames from the server",
 -	.description = "Extra @usernames the tele server gives to accounts, "
 -		"shown and usable like real ones.",
 +	.description = "Extra @usernames from the tele server, usable like "
@@ -580,27 +580,27 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -565,35 +545,30 @@ base::options::toggle SentToBottomOption({
  base::options::toggle QueueBehindMediaOption({
  	.id = kOptionQueueBehindMedia,
- 	.name = "Очередь сообщений за загружаемым медиа",
+ 	.name = "Queue messages behind uploading media",
 -	.description = "Messages sent during an upload go out after it, in order.",
  });
  
  base::options::toggle InlineWithoutViaOption({
  	.id = kOptionInlineWithoutVia,
- 	.name = "Отправлять инлайн-результаты без пометки «через бота»",
+ 	.name = "Send inline results without via",
 -	.description = "Sent as your own message, without the bot's buttons.",
 +	.description = "The bot's buttons are dropped too.",
  });
  
  base::options::toggle NoRichPastePromptOption({
  	.id = kOptionNoRichPastePrompt,
- 	.name = "Не предлагать отправку форматированного текста как rich message",
+ 	.name = "No rich message prompt on paste",
 -	.description = "Pasting formatted text won't offer to send it as a rich "
 -		"message.",
  });
  
  base::options::toggle PunctualScheduledOption({
  	.id = kOptionPunctualScheduled,
- 	.name = "Отправлять отложенные сообщения вовремя",
+ 	.name = "Send scheduled messages on time",
 -	.description = "While tele is online, it sends them itself at the set "
 -		"minute instead of waiting for Telegram, which can be a few "
 +	.description = "While running, tele sends them itself, Telegram can be "
@@ -609,7 +609,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::toggle HdPhotosOption({
  	.id = kOptionHdPhotos,
- 	.name = "Отправлять фото в HD по умолчанию",
+ 	.name = "Send photos in HD by default",
 -	.description = "Every send box starts with HD quality on, whatever was "
 -		"picked last time.",
 +	.description = "Ignores the choice from last time.",
@@ -619,15 +619,15 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
 @@ -606,59 +581,53 @@ base::options::option<QString> ChatBackgroundsOption({
  base::options::option<QString> UsernameAliasesOption({
  	.id = kOptionUsernameAliases,
- 	.name = "Псевдонимы пользователей (@алиасы)",
+ 	.name = "Username aliases",
 -	.description = "Your own @names for chats, set in a chat's menu. "
 -		"Clicking one opens the linked chat, sending one mentions it.",
-+	.description = "Собственные @алиасы для чатов (задаются в меню чата).",
++	.description = "Your own @names for chats, set in a chat's menu.",
  });
  
  base::options::toggle NoPhoneInHeaderOption({
  	.id = kOptionNoPhoneInHeader,
- 	.name = "Имена вместо номеров телефонов в шапке чатов",
+ 	.name = "Names instead of phone numbers in chats",
 -	.description = "People who shared their number with you but aren't in "
 -		"your contacts keep their name in the chat header. The number stays "
 -		"in their profile.",
@@ -637,7 +637,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::toggle NftPurchasePriceOption({
  	.id = kOptionNftPurchasePrice,
- 	.name = "Цены коллектиблов на дату покупки",
+ 	.name = "Collectible prices at the purchase date",
 -	.description = "Usernames and numbers show the dollar price at the TON "
 -		"rate of the day they were bought. Falls back to Fragment's price "
 -		"when the rate isn't available.",
@@ -647,7 +647,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::option<QString> LinkRewritesOption({
  	.id = kOptionLinkRewrites,
- 	.name = "Правила автозамены ссылок",
+ 	.name = "Link rewrites",
 -	.description = "Your own rules that rewrite links you paste into a "
 -		"message, like x.com to fixupx.com.",
 +	.description = "Applies to links you paste into a message.",
@@ -655,7 +655,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::option<QString> LocalNamesOption({
  	.id = kOptionLocalNames,
- 	.name = "Пользовательские имена (только для вас)",
+ 	.name = "Custom names",
 -	.description = "Names for people that only you see, set in a user's "
 -		"menu. Nothing is sent to Telegram.",
 +	.description = "Only you see them, set in a user's menu.",
@@ -663,7 +663,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::option<QString> AppIconOption({
  	.id = kOptionAppIcon,
- 	.name = "Иконка приложения",
+ 	.name = "App icon",
 -	.description = "Your own image for the windows, taskbar, Alt+Tab and "
 -		"dock. The exe file and pinned shortcuts keep the original icon.",
 +	.description = "The exe file and pinned shortcuts keep the original "
@@ -672,7 +672,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::option<QString> TrayIconOption({
  	.id = kOptionTrayIcon,
- 	.name = "Иконка в трее",
+ 	.name = "Tray icon",
 -	.description = "Your own image for the notification area. The "
 -		"monochrome tray icon setting takes priority.",
 +	.description = "The monochrome tray icon setting takes priority.",
@@ -680,7 +680,7 @@ index 180c759ff41869f0f2c477655f720fd6889cfa9f..5b83e88e0f9f808c73180496b9a66a90
  
  base::options::toggle LocalDraftsOption({
  	.id = kOptionLocalDrafts,
- 	.name = "Хранить черновики только на этом устройстве",
+ 	.name = "Keep drafts on this device",
 -	.description = "Drafts are never saved to the cloud, so other devices "
 -		"don't see them. Cloud drafts from other devices are ignored.",
 +	.description = "Drafts skip the cloud, and cloud drafts from other "

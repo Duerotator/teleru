@@ -306,7 +306,7 @@ index 92fa3c62388ca5760ea7393ae12029d8cfebb841..754986baf09b3a57bc58eee6fe5ac967
  
 +base::options::toggle InlineWithoutViaOption({
 +	.id = kOptionInlineWithoutVia,
-+	.name = "Отправлять инлайн-результаты без пометки «через бота»",
++	.name = "Send inline results without via",
 +	.description = "Sent as your own message, without the bot's buttons.",
 +});
 +

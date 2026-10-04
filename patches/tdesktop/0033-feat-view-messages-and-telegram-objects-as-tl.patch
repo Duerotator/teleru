@@ -278,7 +278,7 @@ index d15f66869555b1b717d4af02acf9eba8d89d5927..ffa9b5449c864ec2c88b0ab2ea8db699
  
 +base::options::toggle ViewAsTlOption({
 +	.id = kOptionViewAsTl,
-+	.name = "В виде TL",
++	.name = "View as TL",
 +	.description = "Adds View as TL to menus of messages, chats, "
 +		"profiles, topics, stickers, gifts, stories and folders: it "
 +		"fetches the object from the server and opens it on "
@@ -287,7 +287,7 @@ index d15f66869555b1b717d4af02acf9eba8d89d5927..ffa9b5449c864ec2c88b0ab2ea8db699
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -566,6 +576,10 @@ bool ScreenshotSecretMedia() {
  	return ScreenshotSecretMediaOption.value();
  }

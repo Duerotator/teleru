@@ -64,7 +64,7 @@ index 431ad10bb25286c95b4eb8eba8b960248731dd6c..5c55fc55ece56da0bf5add8cfbdf2c67
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -128,6 +128,7 @@ void TeleSection::setupContent() {
  	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Истории"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Stories"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionInvisibleStories);
  	Ui::AddSkip(content);
@@ -88,7 +88,7 @@ index 335ebec14f07215103e5c57caa960ef681dd8175..4500af757e95c76ca98abfa3219b8f3e
  
 +base::options::toggle InvisibleStoriesOption({
 +	.id = kOptionInvisibleStories,
-+	.name = "Анонимный просмотр историй",
++	.name = "Watch stories invisibly",
 +	.description = "Watching a story doesn't tell the server, so you "
 +		"don't appear among its viewers. Seen stories come back "
 +		"as unread after a restart. Reactions and replies still "

@@ -76,12 +76,12 @@ index 056e97d9adf2b3f361b82a1b4ed57b8e04643b59..c625b75e28427e71a7fae273190b2bc9
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Интерфейс"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Interface"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionLowercase);
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Истории"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Stories"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
  	AddOptionToggle(content, controller(), ::Tele::kOptionInvisibleStories);
 diff --git a/Telegram/SourceFiles/tele/tele_lowercase.cpp b/Telegram/SourceFiles/tele/tele_lowercase.cpp
@@ -193,7 +193,7 @@ index 19bcb8cfdd244247d11bf65fdc288e7565e5739b..6996ad1670e361cad8488b45a79137ff
  
 +base::options::toggle LowercaseOption({
 +	.id = kOptionLowercase,
-+	.name = "Все строчными буквами",
++	.name = "Lowercase everything",
 +	.description = "Every interface text is shown in lowercase, both "
 +		"the language pack and tele's own texts. Messages and names "
 +		"stay as they are.",
@@ -202,7 +202,7 @@ index 19bcb8cfdd244247d11bf65fdc288e7565e5739b..6996ad1670e361cad8488b45a79137ff
 +
  base::options::toggle HideCallsOption({
  	.id = kOptionHideCalls,
- 	.name = "Скрыть кнопки звонков",
+ 	.name = "Hide call buttons",
 @@ -196,6 +206,10 @@ bool GroupQuickReplies() {
  	return GroupQuickRepliesOption.value();
  }

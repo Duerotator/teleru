@@ -85,12 +85,12 @@ index 8fc79f81e2518a1570593b9890389363be8e5389..3e4f50b6a3793df8eb09a607d716df02
 +	};
 +	add(
 +		u"tele-export-settings"_q,
-+		u"Экспорт настроек..."_q,
++		u"Export settings..."_q,
 +		::Tele::ExportSettingsBox,
 +		{ u"backup"_q, u"share"_q, u"save"_q, u"file"_q });
 +	add(
 +		u"tele-import-settings"_q,
-+		u"Импорт настроек..."_q,
++		u"Import settings..."_q,
 +		::Tele::ImportSettingsBox,
 +		{ u"backup"_q, u"restore"_q, u"load"_q, u"file"_q });
 +	AddAbout(builder, ::Tele::Lower(u"Move tele settings to another "
@@ -104,10 +104,10 @@ index 8fc79f81e2518a1570593b9890389363be8e5389..3e4f50b6a3793df8eb09a607d716df02
  	AddServer(builder);
  	AddOptionToggle(builder, ::Tele::kOptionServerUsernames);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Резервная копия"_q);
++	AddGroupTitle(builder, u"Backup"_q);
 +	AddBackup(builder);
 +	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Обновления"_q);
+ 	AddGroupTitle(builder, u"Updates"_q);
  	AddUpdates(builder);
  }
 @@ -2222,6 +2260,7 @@ std::vector<std::pair<QString, Type>> TeleSettingsPaths() {

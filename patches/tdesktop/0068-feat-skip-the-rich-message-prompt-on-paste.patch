@@ -60,7 +60,7 @@ index 754986baf09b3a57bc58eee6fe5ac9679a278d1f..1341cbe70d0de68933b9cf114968b604
  
 +base::options::toggle NoRichPastePromptOption({
 +	.id = kOptionNoRichPastePrompt,
-+	.name = "Не предлагать отправку форматированного текста как rich message",
++	.name = "No rich message prompt on paste",
 +	.description = "Pasting formatted text won't offer to send it as a rich "
 +		"message.",
 +});

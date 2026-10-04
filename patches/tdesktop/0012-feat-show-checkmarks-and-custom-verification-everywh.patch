@@ -499,7 +499,7 @@ index 32652a620bb4683b031b85dc5ef8a6235e00717a..574166f99cd311622adf41d7d98bca5e
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -339,6 +339,7 @@ void TeleSection::setupContent() {
  	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Чаты"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
  	Ui::AddSkip(content);
@@ -813,14 +813,14 @@ index d0370bbca5569ae652b0317fe755d64f087f7def..b62c54c70128dd5483a27d28558ed7a5
  
 +base::options::toggle BubbleBadgesOption({
 +	.id = kOptionBubbleBadges,
-+	.name = "Бейджи рядом с именами",
++	.name = "Badges next to names in messages",
 +	.description = "Show checkmarks and custom verification next to "
 +		"sender names in message bubbles, where emoji statuses are.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -105,6 +113,10 @@ bool GroupQuickReplies() {
  	return GroupQuickRepliesOption.value();
  }

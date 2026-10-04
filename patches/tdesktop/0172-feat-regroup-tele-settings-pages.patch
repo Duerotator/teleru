@@ -27,13 +27,13 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  	AddGroupTitle(builder, u"App icon"_q);
  	AddAppIcons(builder);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Масштаб"_q);
++	AddGroupTitle(builder, u"Scale"_q);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionScaleOnePercent,
 +		{ u"zoom"_q, u"size"_q, u"interface"_q });
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Анимации"_q);
++	AddGroupTitle(builder, u"Animations"_q);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionReduceMotion,
@@ -92,7 +92,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 -		::Tele::kOptionNoAi,
 -		{ u"cocoon"_q, u"summary"_q, u"compose"_q, u"style"_q });
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Панели"_q);
++	AddGroupTitle(builder, u"Panels"_q);
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionEmojiPanelClick,
@@ -111,7 +111,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 -		::Tele::kOptionAttachMenuClick,
 -		{ u"hover"_q, u"paperclip"_q });
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Жесты"_q);
++	AddGroupTitle(builder, u"Gestures"_q);
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionNoGestures,
@@ -123,7 +123,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 +	AddGroupTitle(builder, u"Call buttons"_q);
  	AddCallButtons(builder);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Похожие каналы"_q);
++	AddGroupTitle(builder, u"Similar channels"_q);
  	AddOptionToggle(
  		builder,
  		::Tele::kOptionHideSimilar,
@@ -131,7 +131,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  		{},
  		::Tele::kOptionHideSimilar);
  	AddGroupDivider(builder);
--	AddGroupTitle(builder, u"Масштаб"_q);
+-	AddGroupTitle(builder, u"Scale"_q);
 +	AddGroupTitle(builder, u"Chat features"_q);
  	AddOptionToggle(
  		builder,
@@ -149,8 +149,8 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 +		::Tele::kOptionPinnedBarMenu,
 +		{ u"pinned messages"_q });
  	AddGroupDivider(builder);
--	AddGroupTitle(builder, u"Анимации"_q);
-+	AddGroupTitle(builder, u"Реклама"_q);
+-	AddGroupTitle(builder, u"Animations"_q);
++	AddGroupTitle(builder, u"Sponsored"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
 +	AddOptionToggle(builder, ::Tele::kOptionHideProxySponsor);
 +	AddGroupDivider(builder);
@@ -177,7 +177,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 -void FillChats(SectionBuilder &builder) {
 +void FillMessages(SectionBuilder &builder) {
  	AddSkip(builder);
- 	AddGroupTitle(builder, u"Сообщения"_q);
+ 	AddGroupTitle(builder, u"Messages"_q);
  	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
 @@ -2101,11 +2119,6 @@ void FillChats(SectionBuilder &builder) {
  		},
@@ -195,13 +195,13 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  		::Tele::kOptionReturnPoint,
  		{ u"jump"_q, u"scroll"_q });
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Блоки кода"_q);
++	AddGroupTitle(builder, u"Code blocks"_q);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionCodeLineNumbers,
 +		{ u"pre"_q, u"monospace"_q });
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Спойлеры"_q);
++	AddGroupTitle(builder, u"Spoilers"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionRevealSpoilers);
 +	AddGroupDivider(builder);
 +	AddGroupTitle(builder, u"Disappearing media"_q);
@@ -269,7 +269,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  		::Tele::kOptionDraftsMenu,
  		{ u"save"_q, u"discarded"_q });
  	AddGroupDivider(builder);
--	AddGroupTitle(builder, u"Уведомления"_q);
+-	AddGroupTitle(builder, u"Notifications"_q);
 +	AddGroupTitle(builder, u"Downloads"_q);
 +	AddOptionToggle(
 +		builder,
@@ -333,7 +333,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 +
 +void FillMenus(SectionBuilder &builder) {
 +	AddSkip(builder);
- 	AddGroupTitle(builder, u"Меню"_q);
+ 	AddGroupTitle(builder, u"Menus"_q);
  	AddMessageMenu(builder);
 +	AddGroupDivider(builder);
 +	AddGroupTitle(builder, u"Menu items"_q);
@@ -345,7 +345,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  		{ u"right click"_q, u"context"_q });
  	AddOptionToggle(builder, ::Tele::kOptionShot);
 -	AddGroupDivider(builder);
--	AddGroupTitle(builder, u"Чаты"_q);
+-	AddGroupTitle(builder, u"Chats"_q);
 -	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
 -	AddOptionToggle(
 -		builder,
@@ -395,7 +395,7 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
  
 @@ -2762,14 +2804,38 @@ void FillRoot(SectionBuilder &builder) {
  		u"interface"_q,
- 		u"Интерфейс"_q,
+ 		u"Interface"_q,
  		st::menuIconPalette,
 -		{ u"title"_q, u"lowercase"_q, u"badges"_q, u"userpics"_q },
 +		{ u"title"_q, u"lowercase"_q, u"scale"_q, u"chat list"_q },
@@ -405,37 +405,37 @@ index a93da059ae55bda306ee57eb58310c49f4893d0c..4ec3273cc9cef8dcb5bf471419cb24fc
 -		u"Chats and messages"_q,
 -		st::menuIconChatBubble,
 -		{ u"deleted"_q, u"edited"_q, u"links"_q, u"sponsored"_q },
-+		u"Чаты"_q,
++		u"Chats"_q,
 +		st::menuIconChats,
 +		{ u"badges"_q, u"userpics"_q, u"sponsored"_q, u"gestures"_q },
  		FillChats);
 +	add(
 +		u"messages"_q,
-+		u"Сообщения"_q,
++		u"Messages"_q,
 +		st::menuIconChatBubble,
 +		{ u"deleted"_q, u"edited"_q, u"bookmarks"_q, u"links"_q },
 +		FillMessages);
 +	add(
 +		u"sending"_q,
-+		u"Отправка"_q,
++		u"Sending"_q,
 +		st::menuIconSend,
 +		{ u"uploads"_q, u"drafts"_q, u"scheduled"_q, u"confirm"_q },
 +		FillSending);
 +	add(
 +		u"notifications"_q,
-+		u"Уведомления"_q,
++		u"Notifications"_q,
 +		st::menuIconNotifications,
 +		{ u"unread"_q, u"counters"_q, u"online"_q, u"mute"_q },
 +		FillNotifications);
 +	add(
 +		u"menus"_q,
-+		u"Меню"_q,
++		u"Menus"_q,
 +		st::menuIconReorder,
 +		{ u"context"_q, u"right click"_q, u"message menu"_q },
 +		FillMenus);
  	add(
  		u"privacy"_q,
- 		u"Конфиденциальность"_q,
+ 		u"Privacy"_q,
 @@ -2860,6 +2926,22 @@ void FillNew(SectionBuilder &builder) {
  		return;
  	}

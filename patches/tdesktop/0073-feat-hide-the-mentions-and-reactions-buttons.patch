@@ -141,19 +141,19 @@ index a2b64f3a3fa13d80f300fcfa7a674109620d51ca..9b36d078a77e9650be22095fe74fbf6e
  
 +base::options::toggle HideMentionsButtonOption({
 +	.id = kOptionHideMentionsButton,
-+	.name = "Скрыть кнопку перехода к упоминаниям (@)",
-+	.description = "Скрыть кнопку @ над полем ввода при наличии непрочитанных упоминаний.",
++	.name = "Hide the mentions button",
++	.description = "No @ button above the input field for unread mentions.",
 +});
 +
 +base::options::toggle HideReactionsButtonOption({
 +	.id = kOptionHideReactionsButton,
-+	.name = "Скрыть кнопку перехода к реакциям (❤️)",
-+	.description = "Скрыть кнопку ❤️ над полем ввода при наличии непрочитанных реакций.",
++	.name = "Hide the reactions button",
++	.description = "No heart button above the input field for unread reactions.",
 +});
 +
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Показывать ID подарков",
+ 	.name = "Show gift IDs",
 @@ -692,6 +706,22 @@ rpl::producer<> StaticUserpicsChatsChanges() {
  	return StaticUserpicsChatsOption.changes();
  }

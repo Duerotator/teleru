@@ -59,11 +59,11 @@ index fd3534130c3467ddaa81448ce7dd62fd1678045c..beec743960b7c2c4ce3a421c8f71aa71
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1890,6 +1890,7 @@ void FillRoot(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Сервер"_q);
+ 	AddGroupTitle(builder, u"Server"_q);
  	AddServer(builder);
 +	AddOptionToggle(builder, ::Tele::kOptionServerUsernames);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Обновления"_q);
+ 	AddGroupTitle(builder, u"Updates"_q);
  	AddUpdates(builder);
 diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
 index 2b58444ffef2a77cf6cca5cc9c06b493a1f3f26a..fc7d03846d2cf61960b1a383b9a43338a07529a0 100644
@@ -260,7 +260,7 @@ index 631780506f1ad40dae8f4f2b3b1613f83cd69f4a..6fceea04f5d57bb35c51b496b12d2626
  
 +base::options::toggle ServerUsernamesOption({
 +	.id = kOptionServerUsernames,
-+	.name = "Имена пользователей с сервера tele",
++	.name = "Usernames from the server",
 +	.description = "Extra @usernames the tele server gives to accounts, "
 +		"shown and usable like real ones.",
 +	.defaultValue = true,
@@ -268,7 +268,7 @@ index 631780506f1ad40dae8f4f2b3b1613f83cd69f4a..6fceea04f5d57bb35c51b496b12d2626
 +
  base::options::option<QString> TitleTemplateOption({
  	.id = kOptionTitleTemplate,
- 	.name = "Шаблон заголовка окна",
+ 	.name = "Title bar label",
 @@ -1046,6 +1055,14 @@ rpl::producer<QString> ServerUrlValue() {
  	});
  }

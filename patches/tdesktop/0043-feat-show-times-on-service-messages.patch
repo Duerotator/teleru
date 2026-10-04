@@ -56,7 +56,7 @@ index 331f11c0c8b5667e463018dff5c8f0ee422ff75f..81552d22fe7b5be5846c5c0800dff953
 @@ -255,6 +255,7 @@ base::options::option<QString> IgnoredUsersOption({
  base::options::toggle MessageSecondsOption({
  	.id = kOptionMessageSeconds,
- 	.name = "Секунды во времени сообщений",
+ 	.name = "Show seconds in message times",
 +	.description = "Service messages like joins and pins also show their time.",
  });
  

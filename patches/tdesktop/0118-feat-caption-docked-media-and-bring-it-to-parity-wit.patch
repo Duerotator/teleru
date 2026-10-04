@@ -2728,7 +2728,7 @@ index 80b067b8c2fcbc25ee2c0027ad4a15932f065261..715ab4175dbab9dbac3d858dbf9caf3c
 @@ -641,15 +641,13 @@ base::options::toggle LocalDraftsOption({
  base::options::toggle DockedAttachmentsOption({
  	.id = kOptionDockedAttachments,
- 	.name = "Прикреплять медиа над полем ввода (бета)",
+ 	.name = "Attach media above the field (beta)",
 -	.description = "Files dock above the input instead of opening the send "
 -		"box, kept per chat until sent.",
 +	.description = "Replaces the send box; attachments stay in the chat "
@@ -2737,7 +2737,7 @@ index 80b067b8c2fcbc25ee2c0027ad4a15932f065261..715ab4175dbab9dbac3d858dbf9caf3c
  
  base::options::toggle DockedGridOption({
  	.id = kOptionDockedGrid,
- 	.name = "Прикрепленные медиа сеткой альбома",
+ 	.name = "Docked media as album grid",
 -	.description = "The docked media tray shows albums the way they will "
 -		"be sent.",
  });

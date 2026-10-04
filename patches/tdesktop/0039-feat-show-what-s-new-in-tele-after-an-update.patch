@@ -54,7 +54,7 @@ index fd16672872cda51f4aeb2f42397923388bb254a5..b7a715850b278878e7e50200a6c1c255
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -827,6 +827,7 @@ void TeleSection::setupContent() {
  	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Обновления"_q)));
+ 	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Updates"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionShowChangelog);
  	AddUpdates(content);
@@ -339,7 +339,7 @@ index ac179dcc5e41fdf61deda28d84b4235693e4ce2d..97020eddedbe0715ba0d17a0f4aea726
 +
  base::options::toggle GroupQuickRepliesOption({
  	.id = kOptionGroupQuickReplies,
- 	.name = "Быстрые ответы в группах и каналах",
+ 	.name = "Quick replies in groups and channels",
 @@ -443,6 +460,18 @@ rpl::producer<bool> AutoUpdateValue() {
  	});
  }

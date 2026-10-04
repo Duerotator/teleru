@@ -56,7 +56,7 @@ index 3bb9c2d26070573afe3f7a7a079650a3fc4d2d3b..ae1acb075b7a82a5dc16bbff4c336067
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -974,6 +974,7 @@ void FillChats(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Чаты"_q);
+ 	AddGroupTitle(builder, u"Chats"_q);
  	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
 +	AddOptionToggle(builder, ::Tele::kOptionOpenLinksInApps);
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
@@ -381,7 +381,7 @@ index 27ad0f90ce728f9d2f17e670a5facd465a735503..89c5bc7d6e1c22153baad65cd1ba36b5
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
- 	.name = "Скрыть папку «Все чаты»",
+ 	.name = "Hide the All chats folder",
 @@ -497,6 +504,10 @@ bool NoLinkWarning() {
  	return NoLinkWarningOption.value();
  }

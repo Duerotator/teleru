@@ -646,12 +646,12 @@ index 3fa22c705fd983e096646f60f1b47b5c7ffce548..c49615d06d52b463324edfe9a3aad413
  const char kOptionBookmarks[] = "tele-bookmarks";
  const char kOptionReturnPoint[] = "tele-return-point";
 @@ -869,6 +871,16 @@ base::options::toggle DockedGridOption({
- 	.name = "Прикрепленные медиа сеткой альбома",
+ 	.name = "Docked media as album grid",
  });
  
 +base::options::toggle ResizableFieldOption({
 +	.id = kOptionResizableField,
-+	.name = "Изменяемая высота поля ввода",
++	.name = "Resizable message field",
 +});
 +
 +base::options::option<int> FieldHeightOption({
@@ -661,7 +661,7 @@ index 3fa22c705fd983e096646f60f1b47b5c7ffce548..c49615d06d52b463324edfe9a3aad413
 +
  base::options::toggle LocalFoldersOption({
  	.id = kOptionLocalFolders,
- 	.name = "Папки сверх лимита",
+ 	.name = "Folders past the limit",
 @@ -1896,6 +1908,32 @@ rpl::producer<> DockedGridChanges() {
  	return DockedGridOption.changes();
  }

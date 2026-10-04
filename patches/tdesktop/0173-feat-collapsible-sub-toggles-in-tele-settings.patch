@@ -997,7 +997,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..1e93c256f75296d562d5575ae6cedaa3
 @@ -2422,17 +2951,23 @@ void FillPrivacy(SectionBuilder &builder) {
  void FillProfiles(SectionBuilder &builder) {
  	AddSkip(builder);
- 	AddGroupTitle(builder, u"Идентификаторы (ID)"_q);
+ 	AddGroupTitle(builder, u"Peer IDs"_q);
 -	AddOptionToggle(builder, ::Info::Profile::kOptionShowPeerIdBelowAbout);
  	AddOptionToggle(
  		builder,
@@ -1023,7 +1023,7 @@ index 4ec3273cc9cef8dcb5bf471419cb24fcb79e9f3d..1e93c256f75296d562d5575ae6cedaa3
 +				::Info::Profile::kOptionShowPeerIdBelowAbout);
 +		});
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Профили"_q);
+ 	AddGroupTitle(builder, u"Profiles"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc, { u"dc"_q });
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index e7b5e6729e888e5fb967e8cda3381f1d987ef6e3..27335b086404677113b341deeeeefb215590395e 100644

@@ -80,7 +80,7 @@ index 63cd6fb62fb8c50581be8c7182cc296553210917..9ad55566f969546b75087c550d7dd2ab
 @@ -307,7 +307,7 @@ base::options::toggle EditHistoryOption({
  base::options::toggle KeepDeletedOption({
  	.id = kOptionKeepDeleted,
- 	.name = "Сохранять удаленные сообщения",
+ 	.name = "Keep deleted messages",
 -	.description = "Kept until tele restarts, marked as deleted.",
 +	.description = "Kept until tele restarts, including ones you delete yourself.",
  });

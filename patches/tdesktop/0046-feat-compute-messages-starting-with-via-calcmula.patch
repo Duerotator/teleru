@@ -96,7 +96,7 @@ index b78a3d6ad94c720d920058ab93ab9a8c8c9fe970..fa798e0af6ab33bed7d8a0846bd1ba58
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -958,6 +958,7 @@ void FillChats(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Отправка"_q);
+ 	AddGroupTitle(builder, u"Sending"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 +	AddOptionToggle(builder, ::Tele::kOptionCalcmula);
  	AddGroupDivider(builder);
@@ -461,7 +461,7 @@ index 69149320b4222096be4f3a384b363afe667ccfcb..77936b07bf533e95851a7cce10f097eb
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -612,6 +620,10 @@ bool ParallelUploads() {
  	return ParallelUploadsOption.value();
  }

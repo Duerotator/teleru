@@ -54,7 +54,7 @@ index 8e40a2637f0d1cedf5b6bda6de458f2061430f90..929b396734f0034ec3a092bc6b018664
  
 +base::options::toggle ChatListNoReorderAnimationOption({
 +	.id = kOptionChatListNoReorderAnimation,
-+	.name = "Мгновенное перемещение чатов в списке",
++	.name = "Move chats instantly in the list",
 +	.description = "No two-second pause in reordering while the mouse moves "
 +		"over the list. Still held while a chat is pressed.",
 +});

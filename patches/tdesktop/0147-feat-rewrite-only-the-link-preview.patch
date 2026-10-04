@@ -241,12 +241,12 @@ index ddd12bc6e59967f91e82c4c223ec9091790ec872..1417bf8d3637dda38f60f11cd5bdf688
  
 +base::options::toggle RewritePreviewOnlyOption({
 +	.id = kOptionRewritePreviewOnly,
-+	.name = "Перезаписывать только превью ссылки",
++	.name = "Rewrite only the preview",
 +});
 +
  base::options::option<QString> LocalNamesOption({
  	.id = kOptionLocalNames,
- 	.name = "Пользовательские имена (только для вас)",
+ 	.name = "Custom names",
 @@ -1655,6 +1661,10 @@ rpl::producer<QString> LinkRewritesValue() {
  	});
  }

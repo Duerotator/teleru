@@ -180,6 +180,10 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python tele\tele.py --tdesktop %TBUILD%\tdesktop apply
 
+      - name: Localize to Russian
+        run: |
+          python tele\ci\translate_ru.py %TBUILD%\tdesktop
+
       - name: Read toolchain versions
         shell: bash
         run: |
@@ -465,6 +469,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+          python3 tele/ci/translate_ru.py "$GITHUB_WORKSPACE/tdesktop"
 
       - name: Free disk space
         uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be
@@ -693,6 +698,7 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
           python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+          python3 tele/ci/translate_ru.py "$GITHUB_WORKSPACE/tdesktop"
 
       - name: Restore libraries
         run: |

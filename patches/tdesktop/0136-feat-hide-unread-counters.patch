@@ -368,23 +368,23 @@ index 6d457e87ec87686f5802ed2e2091ca655d5f3489..f858f3b5821aa5beb07d0ef96f3a1cfa
  
 +base::options::toggle HideCountersOption({
 +	.id = kOptionHideCounters,
-+	.name = "Скрыть счетчики непрочитанных",
++	.name = "Hide unread counters",
 +});
 +
 +base::options::toggle HideFolderCountersOption({
 +	.id = kOptionHideFolderCounters,
-+	.name = "На вкладках папок",
++	.name = "Folder tabs",
 +});
 +
 +base::options::toggle HideAppCounterOption({
 +	.id = kOptionHideAppCounter,
-+	.name = "На панели задач и в трее",
++	.name = "Taskbar and tray",
 +});
 +
 +base::options::toggle CounterSkipArchiveOption({
 +	.id = kOptionCounterSkipArchive,
-+	.name = "Исключить архив из счетчиков",
-+	.description = "Чаты из архива не учитываются в счетчике непрочитанных на панели задач и в трее.",
++	.name = "Leave out the archive",
++	.description = "Archived chats don't add to the taskbar and tray count.",
 +});
 +
 +base::options::option<QString> UncountedAccountsOption({

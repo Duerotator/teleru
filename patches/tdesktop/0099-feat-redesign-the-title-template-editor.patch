@@ -256,7 +256,7 @@ index 0000000000000000000000000000000000000000..b51ffcae6b67874d3f7623859ca482ca
 +		} },
 +	};
 +	if (window) {
-+		result.push_back({ u"Окно"_q, { { u"label"_q, { QString() } } } });
++		result.push_back({ u"Window"_q, { { u"label"_q, { QString() } } } });
 +	}
 +	return result;
 +}
@@ -664,7 +664,7 @@ index 0000000000000000000000000000000000000000..b51ffcae6b67874d3f7623859ca482ca
 +		RowMargins(st::boxRowPadding.left() / 2));
 +	const auto presets = Ui::CreateChild<Ui::LinkButton>(
 +		links,
-+		Lower(u"Пресеты"_q),
++		Lower(u"Presets"_q),
 +		st::boxLinkButton);
 +	links->resize(links->width(), presets->height());
 +	const auto menu = box->lifetime().make_state<

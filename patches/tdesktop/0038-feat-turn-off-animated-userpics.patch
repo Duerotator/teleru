@@ -220,7 +220,7 @@ index ab170d4adc6cfd45635a61f19a0d34b78c5e5236..ac179dcc5e41fdf61deda28d84b42356
 +
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Показывать ID подарков",
+ 	.name = "Show gift IDs",
 @@ -484,6 +501,22 @@ bool JumpToFirst() {
  	return JumpToFirstOption.value();
  }

@@ -154,7 +154,7 @@ index d6e87da8a35a3c983c39174b251d03231d7a3090..cb5653af7f6fccc2779399cf0c81d508
 -	AddButtonWithLabel(
 +	const auto server = AddButtonWithLabel(
  		container,
- 		rpl::single(u"Сервер"_q),
+ 		rpl::single(u"Server"_q),
  		::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
  			return url.isEmpty() ? u"off"_q : url;
  		}),
@@ -168,7 +168,7 @@ index d6e87da8a35a3c983c39174b251d03231d7a3090..cb5653af7f6fccc2779399cf0c81d508
 +	SetupLink(server, option.id());
 +	const auto refresh = container->add(object_ptr<Button>(
  		container,
- 		rpl::single(u"Обновить сейчас"_q),
+ 		rpl::single(u"Refresh now"_q),
 -		st::settingsButtonNoIcon
 -	))->setClickedCallback([=] {
 +		st::settingsButtonNoIcon));

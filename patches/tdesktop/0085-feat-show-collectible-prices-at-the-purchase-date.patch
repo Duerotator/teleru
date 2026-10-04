@@ -33,13 +33,13 @@ index 024a39523d1841cc4e74489f2ba7b3bc59a930da..c0129cc6a26dfa5eb07c8547e51ed40d
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1560,6 +1560,7 @@ void FillProfiles(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Профили"_q);
+ 	AddGroupTitle(builder, u"Profiles"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc);
  	AddOptionToggle(builder, ::Tele::kOptionNoPhoneInHeader);
 +	AddOptionToggle(builder, ::Tele::kOptionNftPurchasePrice);
  	AddLocalNames(builder);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Подарки"_q);
+ 	AddGroupTitle(builder, u"Gifts"_q);
 diff --git a/Telegram/SourceFiles/tele/tele_collectible_price.cpp b/Telegram/SourceFiles/tele/tele_collectible_price.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..056d50120ebbac79a209d1d9aaa89c524c6c44c8
@@ -283,7 +283,7 @@ index 929b396734f0034ec3a092bc6b018664efa25680..66c6a5d2ebdc44aee5f50ca049756eea
  
 +base::options::toggle NftPurchasePriceOption({
 +	.id = kOptionNftPurchasePrice,
-+	.name = "Цены коллектиблов на дату покупки",
++	.name = "Collectible prices at the purchase date",
 +	.description = "Usernames and numbers show the dollar price at the TON "
 +		"rate of the day they were bought. Falls back to Fragment's price "
 +		"when the rate isn't available.",
@@ -291,7 +291,7 @@ index 929b396734f0034ec3a092bc6b018664efa25680..66c6a5d2ebdc44aee5f50ca049756eea
 +
  base::options::option<QString> LinkRewritesOption({
  	.id = kOptionLinkRewrites,
- 	.name = "Правила автозамены ссылок",
+ 	.name = "Link rewrites",
 @@ -1099,6 +1108,10 @@ rpl::producer<bool> NoPhoneInHeaderValue() {
  	});
  }

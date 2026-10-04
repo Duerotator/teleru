@@ -2260,7 +2260,7 @@ index b5d53195d6a959dce878bc03a5249f33cc8d46f7..ac6e3f310ccc7375f58dc9658d06d0f4
 +
 +base::options::option<QString> ChangelogAccountsOption({
 +	.id = kOptionChangelogAccounts,
-+	.name = "Список изменений для каждого аккаунта",
++	.name = "Changelog per account",
 +	.description = "The tele build whose changes each account was shown.",
  });
  

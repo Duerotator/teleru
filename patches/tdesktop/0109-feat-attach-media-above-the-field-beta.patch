@@ -395,7 +395,7 @@ index 3e4f50b6a3793df8eb09a607d716df0289a2e970..db19fd3ca31b1ab6167bd53224a3c01b
  	AddOptionToggle(builder, ::Tele::kOptionNoRichPastePrompt);
 +	AddOptionToggle(builder, ::Tele::kOptionDockedAttachments);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
  	AddSavedDrafts(builder);
 diff --git a/Telegram/SourceFiles/tele/tele_docked_media.cpp b/Telegram/SourceFiles/tele/tele_docked_media.cpp
 new file mode 100644
@@ -4477,14 +4477,14 @@ index c64229ef0add3d18ff5079bf713ffef67c4c5894..a686c023698dd151c7ed1846f84f1b62
  
 +base::options::toggle DockedAttachmentsOption({
 +	.id = kOptionDockedAttachments,
-+	.name = "Прикреплять медиа над полем ввода (бета)",
++	.name = "Attach media above the field (beta)",
 +	.description = "Files dock above the input instead of opening the send "
 +		"box, kept per chat until sent.",
 +});
 +
 +base::options::toggle DockedGridOption({
 +	.id = kOptionDockedGrid,
-+	.name = "Прикрепленные медиа сеткой альбома",
++	.name = "Docked media as album grid",
 +	.description = "The docked media tray shows albums the way they will "
 +		"be sent.",
 +});

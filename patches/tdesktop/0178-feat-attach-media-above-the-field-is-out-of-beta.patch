@@ -15,8 +15,8 @@ index fa7943aec88612574529a254a46f58d4bec75296..b3f034765aa7d384f9ac0bc47f3da78c
  
  base::options::toggle DockedAttachmentsOption({
  	.id = kOptionDockedAttachments,
--	.name = "Прикреплять медиа над полем ввода (бета)",
-+	.name = "Прикреплять медиа над полем ввода",
+-	.name = "Attach media above the field (beta)",
++	.name = "Attach media above the field",
  	.description = "Replaces the send box; attachments stay in the chat "
  		"until sent.",
  });

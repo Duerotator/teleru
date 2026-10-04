@@ -371,7 +371,7 @@ index 05f0c6aed93799c31aa3eb90af0f1aead8965997..59f5c26f48c98f037b46be927a4d1abc
 +		::Tele::kOptionStickerCaptionsShow,
 +		{ u"text"_q, u"message"_q });
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Панели"_q);
+ 	AddGroupTitle(builder, u"Panels"_q);
  	AddOptionToggle(
 @@ -2785,6 +2789,10 @@ void FillSending(SectionBuilder &builder) {
  		builder,
@@ -398,18 +398,18 @@ index b3f034765aa7d384f9ac0bc47f3da78cfb576304..3c15fb50ad899906cfc4b7b38cf6099f
  namespace {
  
 @@ -1141,6 +1143,19 @@ base::options::toggle HidePhoneInProfileOption({
- 	.name = "Скрыть номера телефонов в профилях",
+ 	.name = "Hide phone numbers in profiles",
  });
  
 +base::options::toggle StickerCaptionsShowOption({
 +	.id = kOptionStickerCaptionsShow,
-+	.name = "Показывать подписи к стикерам",
++	.name = "Show sticker captions",
 +	.description = "Also in the chat list, replies and notifications.",
 +});
 +
 +base::options::toggle StickerCaptionsSendOption({
 +	.id = kOptionStickerCaptionsSend,
-+	.name = "Отправлять стикеры с подписями",
++	.name = "Send stickers with captions",
 +	.description = "A sticker picked while the field has text takes it "
 +		"as a caption, and captions of your stickers can be edited.",
 +});

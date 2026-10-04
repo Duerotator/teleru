@@ -124,17 +124,17 @@ index c49615d06d52b463324edfe9a3aad413934c8d90..40d769e388967b9f65d56737b2bd78c9
  
 +base::options::toggle StreamerModeOption({
 +	.id = kOptionStreamerMode,
-+	.name = "Режим стримера",
++	.name = "Streamer mode",
 +});
 +
 +base::options::toggle StreamerModeInMenuOption({
 +	.id = kOptionStreamerModeInMenu,
-+	.name = "Режим стримера в главном меню",
++	.name = "Streamer mode in the main menu",
 +});
 +
  base::options::toggle ViewAsTlOption({
  	.id = kOptionViewAsTl,
- 	.name = "В виде TL",
+ 	.name = "View as TL",
 @@ -1530,6 +1542,28 @@ rpl::producer<> AllowScreenCaptureChanges() {
  	return AllowScreenCaptureOption.changes();
  }
@@ -314,7 +314,7 @@ index 0000000000000000000000000000000000000000..381da4b4e3d0b7be6064191b4245d492
 +	}
 +	const auto button = Settings::AddButtonWithIcon(
 +		container,
-+		rpl::single(Lower(u"Режим стримера"_q)),
++		rpl::single(Lower(u"Streamer mode"_q)),
 +		st::mainMenuButton,
 +		{ &st::menuIconStartStream });
 +	button->toggleOn(StreamerModeValue());

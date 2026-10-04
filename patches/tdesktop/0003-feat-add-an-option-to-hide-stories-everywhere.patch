@@ -241,7 +241,7 @@ index 56e5327dc7f466f2f5c3216565593299a91b69d1..431ad10bb25286c95b4eb8eba8b96024
  	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
  
 +	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Истории"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Stories"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
 +	Ui::AddSkip(content);
 +
@@ -266,7 +266,7 @@ index 0000000000000000000000000000000000000000..335ebec14f07215103e5c57caa960ef6
 +
 +base::options::toggle HideStoriesOption({
 +	.id = kOptionHideStories,
-+	.name = "Скрыть истории",
++	.name = "Hide stories",
 +	.description = "No stories anywhere: no stories bar, no rings around "
 +		"userpics, no stories in profiles, story messages show "
 +		"as expired and story links don't open.",

@@ -77,7 +77,7 @@ index d1bcc0d0d1d5ad663bf2de1e4300f73febde84ee..32fea520f63ed3beb1d6416de56352cc
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -960,6 +960,7 @@ void FillChats(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Отправка"_q);
+ 	AddGroupTitle(builder, u"Sending"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
  	AddOptionToggle(builder, ::Tele::kOptionCalcmula);
 +	AddOptionToggle(builder, ::Tele::kOptionSentToBottom);
@@ -102,7 +102,7 @@ index 0e3d18d806568a31dafd3b013457493366227234..bf0171ccf96a021e17e312550cf3b989
  
 +base::options::toggle SentToBottomOption({
 +	.id = kOptionSentToBottom,
-+	.name = "Перемещать долго отправляемые сообщения вниз",
++	.name = "Move late-sent messages to the bottom",
 +	.description = "When a slow upload finishes after newer messages.",
 +});
 +

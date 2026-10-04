@@ -184,7 +184,7 @@ index 4a4905394acb68e8e6479d947aafa96b286fd080..fa7943aec88612574529a254a46f58d4
 +
  base::options::toggle RevealSpoilersOption({
  	.id = kOptionRevealSpoilers,
- 	.name = "Автоматически раскрывать спойлеры",
+ 	.name = "Reveal spoilers automatically",
 @@ -1739,6 +1745,24 @@ rpl::producer<QString> DeletedReplyValue() {
  	});
  }

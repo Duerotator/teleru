@@ -176,8 +176,8 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	const auto button = container->add(object_ptr<Button>(
  		container,
  		::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
--			return ready ? u"Restart to update"_q : u"Проверить обновления"_q;
-+			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Проверить обновления"_q);
+-			return ready ? u"Restart to update"_q : u"Check for updates"_q;
++			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Check for updates"_q);
  		}),
  		st::settingsButtonNoIcon));
  	button->setClickedCallback([] {
@@ -203,8 +203,8 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  		::Tele::kOptionServerUrl);
  	const auto server = AddButtonWithLabel(
  		container,
--		rpl::single(u"Сервер"_q),
-+		rpl::single(::Tele::Lower(u"Сервер"_q)),
+-		rpl::single(u"Server"_q),
++		rpl::single(::Tele::Lower(u"Server"_q)),
  		::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
  			return url.isEmpty() ? u"off"_q : url;
  		}),
@@ -212,8 +212,8 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	SetupLink(server, option.id());
  	const auto refresh = container->add(object_ptr<Button>(
  		container,
--		rpl::single(u"Обновить сейчас"_q),
-+		rpl::single(::Tele::Lower(u"Обновить сейчас"_q)),
+-		rpl::single(u"Refresh now"_q),
++		rpl::single(::Tele::Lower(u"Refresh now"_q)),
  		st::settingsButtonNoIcon));
  	refresh->setClickedCallback([=] {
  		::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
@@ -409,27 +409,27 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
  
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Заголовок окна"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Заголовок окна"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Title bar"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Title bar"_q)));
  	AddTitle(content, controller());
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Интерфейс"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Интерфейс"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Interface"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Interface"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionLowercase);
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Истории"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Истории"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Stories"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Stories"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
  	AddOptionToggle(content, controller(), ::Tele::kOptionInvisibleStories);
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Режим невидимки"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Режим невидимки"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Ghost mode"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Ghost mode"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionGhost);
  	AddOptionToggle(content, controller(), ::Tele::kOptionGhostRead);
  	AddOptionToggle(content, controller(), ::Tele::kOptionGhostReadOnReply);
@@ -437,14 +437,14 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Боты"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Боты"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Bots"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Bots"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Чаты"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Чаты"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Chats"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
  	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
  	AddOptionToggle(content, controller(), ::Tele::kOptionHideCalls);
@@ -459,8 +459,8 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Сообщения"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Сообщения"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Messages"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
  	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
  	AddOptionToggle(content, controller(), ::Tele::kOptionKeepDeleted);
@@ -468,8 +468,8 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Подарки"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Gifts"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
@@ -483,14 +483,14 @@ index 0aba283d6766ec3e9dc6870018933624006f5ba4..ee42faab20b039a07644c60cb6729277
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Сервер"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Сервер"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Server"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Server"_q)));
  	AddServer(content, controller());
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(u"Обновления"_q));
-+	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Обновления"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(u"Updates"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Updates"_q)));
  	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
  	AddUpdates(content);
  	Ui::AddSkip(content);
@@ -667,8 +667,8 @@ index b43d5943b72c8a1e3ed57016b78b0cbba7928803..7772d51fd1d7c2deb381822953e16828
  void AddGhostMenuToggle(not_null<Ui::VerticalLayout*> container) {
  	const auto button = Settings::AddButtonWithIcon(
  		container,
--		rpl::single(u"Режим невидимки"_q),
-+		rpl::single(Lower(u"Режим невидимки"_q)),
+-		rpl::single(u"Ghost mode"_q),
++		rpl::single(Lower(u"Ghost mode"_q)),
  		st::mainMenuButton,
  		{ &st::menuIconStealth });
  	button->toggleOn(GhostValue());

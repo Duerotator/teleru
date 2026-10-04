@@ -154,7 +154,7 @@ index 0669631de73e1ccc02ce556fd3924c14fc90dc4f..594c123788c815d0ed728eba7b823712
 +
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Показывать ID подарков",
+ 	.name = "Show gift IDs",
 @@ -310,6 +318,10 @@ rpl::producer<> HideAllChatsChanges() {
  	return HideAllChatsOption.changes();
  }

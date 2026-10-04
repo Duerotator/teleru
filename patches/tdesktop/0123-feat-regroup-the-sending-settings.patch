@@ -16,7 +16,7 @@ index 8e747a31e4968abf6ff4c866b514afb974ae8eb9..061ff6b474cd19c70157a9a72f7e6d4b
  	AddOptionToggle(builder, ::Tele::kOptionRevealSpoilers);
  	AddOptionToggle(builder, ::Tele::kOptionCopyProtected);
  	AddGroupDivider(builder);
--	AddGroupTitle(builder, u"Отправка"_q);
+-	AddGroupTitle(builder, u"Sending"_q);
 -	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 -	AddOptionToggle(builder, ::Tele::kOptionCalcmula);
 -	AddOptionToggle(builder, ::Tele::kOptionCalcmulaPreview);
@@ -56,7 +56,7 @@ index 8e747a31e4968abf6ff4c866b514afb974ae8eb9..061ff6b474cd19c70157a9a72f7e6d4b
 +	AddGroupTitle(builder, u"Scheduled messages"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionPunctualScheduled);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
  	AddSavedDrafts(builder);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index a94a90640ff4f7afbceaa3833a885d3687b76826..5e4027046bddcb7d11bae5ca4746dc4aed13c1d9 100644
@@ -65,7 +65,7 @@ index a94a90640ff4f7afbceaa3833a885d3687b76826..5e4027046bddcb7d11bae5ca4746dc4a
 @@ -587,8 +587,7 @@ base::options::toggle NoRichPastePromptOption({
  base::options::toggle PunctualScheduledOption({
  	.id = kOptionPunctualScheduled,
- 	.name = "Отправлять отложенные сообщения вовремя",
+ 	.name = "Send scheduled messages on time",
 -	.description = "While running, tele sends them itself, Telegram can be "
 -		"minutes late.",
 +	.description = "Tele sends them itself while it's running.",

@@ -363,14 +363,14 @@ index 5a94ead1a746891c3e4ead4400fd7bbc97e5d0c8..843de244515192e42b1541b2dafcab0c
  
 +base::options::toggle UnsortedFolderOption({
 +	.id = kOptionUnsortedFolder,
-+	.name = "Папка «Без папки» (несортированные)",
++	.name = "Unsorted folder",
 +	.description = "Every chat that isn't in another folder, except "
 +		"archived ones.",
 +});
 +
  base::options::toggle BookmarksOption({
  	.id = kOptionBookmarks,
- 	.name = "Закладки сообщений",
+ 	.name = "Message bookmarks",
 @@ -1988,6 +1996,20 @@ rpl::producer<bool> LocalFoldersValue() {
  	});
  }

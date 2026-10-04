@@ -67,7 +67,7 @@ index 683522616e82fd7d27815b02bfddc4b0d0202905..ee64219dedb5fee7c60a42035f5edbc0
 +	AddOptionToggle(builder, ::Tele::kOptionHdPhotos);
  	AddOptionToggle(builder, ::Tele::kOptionNoRichPastePrompt);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 52505e516c25d4ec50cf4eb2bb6fa18e92afb0eb..04e9e0ff54b67de6dbf3a57cc4840b0c2467db90 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
@@ -86,7 +86,7 @@ index 52505e516c25d4ec50cf4eb2bb6fa18e92afb0eb..04e9e0ff54b67de6dbf3a57cc4840b0c
  
 +base::options::toggle HdPhotosOption({
 +	.id = kOptionHdPhotos,
-+	.name = "Отправлять фото в HD по умолчанию",
++	.name = "Send photos in HD by default",
 +	.description = "Every send box starts with HD quality on, whatever was "
 +		"picked last time.",
 +	.defaultValue = true,
@@ -94,7 +94,7 @@ index 52505e516c25d4ec50cf4eb2bb6fa18e92afb0eb..04e9e0ff54b67de6dbf3a57cc4840b0c
 +
  base::options::option<QString> ChatBackgroundsOption({
  	.id = kOptionChatBackgrounds,
- 	.name = "Локальные фоны чатов",
+ 	.name = "Chat backgrounds",
 @@ -1182,6 +1191,10 @@ bool PunctualScheduled() {
  	return PunctualScheduledOption.value();
  }

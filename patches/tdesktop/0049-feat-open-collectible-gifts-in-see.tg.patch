@@ -151,7 +151,7 @@ index 77936b07bf533e95851a7cce10f097eb89d09be4..0e3d18d806568a31dafd3b0134574933
 +
  base::options::toggle PeerIdsWithoutSpacesOption({
  	.id = kOptionPeerIdsWithoutSpaces,
- 	.name = "ID без пробелов",
+ 	.name = "IDs without spaces",
 @@ -508,6 +515,10 @@ bool ShowGiftIds() {
  	return ShowGiftIdsOption.value();
  }

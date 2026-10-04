@@ -106,7 +106,7 @@ index a0159082efbda3582ad0d4f6da0703f11986d832..d61a0da1741379e2526abe81c1b2520e
 +	AddOptionToggle(builder, ::Tele::kOptionCopyMarkdown);
  	AddOptionToggle(builder, ::Tele::kOptionShot);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Чаты"_q);
+ 	AddGroupTitle(builder, u"Chats"_q);
 diff --git a/Telegram/SourceFiles/tele/tele_copy_markdown.cpp b/Telegram/SourceFiles/tele/tele_copy_markdown.cpp
 new file mode 100644
 index 0000000000000000000000000000000000000000..21c3a2ddfb14d82a1d9dd62122c5cb6405d1f9bf
@@ -700,12 +700,12 @@ index 67506ace78d2a44fd03a6a3345456b54e8e00fe2..5de407bb8c633a73c180c68ac56a675e
  
 +base::options::toggle CopyMarkdownOption({
 +	.id = kOptionCopyMarkdown,
-+	.name = "Копировать как Markdown и HTML",
++	.name = "Copy as Markdown and HTML",
 +});
 +
  base::options::toggle ShotOption({
  	.id = kOptionShot,
- 	.name = "Шот в меню сообщений",
+ 	.name = "Shot in the message menu",
 @@ -1375,6 +1381,10 @@ bool CopyEmojiId() {
  	return CopyEmojiIdOption.value();
  }

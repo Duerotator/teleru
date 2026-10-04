@@ -210,7 +210,7 @@ index 8674cb05c49e20b31aeabe2ebcb14a41b1ba69e8..a93da059ae55bda306ee57eb58310c49
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -2253,6 +2253,10 @@ void FillChats(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Чаты"_q);
+ 	AddGroupTitle(builder, u"Chats"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
 +	AddOptionToggle(
 +		builder,
@@ -237,14 +237,14 @@ index 82f4e704127453c42313b9ffbe39dae27e9957da..e7b5e6729e888e5fb967e8cda3381f1d
  
 +base::options::toggle RegexSearchOption({
 +	.id = kOptionRegexSearch,
-+	.name = "Поиск по регулярным выражениям (RegEx)",
++	.name = "Regex search in chats",
 +	.description = "Matches only messages already loaded, without asking "
 +		"the server.",
 +});
 +
  base::options::toggle LowercaseOption({
  	.id = kOptionLowercase,
- 	.name = "Все строчными буквами",
+ 	.name = "Lowercase everything",
 @@ -1265,6 +1273,20 @@ bool GroupQuickReplies() {
  	return GroupQuickRepliesOption.value();
  }

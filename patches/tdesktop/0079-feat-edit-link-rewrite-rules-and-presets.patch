@@ -74,7 +74,7 @@ index dc760d8d2ff556a6fa1e94e1ef703333652a1f8d..d072c676a17457741f60e357236ff64a
 +
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Заголовок окна"_q);
+ 	AddGroupTitle(builder, u"Title bar"_q);
 @@ -1315,6 +1347,7 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionCleanOpenedLinks);
  	AddOptionToggle(builder, ::Tele::kOptionCleanSentLinks);
@@ -400,7 +400,7 @@ index 0000000000000000000000000000000000000000..d1af9e8183c186cd2fd2f0bdb238c970
 +	const auto show = box->uiShow();
 +
 +	box->setWidth(st::boxWideWidth);
-+	box->setTitle(rpl::single(Lower(u"Автозамена ссылок"_q)));
++	box->setTitle(rpl::single(Lower(u"Link rewrites"_q)));
 +	box->addRow(object_ptr<Ui::FlatLabel>(
 +		box,
 +		Lower(u"Links you paste into a message are rewritten by the first "

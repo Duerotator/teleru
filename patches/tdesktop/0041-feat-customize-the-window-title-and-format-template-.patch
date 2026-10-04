@@ -183,7 +183,7 @@ index 97020eddedbe0715ba0d17a0f4aea7269d063549..22d865d1590a766b395912c84403148b
  
 +base::options::option<QString> WindowTitleTemplateOption({
 +	.id = kOptionWindowTitleTemplate,
-+	.name = "Заголовок окна в системе",
++	.name = "Window title",
 +	.description = "The title the system shows in the taskbar, Alt+Tab "
 +		"and the system window frame, with the same variables as the "
 +		"label and {label} for the label itself. Empty keeps the "

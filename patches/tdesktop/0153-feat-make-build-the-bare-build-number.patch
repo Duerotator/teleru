@@ -35,7 +35,7 @@ index bd442cc7e5247c3a8fdffdfc2d51cb619245ae8c..9d7ee736433d216d4a2540e5b5856792
  const char kOptionQueueBehindMedia[] = "tele-queue-behind-media";
 @@ -619,7 +621,7 @@ base::options::option<QString> TitleTemplateOption({
  	.id = kOptionTitleTemplate,
- 	.name = "Шаблон заголовка окна",
+ 	.name = "Title bar label",
  	.description = "A live template, empty hides the label.",
 -	.defaultValue = u"TELE {build}"_q,
 +	.defaultValue = u"TELE #{build}"_q,

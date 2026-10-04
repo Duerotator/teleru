@@ -69,12 +69,12 @@ index 5c432ffed51471aa72113fa6b028755a77252afb..2e858a9acceed6d41e8ec651153d56ff
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Сообщения"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
@@ -128,14 +128,14 @@ index 76c4449d77364d4693adc1a799caac8c2cdd535e..67d3bd386647abab556894201b74de3b
  
 +base::options::toggle MessageSecondsOption({
 +	.id = kOptionMessageSeconds,
-+	.name = "Секунды во времени сообщений",
++	.name = "Show seconds in message times",
 +	.description = "Times in message bubbles show seconds too, "
 +		"like 14:03:21.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -204,6 +212,20 @@ rpl::producer<QString> IgnoredListValue() {
  	});
  }

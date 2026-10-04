@@ -85,7 +85,7 @@ index bbc7d80237b4d962f3e3f972957b0f088b8dbb1e..cd50a79dbbd96fb60fbbcd648dbe5c6d
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -377,6 +386,10 @@ bool KeepSecretMedia() {
  	return KeepSecretMediaOption.value();
  }

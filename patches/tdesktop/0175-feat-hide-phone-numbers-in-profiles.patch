@@ -63,12 +63,12 @@ index f271a56959338e331155996f27ed54e3a55217df..4a4905394acb68e8e6479d947aafa96b
  namespace {
  
 @@ -1129,6 +1130,11 @@ base::options::option<QString> TranslateOutToOption({
- 	.name = "Переводить сообщения на",
+ 	.name = "Translate your message to",
  });
  
 +base::options::toggle HidePhoneInProfileOption({
 +	.id = kOptionHidePhoneInProfile,
-+	.name = "Скрыть номера телефонов в профилях",
++	.name = "Hide phone numbers in profiles",
 +});
 +
  void MigrateHideCalls() {

@@ -309,7 +309,7 @@ index 0be5532022359fbd252d01f5c9f1bd4beb0b6417..206087a571e57b0a32f0bcfea0691ee6
 +
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Заголовок окна"_q);
+ 	AddGroupTitle(builder, u"Title bar"_q);
 @@ -1094,6 +1218,7 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
  	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
@@ -922,8 +922,8 @@ index 1341cbe70d0de68933b9cf114968b604b20fc076..85ffa49be0ee4b1f69aff978096f56a9
  
 +base::options::option<QString> ChatBackgroundsOption({
 +	.id = kOptionChatBackgrounds,
-+	.name = "Локальные фоны чатов",
-+	.description = "Чаты с индивидуальным фоном, который видите только вы (настраивается в меню чата).",
++	.name = "Chat backgrounds",
++	.description = "Chats with a background only you see, set in a chat's menu.",
 +});
 +
  void MigrateHideCalls() {

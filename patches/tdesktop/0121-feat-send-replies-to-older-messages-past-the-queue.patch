@@ -64,18 +64,18 @@ index 859165cd368ae992b5c0e071de2dad7d6fadac93..1e4423d2ba567030293b7e94e99356ae
  const char kOptionNoRichPastePrompt[] = "tele-no-rich-paste-prompt";
  const char kOptionPunctualScheduled[] = "tele-punctual-scheduled";
 @@ -560,6 +561,12 @@ base::options::toggle QueueBehindMediaOption({
- 	.name = "Очередь сообщений за загружаемым медиа",
+ 	.name = "Queue messages behind uploading media",
  });
  
 +base::options::toggle SendOlderRepliesOption({
 +	.id = kOptionSendOlderReplies,
-+	.name = "Отправлять ответы на старые сообщения без очереди",
++	.name = "Send replies to older messages right away",
 +	.description = "Older than the uploading media.",
 +});
 +
  base::options::toggle InlineWithoutViaOption({
  	.id = kOptionInlineWithoutVia,
- 	.name = "Отправлять инлайн-результаты без пометки «через бота»",
+ 	.name = "Send inline results without via",
 @@ -1266,6 +1273,14 @@ rpl::producer<> QueueBehindMediaChanges() {
  	return QueueBehindMediaOption.changes();
  }

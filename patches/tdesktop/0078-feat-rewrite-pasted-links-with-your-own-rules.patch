@@ -832,7 +832,7 @@ index 84f26d93b79a83bac7a1cbaf7c85382e2171f84d..f48b696e5eb39f3295230e2b1f8a6ebd
  
 +base::options::option<QString> LinkRewritesOption({
 +	.id = kOptionLinkRewrites,
-+	.name = "Правила автозамены ссылок",
++	.name = "Link rewrites",
 +	.description = "Your own rules that rewrite links you paste into a "
 +		"message, like x.com to fixupx.com.",
 +});

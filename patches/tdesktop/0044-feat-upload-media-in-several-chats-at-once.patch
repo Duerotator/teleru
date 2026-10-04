@@ -33,7 +33,7 @@ index 46b917be98d627067c1cbec9cc41c47b5a4a3d7e..b78a3d6ad94c720d920058ab93ab9a8c
  	AddOptionToggle(builder, ::Tele::kOptionKeepDeleted);
  	AddOptionToggle(builder, ::Tele::kOptionDeletedIcon);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Отправка"_q);
++	AddGroupTitle(builder, u"Sending"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 +	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Disappearing media"_q);
@@ -104,7 +104,7 @@ index 81552d22fe7b5be5846c5c0800dff953a11a0d00..69149320b4222096be4f3a384b363afe
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -601,6 +608,10 @@ bool ViewAsTl() {
  	return ViewAsTlOption.value();
  }

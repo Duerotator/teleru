@@ -296,12 +296,12 @@ index 1223f51ae2a10b7e73c78f89272e81ba1bf1e1d5..3cf4ab5018e91ac86a760be4313f7184
  const char kOptionHdPhotos[] = "tele-hd-photos";
  const char kOptionChatBackgrounds[] = "tele-chat-backgrounds";
 @@ -601,6 +603,17 @@ base::options::toggle HideGiftButtonOption({
- 	.name = "Скрыть кнопку подарка в строке ввода",
+ 	.name = "Hide the gift button in the message field",
  });
  
 +base::options::toggle SilentByDefaultOption({
 +	.id = kOptionSilentByDefault,
-+	.name = "Отправлять без звука по умолчанию",
++	.name = "Send silently by default",
 +});
 +
 +base::options::toggle SilentPerChatOption({
@@ -312,7 +312,7 @@ index 1223f51ae2a10b7e73c78f89272e81ba1bf1e1d5..3cf4ab5018e91ac86a760be4313f7184
 +
  base::options::toggle PunctualScheduledOption({
  	.id = kOptionPunctualScheduled,
- 	.name = "Отправлять отложенные сообщения вовремя",
+ 	.name = "Send scheduled messages on time",
 @@ -1355,6 +1368,22 @@ rpl::producer<> HideGiftButtonChanges() {
  	return HideGiftButtonOption.changes();
  }

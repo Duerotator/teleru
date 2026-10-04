@@ -400,7 +400,7 @@ index cb5653af7f6fccc2779399cf0c81d50861a0fb34..5c432ffed51471aa72113fa6b028755a
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
@@ -745,21 +745,21 @@ index b34c5a7d33ad1aef8b9672299c843a7afe766281..76c4449d77364d4693adc1a799caac8c
  
 +base::options::toggle HideIgnoredOption({
 +	.id = kOptionHideIgnored,
-+	.name = "Полностью скрывать сообщения игнорируемых",
++	.name = "Hide ignored messages completely",
 +	.description = "Messages from ignored users disappear from chats. "
 +		"When off, they are shown faded.",
 +});
 +
 +base::options::option<QString> IgnoredUsersOption({
 +	.id = kOptionIgnoredUsers,
-+	.name = "Игнорируемые пользователи",
++	.name = "Ignored users",
 +	.description = "People whose messages are faded or hidden in chats. "
 +		"Right-click a userpic in a group to ignore someone.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "Сервер tele",
+ 	.name = "tele server",
 @@ -160,6 +176,34 @@ rpl::producer<> PeerIdFormatChanges() {
  		BotApiPeerIdsOption.changes());
  }

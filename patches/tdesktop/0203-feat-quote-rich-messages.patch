@@ -192,7 +192,7 @@ index a87a5d28524f7c0b6c03fac5e4f5e2dacca54a01..9b4eab6348c9239ef3978250f5ababa2
  
 +base::options::toggle RichQuoteOption({
 +	.id = kOptionRichQuote,
-+	.name = "Цитирование rich-сообщений",
++	.name = "Quote rich messages",
 +	.description = "The selection goes into your message as a blockquote, "
 +		"in the rich editor when you can send rich messages.",
 +	.defaultValue = true,

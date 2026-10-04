@@ -563,7 +563,7 @@ index 9ad55566f969546b75087c550d7dd2aba0f6b8c3..e0bfb12629b6c1537e3a7c1a0b58edd8
  
  base::options::toggle HideCallsOption({
  	.id = kOptionHideCalls,
--	.name = "Скрыть кнопки звонков",
+-	.name = "Hide call buttons",
 +});
 +
 +base::options::option<QString> CallButtonOption({

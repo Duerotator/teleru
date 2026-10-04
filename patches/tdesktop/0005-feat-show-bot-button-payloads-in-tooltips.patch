@@ -64,7 +64,7 @@ index 5c55fc55ece56da0bf5add8cfbdf2c67e9530ae5..7d5a2859ea4be6df329b43f04bf89803
  	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Боты"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Bots"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
 +	Ui::AddSkip(content);
  
@@ -386,7 +386,7 @@ index 4500af757e95c76ca98abfa3219b8f3ed507fad0..2be3b2f04ae14a2c624df8dae2ee104e
  
 +base::options::toggle ButtonPayloadsOption({
 +	.id = kOptionButtonPayloads,
-+	.name = "Показывать данные кнопок ботов",
++	.name = "Show bot button payloads",
 +	.description = "Hovering a bot button shows what it carries: "
 +		"callback data, links, inline queries, web apps and more.",
 +});

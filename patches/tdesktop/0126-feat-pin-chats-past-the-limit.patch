@@ -1322,13 +1322,13 @@ index 2826a4b567ff7f9f7d6e4b2fa0ebcdfee4e6736b..c189bb296b356af63cad535725f8b446
  
 +base::options::toggle LocalPinsOption({
 +	.id = kOptionLocalPins,
-+	.name = "Закреплять чаты сверх лимита",
++	.name = "Pin chats past the limit",
 +	.description = "Extra pins stay on this device.",
 +});
 +
  base::options::toggle DockedAttachmentsOption({
  	.id = kOptionDockedAttachments,
- 	.name = "Прикреплять медиа над полем ввода (бета)",
+ 	.name = "Attach media above the field (beta)",
 @@ -1438,6 +1445,14 @@ rpl::producer<bool> LocalDraftsValue() {
  	});
  }

@@ -31,7 +31,7 @@ index 1ad81f81d5e34588a87207326d0547c3f6a16195..b1fa391b6fbe352ee58d497a5fc78c50
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1137,6 +1137,7 @@ void FillProfiles(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Подарки"_q);
+ 	AddGroupTitle(builder, u"Gifts"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
 +	AddOptionToggle(builder, ::Tele::kOptionShowRegularGiftIds);
  	AddOptionToggle(builder, ::Tele::kOptionSeeTgButton);

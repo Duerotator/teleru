@@ -643,17 +643,17 @@ index 970c15bc172f25b9a4ca1c16155a8fae1dacca68..add2a4fd5c70bf836f653e0c7a3f7ebc
  const char kOptionKeepSecretMedia[] = "tele-keep-secret-media";
  const char kOptionScreenshotSecretMedia[] = "tele-screenshot-secret-media";
 @@ -507,6 +508,11 @@ base::options::toggle RevealSpoilersOption({
- 	.name = "Автоматически раскрывать спойлеры",
+ 	.name = "Reveal spoilers automatically",
  });
  
 +base::options::toggle CodeLineNumbersOption({
 +	.id = kOptionCodeLineNumbers,
-+	.name = "Номера строк в блоках кода",
++	.name = "Line numbers in code blocks",
 +});
 +
  base::options::toggle CopyProtectedOption({
  	.id = kOptionCopyProtected,
- 	.name = "Пересылать защищенные сообщения как копии",
+ 	.name = "Forward protected messages as copies",
 @@ -1347,6 +1353,14 @@ rpl::producer<> RevealSpoilersChanges() {
  	return RevealSpoilersOption.changes();
  }

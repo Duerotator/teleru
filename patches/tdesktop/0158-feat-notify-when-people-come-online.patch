@@ -121,10 +121,10 @@ index 6630f1ba86a6ddfb53ed75daff0d7fb6f1d68644..a6f1e61f39e97f1b95aaf5fece80aeb1
  public:
  	explicit GhostChatRow(not_null<PeerData*> peer)
 @@ -2111,6 +2160,9 @@ void FillChats(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Черновики"_q);
+ 	AddGroupTitle(builder, u"Drafts"_q);
  	AddSavedDrafts(builder);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Уведомления"_q);
++	AddGroupTitle(builder, u"Notifications"_q);
 +	AddOnlineNotify(builder);
 +	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Disappearing media"_q);
@@ -554,12 +554,12 @@ index 1d8d04bbce226953da8e10fe604d52a2121e43d3..61a7fcfb401bdd5f1358f632b8361b19
  
 +base::options::toggle OnlineNotifyOption({
 +	.id = kOptionOnlineNotify,
-+	.name = "Оповещать при входе пользователя в сеть",
++	.name = "Notify when people come online",
 +});
 +
  base::options::toggle VoiceNoFadeOption({
  	.id = kOptionVoiceNoFade,
- 	.name = "Запись голоса без затухания в начале",
+ 	.name = "Record voice without fading",
 @@ -1688,6 +1694,10 @@ rpl::producer<> SilentPerChatChanges() {
  	return SilentPerChatOption.changes();
  }

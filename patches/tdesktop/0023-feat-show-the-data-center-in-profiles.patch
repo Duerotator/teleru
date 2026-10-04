@@ -70,7 +70,7 @@ index 6996ad1670e361cad8488b45a79137ffdfb5e185..8fb70feef758c45bd5502e6d593d9c51
  
 +base::options::toggle ShowDcOption({
 +	.id = kOptionShowDc,
-+	.name = "Показывать дата-центр",
++	.name = "Show data center",
 +	.description = "Show a DC row in profiles with the data center "
 +		"the account or chat lives in, known from its profile photo. "
 +		"Click it to copy.",
@@ -78,7 +78,7 @@ index 6996ad1670e361cad8488b45a79137ffdfb5e185..8fb70feef758c45bd5502e6d593d9c51
 +
  base::options::toggle HideIgnoredOption({
  	.id = kOptionHideIgnored,
- 	.name = "Полностью скрывать сообщения игнорируемых",
+ 	.name = "Hide ignored messages completely",
 @@ -240,6 +249,10 @@ rpl::producer<> PeerIdFormatChanges() {
  		BotApiPeerIdsOption.changes());
  }

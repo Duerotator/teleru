@@ -99,26 +99,26 @@ index 9d7ee736433d216d4a2540e5b585679261bdb6fb..f0aca81fea75fb76dd8912151b1872b0
 @@ -498,7 +501,26 @@ base::options::toggle EditHistoryOption({
  base::options::toggle KeepDeletedOption({
  	.id = kOptionKeepDeleted,
- 	.name = "Сохранять удаленные сообщения",
+ 	.name = "Keep deleted messages",
 -	.description = "Kept until tele restarts, including ones you delete yourself.",
 +	.description = "Kept until tele restarts.",
 +});
 +
 +base::options::toggle KeepDeletedBotsOption({
 +	.id = kOptionKeepDeletedBots,
-+	.name = "В чатах с ботами",
++	.name = "In bot chats",
 +	.defaultValue = true,
 +});
 +
 +base::options::toggle KeepDeletedSavedOption({
 +	.id = kOptionKeepDeletedSaved,
-+	.name = "В «Избранном»",
++	.name = "In Saved Messages",
 +	.defaultValue = true,
 +});
 +
 +base::options::toggle KeepDeletedOwnOption({
 +	.id = kOptionKeepDeletedOwn,
-+	.name = "Удаленные вами",
++	.name = "Ones you delete",
 +	.description = "Only ones deleted from this device.",
 +	.defaultValue = true,
  });
