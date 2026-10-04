@@ -32,11 +32,11 @@ Subject: [PATCH] feat: gift studio
  Telegram/SourceFiles/tele/tele_options.cpp    |   21 +
  Telegram/SourceFiles/tele/tele_options.h      |    4 +
  .../SourceFiles/tele/tele_settings_io.cpp     |    2 +
- .../SourceFiles/tele/tele_sticker_truth.cpp   |    5 +-
+ .../SourceFiles/tele/tele_sticker_truth.cpp   |    7 +-
  Telegram/SourceFiles/tele/tele_tgs_rules.cpp  |  188 +
  Telegram/SourceFiles/tele/tele_tgs_rules.h    |   17 +
  .../SourceFiles/window/window_main_menu.cpp   |    4 +-
- 32 files changed, 10456 insertions(+), 35 deletions(-)
+ 32 files changed, 10458 insertions(+), 35 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_gift_studio.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_gift_studio.h
  create mode 100644 Telegram/SourceFiles/tele/tele_gift_studio_data.cpp
@@ -10654,7 +10654,7 @@ index 2c743030c4f5fcf3070281bbfe7fdf24ecb85318..cba7b5c62dfa76478550489165a31f6d
  		Toggle(kOptionPeerIdsWithoutSpaces),
  		Toggle(kOptionBotApiPeerIds),
 diff --git a/Telegram/SourceFiles/tele/tele_sticker_truth.cpp b/Telegram/SourceFiles/tele/tele_sticker_truth.cpp
-index 58be572a74c4d1faa2ea46ac781ef0ab7db2805f..26cb9867d2f76c0142db4167f260c533ab1408b5 100644
+index 58be572a74c4d1faa2ea46ac781ef0ab7db2805f..57fa7028e126dca84153f0ec9ac5fa31e98a8975 100644
 --- a/Telegram/SourceFiles/tele/tele_sticker_truth.cpp
 +++ b/Telegram/SourceFiles/tele/tele_sticker_truth.cpp
 @@ -2,6 +2,7 @@
@@ -10665,14 +10665,16 @@ index 58be572a74c4d1faa2ea46ac781ef0ab7db2805f..26cb9867d2f76c0142db4167f260c533
  
  #include <QtCore/QMimeDatabase>
  
-@@ -28,7 +29,9 @@ QImage ReadStickerThumbnail(
+@@ -28,7 +29,11 @@ QImage ReadStickerThumbnail(
  		const QString &filepath,
  		QString &filemime) {
  	const auto bytes = Lottie::ReadContent(content, filepath);
 -	auto result = (!bytes.isEmpty() && bytes.size() <= kMaxTgsBytes)
++	const auto bundled = filepath.startsWith(u":/"_q);
 +	auto result = (!bytes.isEmpty()
-+		&& bytes.size() <= kMaxTgsBytes
-+		&& PassesTgsServerChecks(bytes))
++		&& (bundled
++			|| (bytes.size() <= kMaxTgsBytes
++				&& PassesTgsServerChecks(bytes))))
  		? Lottie::ReadThumbnail(bytes)
  		: QImage();
  	if (result.isNull()) {
