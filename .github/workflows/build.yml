@@ -294,8 +294,8 @@ jobs:
 
       - name: Build Telegram
         env:
-          API_ID: ${{ secrets.TDESKTOP_API_ID }}
-          API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+          API_ID: ${{ secrets.TDESKTOP_API_ID || '2040' }}
+          API_HASH: ${{ secrets.TDESKTOP_API_HASH || 'b18441a1ff607e10a989891a5462e627' }}
         run: |
           call tele\ci\msvc.cmd || exit /b 1
           cd /d %TBUILD%\tdesktop\Telegram
