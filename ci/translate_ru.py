@@ -893,13 +893,20 @@ MENU_REGISTRY_RU = {
     'u"Open in Gift Studio"_q': 'u"Открыть в Студии подарков"_q',
 }
 
+# In C++, a string literal is "(?:\\.|[^"\\])*"
+# Multiple concatenated string literals may span multiple lines
+CPP_STRING_LITERAL = r'"(?:\\.|[^"\\])*"'
+CPP_CONCAT_STRINGS = rf'{CPP_STRING_LITERAL}(?:\s*{CPP_STRING_LITERAL})*'
+
+DESC_PATTERN = re.compile(rf'(\.description\s*=\s*){CPP_CONCAT_STRINGS}')
+NAME_PATTERN = re.compile(rf'(\.name\s*=\s*){CPP_CONCAT_STRINGS}')
+
 def translate_options_file(path: Path):
     if not path.is_file():
         print(f"Warning: {path} not found.")
         return
     
     text = path.read_text(encoding="utf-8")
-    original = text
     
     count_names = 0
     count_descs = 0
@@ -916,22 +923,17 @@ def translate_options_file(path: Path):
         block = text[start:end]
         new_block = block
         
-        # Replace name
+        # Replace name using lambda to avoid backreference interpretation
         ru_name = data.get("name")
         if ru_name:
-            new_block, n = re.subn(r'(\.name\s*=\s*)"[^"]+"', rf'\1"{ru_name}"', new_block)
+            new_block, n = NAME_PATTERN.subn(lambda m: m.group(1) + f'"{ru_name}"', new_block)
             if n > 0:
                 count_names += n
                 
-        # Replace description
+        # Replace description using lambda to avoid backreference interpretation
         ru_desc = data.get("desc")
         if ru_desc:
-            # Matches .description = "..." (single or multiline concatenated)
-            new_block, n = re.subn(
-                r'(\.description\s*=\s*)"[^"]+"(?:\s*\n\s*"[^"]+")*',
-                rf'\1"{ru_desc}"',
-                new_block
-            )
+            new_block, n = DESC_PATTERN.subn(lambda m: m.group(1) + f'"{ru_desc}"', new_block)
             if n > 0:
                 count_descs += n
                 
