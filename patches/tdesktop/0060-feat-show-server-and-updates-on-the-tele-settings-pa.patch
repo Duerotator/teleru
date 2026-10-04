@@ -46,10 +46,10 @@ index fd7e962f106c14705663f8e9fdb663f599c5d187..2cd1c46d9320e60d83dedb7b2ee31b00
 -	builder.addSkip();
 -	builder.addDividerText(rpl::single(BuildText()));
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Server"_q);
++	AddGroupTitle(builder, u"Сервер"_q);
 +	AddServer(builder);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Updates"_q);
++	AddGroupTitle(builder, u"Обновления"_q);
 +	AddUpdates(builder);
  }
  
@@ -60,13 +60,13 @@ index fd7e962f106c14705663f8e9fdb663f599c5d187..2cd1c46d9320e60d83dedb7b2ee31b00
  		FillBots);
 -	add(
 -		u"server"_q,
--		u"Server"_q,
+-		u"Сервер"_q,
 -		st::menuIconNetwork,
 -		{ u"verification"_q, u"checkmarks"_q },
 -		FillServer);
 -	add(
 -		u"updates"_q,
--		u"Updates"_q,
+-		u"Обновления"_q,
 -		st::menuIconDownload,
 -		{ u"version"_q, u"github"_q },
 -		FillUpdates);

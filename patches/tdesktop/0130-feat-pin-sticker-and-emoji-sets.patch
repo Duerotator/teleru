@@ -157,7 +157,7 @@ index 5c0fa2581b5507a724310ccdaa4feedd97ec6b91..1223f51ae2a10b7e73c78f89272e81ba
  
 +base::options::toggle PinSetsOption({
 +	.id = kOptionPinSets,
-+	.name = "Pin sticker and emoji sets",
++	.name = "Закреплять наборы стикеров и эмодзи",
 +	.description = "Right-click a set in the panel footer.",
 +});
 +

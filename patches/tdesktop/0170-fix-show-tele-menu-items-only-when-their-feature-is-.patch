@@ -43,7 +43,7 @@ index 8e49940f836f8ec4850bb322c29a097cbf2bf775..8674cb05c49e20b31aeabe2ebcb14a41
  	AddGroupTitle(builder, u"Chats and profiles"_q);
  	AddOptionToggle(builder, ::Tele::kOptionBubbleBadges);
 @@ -2060,6 +2064,10 @@ void FillChats(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Messages"_q);
+ 	AddGroupTitle(builder, u"Сообщения"_q);
  	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
  	AddOptionToggle(builder, ::Tele::kOptionEditHistory);
 +	AddOptionToggle(
@@ -81,14 +81,14 @@ index 8e49940f836f8ec4850bb322c29a097cbf2bf775..8674cb05c49e20b31aeabe2ebcb14a41
  	AddOptionToggle(
 @@ -2199,9 +2219,21 @@ void FillChats(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Drafts"_q);
+ 	AddGroupTitle(builder, u"Черновики"_q);
  	AddSavedDrafts(builder);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionDraftsMenu,
 +		{ u"save"_q, u"discarded"_q });
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Notifications"_q);
+ 	AddGroupTitle(builder, u"Уведомления"_q);
  	AddOnlineNotify(builder);
 +	AddOptionToggle(
 +		builder,
@@ -153,7 +153,7 @@ index 8e49940f836f8ec4850bb322c29a097cbf2bf775..8674cb05c49e20b31aeabe2ebcb14a41
 +		::Tele::kOptionLocalNameMenu,
 +		{ u"custom name"_q, u"nickname"_q });
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Gifts"_q);
+ 	AddGroupTitle(builder, u"Подарки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
 @@ -2360,7 +2416,15 @@ void FillProfiles(SectionBuilder &builder) {
  void FillBots(SectionBuilder &builder) {
@@ -643,14 +643,14 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
  
 +base::options::toggle CopyButtonDataOption({
 +	.id = kOptionCopyButtonData,
-+	.name = "Copy bot button data",
-+	.description = "Right-click a bot button in a message.",
++	.name = "Копировать данные кнопки бота",
++	.description = "Доступно по правому клику мыши на кнопку бота в сообщении.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle AutoUpdateOption({
  	.id = kOptionAutoUpdate,
- 	.name = "Update automatically",
+ 	.name = "Автоматическое обновление",
 @@ -351,6 +374,12 @@ base::options::option<QString> LinkPreviewsOption({
  	.description = "Previews you add by hand are always sent.",
  });
@@ -663,7 +663,7 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
- 	.name = "Hide the All chats folder",
+ 	.name = "Скрыть папку «Все чаты»",
 @@ -518,6 +547,12 @@ base::options::toggle HideIgnoredOption({
  	.description = "When off, they are shown faded.",
  });
@@ -676,14 +676,14 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::option<QString> IgnoredUsersOption({
  	.id = kOptionIgnoredUsers,
- 	.name = "Ignored users",
+ 	.name = "Игнорируемые пользователи",
 @@ -542,6 +577,14 @@ base::options::toggle EditHistoryOption({
  		"restart.",
  });
  
 +base::options::toggle ReadLogOption({
 +	.id = kOptionReadLog,
-+	.name = "Remember read times",
++	.name = "Запоминать время прочтения",
 +	.description = "The message menu keeps showing when a private chat read "
 +		"your message.",
 +	.defaultValue = true,
@@ -691,42 +691,42 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::toggle KeepDeletedOption({
  	.id = kOptionKeepDeleted,
- 	.name = "Keep deleted messages",
+ 	.name = "Сохранять удаленные сообщения",
 @@ -649,6 +692,13 @@ base::options::toggle CalcmulaPreviewOption({
- 	.name = "Preview calcmula results while typing",
+ 	.name = "Предпросмотр подсчетов калькулятора при вводе",
  });
  
 +base::options::toggle TranslateOutOption({
 +	.id = kOptionTranslateOut,
-+	.name = "Translate before sending",
++	.name = "Переводить перед отправкой",
 +	.description = "From the field or send button menu.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle CopyEmojiIdOption({
  	.id = kOptionCopyEmojiId,
- 	.name = "Copy custom emoji IDs",
+ 	.name = "Копировать ID кастомных эмодзи",
 @@ -746,6 +796,13 @@ base::options::toggle InlineWithoutViaOption({
  	.description = "The bot's buttons are dropped too.",
  });
  
 +base::options::toggle InlineAsTextOption({
 +	.id = kOptionInlineAsText,
-+	.name = "Send inline queries as text",
++	.name = "Отправлять инлайн-запросы как текст",
 +	.description = "Ctrl+Shift+Enter, or right-click the cancel button.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle NoRichPastePromptOption({
  	.id = kOptionNoRichPastePrompt,
- 	.name = "No rich message prompt on paste",
+ 	.name = "Не предлагать отправку форматированного текста как rich message",
 @@ -772,6 +829,21 @@ base::options::toggle OnlineNotifyOption({
- 	.name = "Notify when people come online",
+ 	.name = "Оповещать при входе пользователя в сеть",
  });
  
 +base::options::toggle SilenceChatsOption({
 +	.id = kOptionSilenceChats,
-+	.name = "Silence chats completely",
++	.name = "Полностью глушить чаты",
 +	.description = "From the mute menu; mentions and reactions don't notify "
 +		"either.",
 +	.defaultValue = true,
@@ -734,39 +734,39 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
 +base::options::toggle MuteFoldersOption({
 +	.id = kOptionMuteFolders,
-+	.name = "Mute folders",
++	.name = "Глушить папки",
 +	.description = "From a folder's menu, on this device only.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle VoiceNoFadeOption({
  	.id = kOptionVoiceNoFade,
- 	.name = "Record voice without fading",
+ 	.name = "Запись голоса без затухания в начале",
 @@ -813,9 +885,22 @@ base::options::toggle HdPhotosOption({
  	.defaultValue = true,
  });
  
 +base::options::toggle GifVideoOption({
 +	.id = kOptionGifVideo,
-+	.name = "Send GIFs as videos and videos as GIFs",
++	.name = "Отправлять GIF как видео и наоборот",
 +	.defaultValue = true,
 +});
 +
 +base::options::toggle AudioVoiceOption({
 +	.id = kOptionAudioVoice,
-+	.name = "Send audio files as voice",
++	.name = "Отправлять аудиофайлы как голосовые сообщения",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle DownloadsPerChatOption({
  	.id = kOptionDownloadsPerChat,
- 	.name = "Save downloads into a folder per chat",
+ 	.name = "Сохранять загрузки в отдельную папку для каждого чата",
 +	.description = "A chat's menu can pick its own folder.",
  });
  
  base::options::option<QString> ChatBackgroundsOption({
 @@ -824,12 +909,31 @@ base::options::option<QString> ChatBackgroundsOption({
- 	.description = "Chats with a background only you see, set in a chat's menu.",
+ 	.description = "Чаты с индивидуальным фоном, который видите только вы (настраивается в меню чата).",
  });
  
 +base::options::toggle BackgroundMenuOption({
@@ -777,8 +777,8 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::option<QString> UsernameAliasesOption({
  	.id = kOptionUsernameAliases,
- 	.name = "Username aliases",
- 	.description = "Your own @names for chats, set in a chat's menu.",
+ 	.name = "Псевдонимы пользователей (@алиасы)",
+ 	.description = "Собственные @алиасы для чатов (задаются в меню чата).",
  });
  
 +base::options::toggle AliasMenuOption({
@@ -789,14 +789,14 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
 +base::options::toggle PinnedBarMenuOption({
 +	.id = kOptionPinnedBarMenu,
-+	.name = "Hide and show the pinned bar",
++	.name = "Скрыть/показать панель закрепов",
 +	.description = "From a chat's menu, in chats where you can't unpin.",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle NoPhoneInHeaderOption({
  	.id = kOptionNoPhoneInHeader,
- 	.name = "Names instead of phone numbers in chats",
+ 	.name = "Имена вместо номеров телефонов в шапке чатов",
 @@ -861,6 +965,12 @@ base::options::option<QString> LocalNamesOption({
  	.description = "Only you see them, set in a user's menu.",
  });
@@ -809,7 +809,7 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::option<QString> AppIconOption({
  	.id = kOptionAppIcon,
- 	.name = "App icon",
+ 	.name = "Иконка приложения",
 @@ -881,6 +991,12 @@ base::options::toggle LocalDraftsOption({
  		"devices are ignored.",
  });
@@ -822,9 +822,9 @@ index 91da885368f25527a5a0a5f5af2862fc7b61b764..82f4e704127453c42313b9ffbe39dae2
 +
  base::options::toggle LocalPinsOption({
  	.id = kOptionLocalPins,
- 	.name = "Pin chats past the limit",
+ 	.name = "Закреплять чаты сверх лимита",
 @@ -976,6 +1092,14 @@ base::options::toggle CounterSkipArchiveOption({
- 	.description = "Archived chats don't add to the taskbar and tray count.",
+ 	.description = "Чаты из архива не учитываются в счетчике непрочитанных на панели задач и в трее.",
  });
  
 +base::options::toggle CounterAccountsOption({

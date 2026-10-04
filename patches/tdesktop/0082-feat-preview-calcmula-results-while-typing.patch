@@ -108,7 +108,7 @@ index 2a8e5dd045e36bc156d110d088b6077f2cdcbab6..4f4183002d45b92e0950971396e174b8
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1480,6 +1480,7 @@ void FillChats(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Sending"_q);
+ 	AddGroupTitle(builder, u"Отправка"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
  	AddOptionToggle(builder, ::Tele::kOptionCalcmula);
 +	AddOptionToggle(builder, ::Tele::kOptionCalcmulaPreview);
@@ -645,7 +645,7 @@ index 660618ec7106df73e142bc5d4ceb5d72969eb51c..8e40a2637f0d1cedf5b6bda6de458f20
  
 +base::options::toggle CalcmulaPreviewOption({
 +	.id = kOptionCalcmulaPreview,
-+	.name = "Preview calcmula results while typing",
++	.name = "Предпросмотр подсчетов калькулятора при вводе",
 +	.description = "Shows the result above the input field, like "
 +		"@calcmulabot inline. Only when \"Calculate with calcmula.app\" "
 +		"is on too.",
@@ -653,7 +653,7 @@ index 660618ec7106df73e142bc5d4ceb5d72969eb51c..8e40a2637f0d1cedf5b6bda6de458f20
 +
  base::options::toggle CopyEmojiIdOption({
  	.id = kOptionCopyEmojiId,
- 	.name = "Copy custom emoji IDs",
+ 	.name = "Копировать ID кастомных эмодзи",
 @@ -936,6 +945,10 @@ bool Calcmula() {
  	return CalcmulaOption.value();
  }

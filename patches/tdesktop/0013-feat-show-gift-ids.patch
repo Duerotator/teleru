@@ -78,12 +78,12 @@ index 574166f99cd311622adf41d7d98bca5eaea286dc..ebb93d4bb8699b6fd0f2a56697f37157
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Gifts"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Подарки"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Server"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Сервер"_q));
  	AddServer(content, controller());
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_gifts.cpp b/Telegram/SourceFiles/tele/tele_gifts.cpp
@@ -178,14 +178,14 @@ index b62c54c70128dd5483a27d28558ed7a5fceec31e..292f053600b34a2fb1495571271a7560
  
 +base::options::toggle ShowGiftIdsOption({
 +	.id = kOptionShowGiftIds,
-+	.name = "Show gift IDs",
++	.name = "Показывать ID подарков",
 +	.description = "Show the ID of a collectible gift in its card. "
 +		"Click it to copy.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -117,6 +125,10 @@ bool BubbleBadges() {
  	return BubbleBadgesOption.value();
  }

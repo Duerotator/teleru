@@ -131,7 +131,7 @@ index 5de407bb8c633a73c180c68ac56a675e9cc9d7f7..970c15bc172f25b9a4ca1c16155a8fae
  
 +base::options::toggle ViewerLoopOption({
 +	.id = kOptionViewerLoop,
-+	.name = "Loop videos",
++	.name = "Зацикливать видео",
 +});
 +
  void MigrateHideCalls() {

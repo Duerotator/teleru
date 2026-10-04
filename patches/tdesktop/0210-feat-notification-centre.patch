@@ -1025,7 +1025,7 @@ index c3217caa7bc7237fd1e1d18f90b54d9babd96735..bf57e9a48b86950a8eee32c00d9fffba
 +	if (notices) {
 +		const auto button = Settings::AddButtonWithIcon(
 +			menu,
-+			rpl::single(Lower(u"Notifications"_q)),
++			rpl::single(Lower(u"Уведомления"_q)),
 +			st::mainMenuButton,
 +			{ &st::menuIconNotifications });
 +		button->setClickedCallback([=] {
@@ -2630,7 +2630,7 @@ index 0000000000000000000000000000000000000000..e65fbfcb223d79bc8875b4b8009bbdb9
 +}
 +
 +rpl::producer<QString> NoticesSection::title() {
-+	return rpl::single(Lower(u"Notifications"_q));
++	return rpl::single(Lower(u"Уведомления"_q));
 +}
 +
 +void NoticesSection::fillTopBarMenu(
@@ -2665,7 +2665,7 @@ index 0000000000000000000000000000000000000000..e65fbfcb223d79bc8875b4b8009bbdb9
 +	for (const auto &[filter, name] : {
 +			std::pair{ Filter::All, u"All"_q },
 +			std::pair{ Filter::Limits, u"Limits"_q },
-+			std::pair{ Filter::Server, u"Server"_q },
++			std::pair{ Filter::Server, u"Сервер"_q },
 +			std::pair{ Filter::Tele, u"tele"_q } }) {
 +		tabs.push_back({
 +			.id = FilterId(filter),
@@ -2813,12 +2813,12 @@ index 9b4eab6348c9239ef3978250f5ababa2e6f83f60..ecf2d77a88573927efbe429e21dfe2ba
  const char kOptionMuteFolders[] = "tele-mute-folders";
  const char kOptionVoiceNoFade[] = "tele-voice-no-fade";
 @@ -963,6 +965,20 @@ base::options::toggle OnlineNotifyOption({
- 	.name = "Notify when people come online",
+ 	.name = "Оповещать при входе пользователя в сеть",
  });
  
 +base::options::toggle NoticesOption({
 +	.id = kOptionNotices,
-+	.name = "Notification centre",
++	.name = "Центр уведомлений",
 +	.description = "A list of tele toasts, rate limits and server notices, "
 +		"opened from the main menu.",
 +	.defaultValue = true,
@@ -2826,13 +2826,13 @@ index 9b4eab6348c9239ef3978250f5ababa2e6f83f60..ecf2d77a88573927efbe429e21dfe2ba
 +
 +base::options::toggle NoticesTeleToastsOption({
 +	.id = kOptionNoticesTeleToasts,
-+	.name = "Log tele toasts",
++	.name = "Журнал всплывающих уведомлений tele",
 +	.defaultValue = true,
 +});
 +
  base::options::toggle SilenceChatsOption({
  	.id = kOptionSilenceChats,
- 	.name = "Silence chats completely",
+ 	.name = "Полностью глушить чаты",
 @@ -2319,6 +2335,24 @@ bool OnlineNotify() {
  	return OnlineNotifyOption.value();
  }

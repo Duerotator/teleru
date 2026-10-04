@@ -99,7 +99,7 @@ index 2e858a9acceed6d41e8ec651153d56ff4b9edc4c..40916b3666b829d00bb2068827845c6a
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -630,6 +630,7 @@ void TeleSection::setupContent() {
  	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Сообщения"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
  	Ui::AddSkip(content);
@@ -519,7 +519,7 @@ index 67d3bd386647abab556894201b74de3bf774e049..d5978504dfb55a38f701ecb39f35bc1a
  
 +base::options::toggle EditHistoryOption({
 +	.id = kOptionEditHistory,
-+	.name = "Keep edit history",
++	.name = "Сохранять историю правок",
 +	.description = "Remember what messages looked like before they were "
 +		"edited while tele is running. Right-click an edited message "
 +		"to see every version. Kept in memory only.",
@@ -527,7 +527,7 @@ index 67d3bd386647abab556894201b74de3bf774e049..d5978504dfb55a38f701ecb39f35bc1a
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -226,6 +235,20 @@ rpl::producer<bool> MessageSecondsValue() {
  	});
  }

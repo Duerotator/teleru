@@ -217,7 +217,7 @@ index c0129cc6a26dfa5eb07c8547e51ed40d790aac83..3ad54ab2b46173dc56b0cce423c1fd94
 +
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Title bar"_q);
+ 	AddGroupTitle(builder, u"Заголовок окна"_q);
  	AddTitle(builder);
  	AddGroupDivider(builder);
 +	AddGroupTitle(builder, u"App icon"_q);
@@ -498,14 +498,14 @@ index 66c6a5d2ebdc44aee5f50ca049756eeaac883137..aa4f6bee7ad0a45f970a00a8c2e437bc
  
 +base::options::option<QString> AppIconOption({
 +	.id = kOptionAppIcon,
-+	.name = "App icon",
++	.name = "Иконка приложения",
 +	.description = "Your own image for the windows, taskbar, Alt+Tab and "
 +		"dock. The exe file and pinned shortcuts keep the original icon.",
 +});
 +
 +base::options::option<QString> TrayIconOption({
 +	.id = kOptionTrayIcon,
-+	.name = "Tray icon",
++	.name = "Иконка в трее",
 +	.description = "Your own image for the notification area. The "
 +		"monochrome tray icon setting takes priority.",
 +});

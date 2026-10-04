@@ -107,7 +107,7 @@ index b8f60ecaec92d026e9d5cbc413a7d727510117b9..6c5770d5ad7f2aeac2afb9f294691f62
  	AddOptionToggle(builder, ::Tele::kOptionCopyEmojiId);
 +	AddOptionToggle(builder, ::Tele::kOptionShot);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Chats"_q);
+ 	AddGroupTitle(builder, u"Чаты"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
 diff --git a/Telegram/SourceFiles/tele/tele_menu_order.cpp b/Telegram/SourceFiles/tele/tele_menu_order.cpp
 index ccaecacde36d2289dadb00952454ff09c6ed2a2b..551b215aedd6c57da2c3f3206eb76e9d0a125976 100644
@@ -141,14 +141,14 @@ index c8f1d9560b65522f01208c566b33f033c8e2106c..631780506f1ad40dae8f4f2b3b1613f8
  
 +base::options::toggle ShotOption({
 +	.id = kOptionShot,
-+	.name = "Shot in the message menu",
++	.name = "Шот в меню сообщений",
 +	.description = "Selected messages or one message can be saved as a "
 +		"picture.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -1016,6 +1024,10 @@ bool CopyEmojiId() {
  	return CopyEmojiIdOption.value();
  }

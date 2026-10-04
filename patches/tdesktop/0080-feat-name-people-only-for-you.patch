@@ -616,14 +616,14 @@ index d072c676a17457741f60e357236ff64a408e322a..7f2223974cd0c97e15b1e984679ead09
 +
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Title bar"_q);
+ 	AddGroupTitle(builder, u"Заголовок окна"_q);
 @@ -1384,6 +1535,7 @@ void FillProfiles(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Profiles"_q);
+ 	AddGroupTitle(builder, u"Профили"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc);
  	AddOptionToggle(builder, ::Tele::kOptionNoPhoneInHeader);
 +	AddLocalNames(builder);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Gifts"_q);
+ 	AddGroupTitle(builder, u"Подарки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
 diff --git a/Telegram/SourceFiles/tele/tele_local_names.cpp b/Telegram/SourceFiles/tele/tele_local_names.cpp
 new file mode 100644
@@ -1023,7 +1023,7 @@ index f48b696e5eb39f3295230e2b1f8a6ebd508251e1..660618ec7106df73e142bc5d4ceb5d72
  
 +base::options::option<QString> LocalNamesOption({
 +	.id = kOptionLocalNames,
-+	.name = "Custom names",
++	.name = "Пользовательские имена (только для вас)",
 +	.description = "Names for people that only you see, set in a user's "
 +		"menu. Nothing is sent to Telegram.",
 +});

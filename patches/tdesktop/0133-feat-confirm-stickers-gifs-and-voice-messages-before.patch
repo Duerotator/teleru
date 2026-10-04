@@ -572,30 +572,30 @@ index 816d42843e04696f6578b80b53c6f770831381c2..467aaa28597d10c831023c94c3eb049b
  
 +base::options::toggle ConfirmSendOption({
 +	.id = kOptionConfirmSend,
-+	.name = "Confirm before sending",
++	.name = "Подтверждение перед отправкой",
 +});
 +
 +base::options::toggle ConfirmStickersOption({
 +	.id = kOptionConfirmStickers,
-+	.name = "Stickers",
-+	.description = "A second click on the same sticker sends it.",
++	.name = "Стикеры",
++	.description = "Для отправки стикера требуется повторное нажатие (защита от случайной отправки).",
 +});
 +
 +base::options::toggle ConfirmGifsOption({
 +	.id = kOptionConfirmGifs,
-+	.name = "GIFs",
-+	.description = "A second click on the same GIF sends it.",
++	.name = "GIF",
++	.description = "Для отправки GIF требуется повторное нажатие (защита от случайной отправки).",
 +});
 +
 +base::options::toggle ConfirmVoiceOption({
 +	.id = kOptionConfirmVoice,
-+	.name = "Voice and video messages",
-+	.description = "Recordings stop in the preview instead of sending.",
++	.name = "Голосовые и видеосообщения",
++	.description = "Запись голосового сообщения останавливается в режиме предпросмотра вместо автоматической отправки.",
 +});
 +
  base::options::toggle PunctualScheduledOption({
  	.id = kOptionPunctualScheduled,
- 	.name = "Send scheduled messages on time",
+ 	.name = "Отправлять отложенные сообщения вовремя",
 @@ -1399,6 +1426,18 @@ rpl::producer<> SilentPerChatChanges() {
  	return SilentPerChatOption.changes();
  }

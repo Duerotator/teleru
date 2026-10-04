@@ -40,7 +40,7 @@ index a45635d4258a1836ca9139d1f568b56bda9ad8d2..427ca5e96442cf6ba0741b9f1e864e59
  		{},
  		::Tele::kOptionHideSimilar);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Scale"_q);
++	AddGroupTitle(builder, u"Масштаб"_q);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionScaleOnePercent,
@@ -67,7 +67,7 @@ index f0aca81fea75fb76dd8912151b1872b081dc660e..9aab1a4d0528c490acc59c802fd7824d
  
 +base::options::toggle ScaleOnePercentOption({
 +	.id = kOptionScaleOnePercent,
-+	.name = "Interface scale in 1% steps",
++	.name = "Масштабирование интерфейса с шагом 1%",
 +});
 +
  base::options::toggle HideCallsOption({

@@ -465,7 +465,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +	const auto button = builder.addButton({
 +		.id = u"tele-check-updates"_q,
 +		.title = ::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
- 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Check for updates"_q);
+ 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Проверить обновления"_q);
  		}),
 -		st::settingsButtonNoIcon));
 -	button->setClickedCallback([] {
@@ -508,13 +508,13 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
  		::Tele::kOptionServerUrl);
 -	const auto server = AddButtonWithLabel(
 -		container,
--		rpl::single(::Tele::Lower(u"Server"_q)),
+-		rpl::single(::Tele::Lower(u"Сервер"_q)),
 -		::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
 +	const auto controller = builder.controller();
 +	const auto description = ::Tele::Lower(option.description());
 +	const auto server = builder.addButton({
 +		.id = option.id(),
-+		.title = rpl::single(::Tele::Lower(u"Server"_q)),
++		.title = rpl::single(::Tele::Lower(u"Сервер"_q)),
 +		.st = &st::settingsButtonNoIcon,
 +		.label = ::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
  			return url.isEmpty() ? u"off"_q : url;
@@ -530,7 +530,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 -	SetupLink(server, option.id());
 -	const auto refresh = container->add(object_ptr<Button>(
 -		container,
--		rpl::single(::Tele::Lower(u"Refresh now"_q)),
+-		rpl::single(::Tele::Lower(u"Обновить сейчас"_q)),
 -		st::settingsButtonNoIcon));
 -	refresh->setClickedCallback([=] {
 -		::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
@@ -541,7 +541,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +	}
 +	const auto refresh = builder.addButton({
 +		.id = u"tele-refresh-badges"_q,
-+		.title = rpl::single(::Tele::Lower(u"Refresh now"_q)),
++		.title = rpl::single(::Tele::Lower(u"Обновить сейчас"_q)),
 +		.st = &st::settingsButtonNoIcon,
 +		.onClick = [=] {
 +			::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
@@ -753,7 +753,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +
 +void FillChats(SectionBuilder &builder) {
 +	builder.addSkip();
-+	AddGroupTitle(builder, u"Messages"_q);
++	AddGroupTitle(builder, u"Сообщения"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
 +	AddOptionToggle(builder, ::Tele::kOptionEditHistory);
 +	AddOptionToggle(builder, ::Tele::kOptionKeepDeleted);
@@ -763,12 +763,12 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
 +	AddOptionToggle(builder, ::Tele::kOptionScreenshotSecretMedia);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Menus"_q);
++	AddGroupTitle(builder, u"Меню"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionJumpToFirst);
 +	AddOptionToggle(builder, ::Tele::kOptionMessageIdMenu);
 +	AddOptionToggle(builder, ::Tele::kOptionViewAsTl);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Chats"_q);
++	AddGroupTitle(builder, u"Чаты"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
 +	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
 +	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
@@ -778,7 +778,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +
 +void FillPrivacy(SectionBuilder &builder) {
 +	builder.addSkip();
-+	AddGroupTitle(builder, u"Ghost mode"_q);
++	AddGroupTitle(builder, u"Режим невидимки"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionGhost);
 +	AddOptionToggle(builder, ::Tele::kOptionGhostRead);
 +	AddOptionToggle(builder, ::Tele::kOptionGhostReadOnReply);
@@ -788,7 +788,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +	AddOptionToggle(builder, ::Tele::kOptionGhostStories);
 +	AddGhostChats(builder);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Stories"_q);
++	AddGroupTitle(builder, u"Истории"_q);
 +	AddOptionToggle(builder, ::Tele::kOptionHideStories);
 +	AddOptionToggle(builder, ::Tele::kOptionInvisibleStories);
 +	AddGroupDivider(builder);
@@ -868,7 +868,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +	};
 +	add(
 +		u"interface"_q,
-+		u"Interface"_q,
++		u"Интерфейс"_q,
 +		st::menuIconPalette,
 +		{ u"title"_q, u"lowercase"_q, u"badges"_q, u"userpics"_q },
 +		FillInterface);
@@ -880,31 +880,31 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 +		FillChats);
 +	add(
 +		u"privacy"_q,
-+		u"Privacy"_q,
++		u"Конфиденциальность"_q,
 +		st::menuIconStealth,
 +		{ u"ghost"_q, u"stories"_q, u"ignore"_q, u"online"_q },
 +		FillPrivacy);
 +	add(
 +		u"profiles"_q,
-+		u"Profiles and IDs"_q,
++		u"Профили и ID"_q,
 +		st::menuIconProfile,
 +		{ u"id"_q, u"dc"_q, u"gifts"_q },
 +		FillProfiles);
 +	add(
 +		u"bots"_q,
-+		u"Bots"_q,
++		u"Боты"_q,
 +		st::menuIconBot,
 +		{ u"buttons"_q, u"callback"_q },
 +		FillBots);
 +	add(
 +		u"server"_q,
-+		u"Server"_q,
++		u"Сервер"_q,
 +		st::menuIconNetwork,
 +		{ u"verification"_q, u"checkmarks"_q },
 +		FillServer);
 +	add(
 +		u"updates"_q,
-+		u"Updates"_q,
++		u"Обновления"_q,
 +		st::menuIconDownload,
 +		{ u"version"_q, u"github"_q },
 +		FillUpdates);
@@ -1035,23 +1035,23 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
  	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
 -
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Title bar"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Заголовок окна"_q)));
 -	AddTitle(content, controller());
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Interface"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Интерфейс"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionLowercase);
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Stories"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Истории"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionInvisibleStories);
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Ghost mode"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Режим невидимки"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionGhost);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionGhostRead);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionGhostReadOnReply);
@@ -1063,12 +1063,12 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Bots"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Боты"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Chats"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Чаты"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionHideCalls);
@@ -1088,7 +1088,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Messages"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Сообщения"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionKeepDeleted);
@@ -1098,7 +1098,7 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Gifts"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Подарки"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionShowGiftIds);
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
@@ -1116,12 +1116,12 @@ index 964ec99163beb94f477f97afcd5b1e4ad64150bf..46b917be98d627067c1cbec9cc41c47b
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Server"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Сервер"_q)));
 -	AddServer(content, controller());
 -	Ui::AddSkip(content);
 -	Ui::AddDivider(content);
 -	Ui::AddSkip(content);
--	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Updates"_q)));
+-	Ui::AddSubsectionTitle(content, rpl::single(::Tele::Lower(u"Обновления"_q)));
 -	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
 -	AddOptionToggle(content, controller(), ::Tele::kOptionShowChangelog);
 -	AddUpdates(content);
@@ -1270,7 +1270,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
 @@ -52,111 +52,91 @@ namespace {
  base::options::toggle HideStoriesOption({
  	.id = kOptionHideStories,
- 	.name = "Hide stories",
+ 	.name = "Скрыть истории",
 -	.description = "No stories anywhere: no stories bar, no rings around "
 -		"userpics, no stories in profiles, story messages show "
 -		"as expired and story links don't open.",
@@ -1281,7 +1281,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle InvisibleStoriesOption({
  	.id = kOptionInvisibleStories,
- 	.name = "Watch stories invisibly",
+ 	.name = "Анонимный просмотр историй",
 -	.description = "Watching a story doesn't tell the server, so you "
 -		"don't appear among its viewers. Seen stories come back "
 -		"as unread after a restart. Reactions and replies still "
@@ -1292,7 +1292,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle GhostOption({
  	.id = kOptionGhost,
- 	.name = "Ghost mode",
+ 	.name = "Режим невидимки",
 -	.description = "Hide your activity from others, the way the switches "
 -		"below say. Flip it quickly from the main menu.",
 +	.description = "Applies the switches below, also toggled from the main "
@@ -1371,7 +1371,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle ButtonPayloadsOption({
  	.id = kOptionButtonPayloads,
- 	.name = "Show bot button payloads",
+ 	.name = "Показывать данные кнопок ботов",
 -	.description = "Hovering a bot button shows what it carries: "
 -		"callback data, links, inline queries, web apps and more.",
 +	.description = "Hover a bot button to see its callback data or link.",
@@ -1379,7 +1379,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle AutoUpdateOption({
  	.id = kOptionAutoUpdate,
- 	.name = "Update automatically",
+ 	.name = "Автоматическое обновление",
 -	.description = "Check the tele releases on GitHub every 3 hours, "
 -		"download new builds in the background and offer a restart.",
 +	.description = "Checks the GitHub releases every 3 hours.",
@@ -1400,7 +1400,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
 @@ -169,217 +149,169 @@ base::options::option<int> ChangelogShownOption({
  base::options::toggle GroupQuickRepliesOption({
  	.id = kOptionGroupQuickReplies,
- 	.name = "Quick replies in groups and channels",
+ 	.name = "Быстрые ответы в группах и каналах",
 -	.description = "Offer your Business quick replies in groups and "
 -		"channels too. Telegram only sends them in private chats, so "
 -		"tele posts the shortcut's messages as ordinary ones: bot "
@@ -1410,7 +1410,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle LowercaseOption({
  	.id = kOptionLowercase,
- 	.name = "Lowercase everything",
+ 	.name = "Все строчными буквами",
 -	.description = "Every interface text is shown in lowercase, both "
 -		"the language pack and tele's own texts. Messages and names "
 -		"stay as they are.",
@@ -1420,14 +1420,14 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle HideCallsOption({
  	.id = kOptionHideCalls,
- 	.name = "Hide call buttons",
+ 	.name = "Скрыть кнопки звонков",
 -	.description = "No call button in the top bar of private chats "
 -		"and in profiles.",
  });
  
  base::options::toggle BubbleBadgesOption({
  	.id = kOptionBubbleBadges,
- 	.name = "Badges next to names in messages",
+ 	.name = "Бейджи рядом с именами",
 -	.description = "Show checkmarks and custom verification next to "
 -		"sender names in message bubbles, where emoji statuses are.",
 +	.description = "Checkmarks and custom verification next to sender names.",
@@ -1460,7 +1460,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
- 	.name = "Hide the All chats folder",
+ 	.name = "Скрыть папку «Все чаты»",
 -	.description = "When you have folders, All chats disappears from "
 -		"the folder tabs and the chat list opens on your first folder.",
 +	.description = "The chat list opens on your first folder.",
@@ -1493,7 +1493,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Show gift IDs",
+ 	.name = "Показывать ID подарков",
 -	.description = "Show the ID of a collectible gift in its card. "
 -		"Click it to copy.",
 +	.description = "In collectible gift cards, click to copy.",
@@ -1501,14 +1501,14 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle PeerIdsWithoutSpacesOption({
  	.id = kOptionPeerIdsWithoutSpaces,
- 	.name = "IDs without spaces",
+ 	.name = "ID без пробелов",
 -	.description = "Show peer IDs in profiles as plain digits, without "
 -		"grouping them. Copying gives the same text.",
  });
  
  base::options::toggle BotApiPeerIdsOption({
  	.id = kOptionBotApiPeerIds,
- 	.name = "Bot API style IDs",
+ 	.name = "ID в стиле Bot API",
 -	.description = "Show peer IDs in profiles the way the Bot API does: "
 -		"basic groups get a minus in front, channels and supergroups "
 -		"get -100 in front.",
@@ -1517,7 +1517,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle ShowDcOption({
  	.id = kOptionShowDc,
- 	.name = "Show data center",
+ 	.name = "Показывать дата-центр",
 -	.description = "Show a DC row in profiles with the data center "
 -		"the account or chat lives in, known from its profile photo. "
 -		"Click it to copy.",
@@ -1534,7 +1534,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle HideIgnoredOption({
  	.id = kOptionHideIgnored,
- 	.name = "Hide ignored messages completely",
+ 	.name = "Полностью скрывать сообщения игнорируемых",
 -	.description = "Messages from ignored users disappear from chats. "
 -		"When off, they are shown faded.",
 +	.description = "When off, they are shown faded.",
@@ -1542,7 +1542,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::option<QString> IgnoredUsersOption({
  	.id = kOptionIgnoredUsers,
- 	.name = "Ignored users",
+ 	.name = "Игнорируемые пользователи",
 -	.description = "People whose messages are faded or hidden in chats. "
 -		"Right-click a userpic in a group to ignore someone.",
 +	.description = "Right-click a userpic in a group to ignore someone.",
@@ -1550,14 +1550,14 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle MessageSecondsOption({
  	.id = kOptionMessageSeconds,
- 	.name = "Show seconds in message times",
+ 	.name = "Секунды во времени сообщений",
 -	.description = "Times in message bubbles show seconds too, "
 -		"like 14:03:21.",
  });
  
  base::options::toggle EditHistoryOption({
  	.id = kOptionEditHistory,
- 	.name = "Keep edit history",
+ 	.name = "Сохранять историю правок",
 -	.description = "Remember what messages looked like before they were "
 -		"edited while tele is running. Right-click an edited message "
 -		"to see every version. Kept in memory only.",
@@ -1567,7 +1567,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle KeepDeletedOption({
  	.id = kOptionKeepDeleted,
- 	.name = "Keep deleted messages",
+ 	.name = "Сохранять удаленные сообщения",
 -	.description = "Messages deleted by others or from your other "
 -		"devices stay in the chat, marked as deleted, until tele "
 -		"restarts. Deleting one here removes it from tele only.",
@@ -1576,7 +1576,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle DeletedIconOption({
  	.id = kOptionDeletedIcon,
- 	.name = "Mark with a trash icon instead of fading",
+ 	.name = "Отмечать значком корзины вместо затемнения",
 -	.description = "Show kept deleted messages as usual, with a trash "
 -		"icon next to the time.",
  });
@@ -1602,7 +1602,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::toggle ViewAsTlOption({
  	.id = kOptionViewAsTl,
- 	.name = "View as TL",
+ 	.name = "В виде TL",
 -	.description = "Adds View as TL to menus of messages, chats, "
 -		"profiles, topics, stickers, gifts, stories and folders: it "
 -		"fetches the object from the server and opens it on "
@@ -1612,7 +1612,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 -	.description = "Where tele gets extra account data, like "
 -		"checkmarks and custom verification. Empty turns it off.",
 +	.description = "Source of checkmarks and custom verification, empty turns "
@@ -1622,7 +1622,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::option<QString> TitleTemplateOption({
  	.id = kOptionTitleTemplate,
- 	.name = "Title bar label",
+ 	.name = "Шаблон заголовка окна",
 -	.description = "What the label in the title bar shows. Variables in "
 -		"braces are filled in live, parts in square brackets hide when "
 -		"a variable inside is empty or 0. Empty hides the label.",
@@ -1632,7 +1632,7 @@ index 22d865d1590a766b395912c84403148b90697bda..331f11c0c8b5667e463018dff5c8f0ee
  
  base::options::option<QString> WindowTitleTemplateOption({
  	.id = kOptionWindowTitleTemplate,
- 	.name = "Window title",
+ 	.name = "Заголовок окна в системе",
 -	.description = "The title the system shows in the taskbar, Alt+Tab "
 -		"and the system window frame, with the same variables as the "
 -		"label and {label} for the label itself. Empty keeps the "

@@ -252,7 +252,7 @@ index bafcca0e65562f312708e0e9e20432d1a3372f2a..c6aa850aff3f96d5e6efa353e1aaeb79
 +	buildAppleMenu(_menuBar->addMenu(u"tele"_q));
  	buildFileMenu(_menuBar->addMenu(u"File"_q));
  	buildEditMenu(_menuBar->addMenu(u"Edit"_q));
- 	buildWindowMenu(_menuBar->addMenu(u"Window"_q));
+ 	buildWindowMenu(_menuBar->addMenu(u"Окно"_q));
 diff --git a/Telegram/SourceFiles/platform/mac/specific_mac.mm b/Telegram/SourceFiles/platform/mac/specific_mac.mm
 index d5643d100aaef8dcc770213bf5dab438f1e75d98..856f45c5c92068671c6abe5e3af121fe9d8be7ec 100644
 --- a/Telegram/SourceFiles/platform/mac/specific_mac.mm

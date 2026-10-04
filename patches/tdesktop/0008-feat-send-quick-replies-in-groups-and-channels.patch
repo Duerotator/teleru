@@ -164,12 +164,12 @@ index 6a7709de9301383adda4d057bb7e5f8eae5be67c..aeb35a708bc86dc25614026e7d8b9758
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Чаты"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Updates"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Обновления"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
  	AddUpdates(content);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
@@ -190,7 +190,7 @@ index e4bc0261910b539f8356ee9abccc74ce8c18b9d3..fb4c3431cf9265c13c9ba7b118144be4
  
 +base::options::toggle GroupQuickRepliesOption({
 +	.id = kOptionGroupQuickReplies,
-+	.name = "Quick replies in groups and channels",
++	.name = "Быстрые ответы в группах и каналах",
 +	.description = "Offer your Business quick replies in groups and "
 +		"channels too. Telegram only sends them in private chats, so "
 +		"tele posts the shortcut's messages as ordinary ones: bot "

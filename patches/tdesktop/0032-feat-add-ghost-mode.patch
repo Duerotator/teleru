@@ -595,7 +595,7 @@ index 939a1d69d4954b71df365b357b57474eb74dea1a..ff5fd6c0d483c1e20c631e3aba7de25c
  	Ui::AddSkip(content);
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Ghost mode"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Режим невидимки"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionGhost);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionGhostRead);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionGhostReadOnReply);
@@ -607,7 +607,7 @@ index 939a1d69d4954b71df365b357b57474eb74dea1a..ff5fd6c0d483c1e20c631e3aba7de25c
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Bots"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Боты"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_ghost.cpp b/Telegram/SourceFiles/tele/tele_ghost.cpp
@@ -997,7 +997,7 @@ index 0000000000000000000000000000000000000000..b43d5943b72c8a1e3ed57016b78b0cbb
 +void AddGhostMenuToggle(not_null<Ui::VerticalLayout*> container) {
 +	const auto button = Settings::AddButtonWithIcon(
 +		container,
-+		rpl::single(u"Ghost mode"_q),
++		rpl::single(u"Режим невидимки"_q),
 +		st::mainMenuButton,
 +		{ &st::menuIconStealth });
 +	button->toggleOn(GhostValue());
@@ -1194,7 +1194,7 @@ index 594c123788c815d0ed728eba7b82371235ad8878..d15f66869555b1b717d4af02acf9eba8
  
 +base::options::toggle GhostOption({
 +	.id = kOptionGhost,
-+	.name = "Ghost mode",
++	.name = "Режим невидимки",
 +	.description = "Hide your activity from others, the way the switches "
 +		"below say. Flip it quickly from the main menu.",
 +});
@@ -1263,7 +1263,7 @@ index 594c123788c815d0ed728eba7b82371235ad8878..d15f66869555b1b717d4af02acf9eba8
 +
  base::options::toggle ButtonPayloadsOption({
  	.id = kOptionButtonPayloads,
- 	.name = "Show bot button payloads",
+ 	.name = "Показывать данные кнопок ботов",
 @@ -251,7 +328,66 @@ bool HideStories() {
  }
  

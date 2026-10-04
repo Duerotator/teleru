@@ -76,7 +76,7 @@ index d7d80f4d6d03131f6d7631639443f4bbf23f7bb4..fd7e962f106c14705663f8e9fdb663f5
 @@ -969,6 +996,7 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionScreenshotSecretMedia);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Menus"_q);
+ 	AddGroupTitle(builder, u"Меню"_q);
 +	AddMessageMenu(builder);
  	AddOptionToggle(builder, ::Tele::kOptionJumpToFirst);
  	AddOptionToggle(builder, ::Tele::kOptionMessageIdMenu);
@@ -885,7 +885,7 @@ index 0b5c07c1383edfa360c10cf202bdf8a1e670b2ac..63cd6fb62fb8c50581be8c7182cc2965
 +
  base::options::toggle SentToBottomOption({
  	.id = kOptionSentToBottom,
- 	.name = "Move late-sent messages to the bottom",
+ 	.name = "Перемещать долго отправляемые сообщения вниз",
 @@ -766,6 +774,24 @@ rpl::producer<QString> WindowTitleTemplateValue() {
  	});
  }

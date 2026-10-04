@@ -148,7 +148,7 @@ index beec743960b7c2c4ce3a421c8f71aa7106446bd0..a1ddd01eb447bd457394aee2ec2636fd
  	AddOptionToggle(builder, ::Tele::kOptionHideStories);
  	AddOptionToggle(builder, ::Tele::kOptionInvisibleStories);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Drafts"_q);
++	AddGroupTitle(builder, u"Черновики"_q);
 +	AddLocalDrafts(builder);
 +	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Ignoring"_q);
@@ -339,7 +339,7 @@ index 6fceea04f5d57bb35c51b496b12d2626b5d114b7..2c9aa1da65146ea8a17df6b0635a8b42
  
 +base::options::toggle LocalDraftsOption({
 +	.id = kOptionLocalDrafts,
-+	.name = "Keep drafts on this device",
++	.name = "Хранить черновики только на этом устройстве",
 +	.description = "Drafts are never saved to the cloud, so other devices "
 +		"don't see them. Cloud drafts from other devices are ignored.",
 +});

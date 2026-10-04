@@ -88,7 +88,7 @@ index 1df3a08b9cda99b2e19efb999912957e516f32ac..438a11ed7b7cc96b195196b4e9302f19
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -3114,6 +3114,10 @@ void FillProfiles(SectionBuilder &builder) {
- 	AddGroupTitle(builder, u"Gifts"_q);
+ 	AddGroupTitle(builder, u"Подарки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
  	AddOptionToggle(builder, ::Tele::kOptionShowRegularGiftIds);
 +	AddOptionToggle(
@@ -589,7 +589,7 @@ index 7a8e737dde4271dcc86638b7c01efd94fd93336b..526e5e4c4c5eac5386d68d2a5c8b01a5
  
 +base::options::toggle GiftQuantityOption({
 +	.id = kOptionGiftQuantity,
-+	.name = "Send several gifts at once",
++	.name = "Отправлять несколько копий подарка сразу",
 +});
 +
  base::options::toggle SeeTgButtonOption({

@@ -1139,19 +1139,19 @@ index a8cef47068bb361e8c9691863f4a9e8122e91c58..2b6c48c301a3939552996f06f458087f
  const char kOptionReturnPoint[] = "tele-return-point";
  const char kOptionNoGestures[] = "tele-no-gestures";
 @@ -1074,6 +1075,13 @@ base::options::toggle SelectChatsOption({
- 	.name = "Select several chats",
+ 	.name = "Выбор нескольких чатов",
  });
  
 +base::options::toggle FullChatPreviewOption({
 +	.id = kOptionFullChatPreview,
-+	.name = "Preview chats in the chat area",
++	.name = "Превью чатов в области сообщений (без прочтения)",
 +	.description = "Alt+click or holding a userpic opens the chat read-only, "
 +		"leaving messages unread.",
 +});
 +
  base::options::toggle BookmarksOption({
  	.id = kOptionBookmarks,
- 	.name = "Message bookmarks",
+ 	.name = "Закладки сообщений",
 @@ -2344,6 +2352,10 @@ rpl::producer<bool> SelectChatsValue() {
  	});
  }

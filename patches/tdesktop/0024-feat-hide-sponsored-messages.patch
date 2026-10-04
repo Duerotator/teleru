@@ -155,7 +155,7 @@ index 8fb70feef758c45bd5502e6d593d9c51252e3504..04099357edc4eadc9ffd4f7edb20e2e1
 +
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Show gift IDs",
+ 	.name = "Показывать ID подарков",
 @@ -231,6 +240,20 @@ bool BubbleBadges() {
  	return BubbleBadgesOption.value();
  }

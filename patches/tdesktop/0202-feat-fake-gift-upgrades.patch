@@ -994,7 +994,7 @@ index 1b2b593f38250e1124200e1262b3d4208d1ee151..a87a5d28524f7c0b6c03fac5e4f5e2da
  
 +base::options::toggle GiftFakeUpgradeOption({
 +	.id = kOptionGiftFakeUpgrade,
-+	.name = "Fake upgrade in gift menus",
++	.name = "Симуляция апгрейда подарков",
 +	.description = "Opens the real upgrade box for a regular gift and "
 +		"rolls the result locally. Nothing is bought or sent.",
 +	.defaultValue = true,
@@ -1002,7 +1002,7 @@ index 1b2b593f38250e1124200e1262b3d4208d1ee151..a87a5d28524f7c0b6c03fac5e4f5e2da
 +
  base::options::toggle PeerIdsWithoutSpacesOption({
  	.id = kOptionPeerIdsWithoutSpaces,
- 	.name = "IDs without spaces",
+ 	.name = "ID без пробелов",
 @@ -1796,6 +1805,10 @@ bool GiftStudioMainMenu() {
  	return GiftStudioMainMenuOption.value();
  }

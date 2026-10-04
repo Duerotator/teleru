@@ -124,13 +124,13 @@ index 0d7334013d75e0dc21c3de6ca7fa89f7b4305ab7..f0d3ee113f4a0d2637e255fa97f1a857
  
 +base::options::toggle StarsToolsOption({
 +	.id = kOptionStarsTools,
-+	.name = "Search and export star transactions",
++	.name = "Поиск и экспорт транзакций Stars",
 +	.description = "Search and filters load the whole history first.",
 +});
 +
  base::options::toggle NoCollectibleTooltipOption({
  	.id = kOptionNoCollectibleTooltip,
- 	.name = "No tooltip for collectible statuses",
+ 	.name = "Скрыть подсказки коллекционных статусов",
 @@ -1744,6 +1751,10 @@ bool GiftSearch() {
  	return GiftSearchOption.value();
  }
@@ -266,7 +266,7 @@ index 0000000000000000000000000000000000000000..85230162c4b1990cfa0972f4d3b3b9e5
 +
 +[[nodiscard]] const std::vector<ChipDescriptor> &ChipDescriptors() {
 +	static const auto result = std::vector<ChipDescriptor>{
-+		{ kGifts, u"Gifts"_q, u"gift"_q },
++		{ kGifts, u"Подарки"_q, u"gift"_q },
 +		{ kReactions, u"Reactions"_q, u"reaction"_q },
 +		{ kPaidMedia, u"Paid media"_q, u"paid_media"_q },
 +		{ kSubscriptions, u"Subscriptions"_q, u"subscription"_q },

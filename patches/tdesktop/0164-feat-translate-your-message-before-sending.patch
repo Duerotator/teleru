@@ -98,12 +98,12 @@ index 40d769e388967b9f65d56737b2bd78c9dc5510c8..5a94ead1a746891c3e4ead4400fd7bbc
  namespace {
  
 @@ -959,6 +960,11 @@ base::options::toggle ViewerLoopOption({
- 	.name = "Loop videos",
+ 	.name = "Зацикливать видео",
  });
  
 +base::options::option<QString> TranslateOutToOption({
 +	.id = kOptionTranslateOutTo,
-+	.name = "Translate your message to",
++	.name = "Переводить сообщения на",
 +});
 +
  void MigrateHideCalls() {

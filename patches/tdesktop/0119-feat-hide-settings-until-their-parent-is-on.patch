@@ -243,7 +243,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
  	}
 -	const auto refresh = AddButton(builder, {
 -		.id = u"tele-refresh-badges"_q,
--		.title = rpl::single(::Tele::Lower(u"Refresh now"_q)),
+-		.title = rpl::single(::Tele::Lower(u"Обновить сейчас"_q)),
 -		.st = &st::settingsButtonNoIcon,
 -		.onClick = [=] {
 -			::Tele::RefreshBadges(crl::guard(controller, [=](QString text) {
@@ -252,7 +252,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 -		},
 -		.keywords = { u"verification"_q, u"checkmarks"_q, u"badges"_q },
 +	const auto refreshId = u"tele-refresh-badges"_q;
-+	const auto refreshTitle = ::Tele::Lower(u"Refresh now"_q);
++	const auto refreshTitle = ::Tele::Lower(u"Обновить сейчас"_q);
 +	WithParent(builder, refreshId, refreshTitle, ::Tele::kOptionServerUrl, [&] {
 +		const auto refresh = AddButton(builder, {
 +			.id = refreshId,
@@ -275,7 +275,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 -	}
  	const auto clear = AddButton(builder, {
  		.id = u"tele-clear-badges"_q,
- 		.title = rpl::single(::Tele::Lower(u"Clear cached data"_q)),
+ 		.title = rpl::single(::Tele::Lower(u"Очистить кэш"_q)),
 @@ -655,7 +855,8 @@ void AddButtonChoice(
  		void (*set)(const QString&),
  		rpl::producer<QString> (*value)(),
@@ -519,11 +519,11 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
  	AddOptionToggle(builder, ::Tele::kOptionKeepSecretMedia);
 -	AddOptionToggle(builder, ::Tele::kOptionScreenshotSecretMedia);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Menus"_q);
+ 	AddGroupTitle(builder, u"Меню"_q);
  	AddMessageMenu(builder);
 @@ -1760,13 +1982,37 @@ void FillPrivacy(SectionBuilder &builder) {
  	AddSkip(builder);
- 	AddGroupTitle(builder, u"Ghost mode"_q);
+ 	AddGroupTitle(builder, u"Режим невидимки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGhost);
 +	AddOptionToggle(
 +		builder,
@@ -564,7 +564,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 -	AddOptionToggle(builder, ::Tele::kOptionGhostStories);
  	AddGhostChats(builder);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Stories"_q);
+ 	AddGroupTitle(builder, u"Истории"_q);
 @@ -1774,7 +2020,11 @@ void FillPrivacy(SectionBuilder &builder) {
  		builder,
  		::Tele::kOptionHideStories,
@@ -576,7 +576,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 +		{},
 +		{ Off(::Tele::kOptionHideStories) });
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Drafts"_q);
+ 	AddGroupTitle(builder, u"Черновики"_q);
  	AddLocalDrafts(builder);
 @@ -1788,6 +2038,11 @@ void FillPrivacy(SectionBuilder &builder) {
  		builder,
@@ -592,7 +592,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
  
 @@ -1795,12 +2050,23 @@ void FillProfiles(SectionBuilder &builder) {
  	AddSkip(builder);
- 	AddGroupTitle(builder, u"Peer IDs"_q);
+ 	AddGroupTitle(builder, u"Идентификаторы (ID)"_q);
  	AddOptionToggle(builder, ::Info::Profile::kOptionShowPeerIdBelowAbout);
 -	AddOptionToggle(builder, ::Tele::kOptionPeerIdsWithoutSpaces);
 -	AddOptionToggle(builder, ::Tele::kOptionBotApiPeerIds);
@@ -607,7 +607,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 +		{},
 +		::Info::Profile::kOptionShowPeerIdBelowAbout);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Profiles"_q);
+ 	AddGroupTitle(builder, u"Профили"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc, { u"dc"_q });
 -	AddOptionToggle(builder, ::Tele::kOptionMergeIdDc);
 +	AddOptionToggle(builder, ::Tele::kOptionMergeIdDc, {}, {
@@ -619,7 +619,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
  	AddLocalNames(builder);
 @@ -2106,7 +2372,11 @@ void FillRoot(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Server"_q);
+ 	AddGroupTitle(builder, u"Сервер"_q);
  	AddServer(builder);
 -	AddOptionToggle(builder, ::Tele::kOptionServerUsernames);
 +	AddOptionToggle(
@@ -628,7 +628,7 @@ index c25c28967a5a43a880e754a504a7bf6a6690180d..27a6f57de65d56b8302249a1e8de2bc7
 +		{},
 +		::Tele::kOptionServerUrl);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Backup"_q);
+ 	AddGroupTitle(builder, u"Резервная копия"_q);
  	AddBackup(builder);
 @@ -2282,6 +2552,10 @@ void FillNew(SectionBuilder &builder) {
  		if (picked.empty()) {
@@ -648,7 +648,7 @@ index 715ab4175dbab9dbac3d858dbf9caf3cd7226133..9e0c434d5258f614404d50f76670aaea
 @@ -112,7 +112,6 @@ base::options::toggle InvisibleStoriesOption({
  base::options::toggle GhostOption({
  	.id = kOptionGhost,
- 	.name = "Ghost mode",
+ 	.name = "Режим невидимки",
 -	.description = "Applies the switches below.",
  });
  
@@ -656,7 +656,7 @@ index 715ab4175dbab9dbac3d858dbf9caf3cd7226133..9e0c434d5258f614404d50f76670aaea
 @@ -487,7 +486,6 @@ base::options::toggle CalcmulaOption({
  base::options::toggle CalcmulaPreviewOption({
  	.id = kOptionCalcmulaPreview,
- 	.name = "Preview calcmula results while typing",
+ 	.name = "Предпросмотр подсчетов калькулятора при вводе",
 -	.description = "Needs \"Calculate with calcmula.app\" on.",
  });
  

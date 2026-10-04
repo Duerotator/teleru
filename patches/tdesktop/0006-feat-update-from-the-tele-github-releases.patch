@@ -162,7 +162,7 @@ index 7d5a2859ea4be6df329b43f04bf898035acc8884..6a7709de9301383adda4d057bb7e5f8e
 +	const auto button = container->add(object_ptr<Button>(
 +		container,
 +		::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
-+			return ready ? u"Restart to update"_q : u"Check for updates"_q;
++			return ready ? u"Restart to update"_q : u"Проверить обновления"_q;
 +		}),
 +		st::settingsButtonNoIcon));
 +	button->setClickedCallback([] {
@@ -178,12 +178,12 @@ index 7d5a2859ea4be6df329b43f04bf898035acc8884..6a7709de9301383adda4d057bb7e5f8e
  	QWidget *parent,
  	not_null<Window::SessionController*> controller)
 @@ -135,12 +178,22 @@ void TeleSection::setupContent() {
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Bots"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Боты"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionButtonPayloads);
  	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Updates"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Обновления"_q));
 +	AddOptionToggle(content, controller(), ::Tele::kOptionAutoUpdate);
 +	AddUpdates(content);
 +	Ui::AddSkip(content);
@@ -221,7 +221,7 @@ index 2be3b2f04ae14a2c624df8dae2ee104ee81e2ab6..e4bc0261910b539f8356ee9abccc74ce
  
 +base::options::toggle AutoUpdateOption({
 +	.id = kOptionAutoUpdate,
-+	.name = "Update automatically",
++	.name = "Автоматическое обновление",
 +	.description = "Check the tele releases on GitHub every 3 hours, "
 +		"download new builds in the background and offer a restart.",
 +	.defaultValue = true,

@@ -66,7 +66,7 @@ index bf0171ccf96a021e17e312550cf3b9895b75b2f2..27ad0f90ce728f9d2f17e670a5facd46
  
 +base::options::toggle QueueBehindMediaOption({
 +	.id = kOptionQueueBehindMedia,
-+	.name = "Queue messages behind uploading media",
++	.name = "Очередь сообщений за загружаемым медиа",
 +	.description = "Messages sent during an upload go out after it, in order.",
 +});
 +

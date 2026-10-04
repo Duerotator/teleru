@@ -676,7 +676,7 @@ index bf752e63cf4e6482efdc2b39ace0675b4d6e30c2..683522616e82fd7d27815b02bfddc4b0
  	AddOptionToggle(builder, ::Tele::kOptionPunctualScheduled);
  	AddOptionToggle(builder, ::Tele::kOptionNoRichPastePrompt);
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Drafts"_q);
++	AddGroupTitle(builder, u"Черновики"_q);
 +	AddSavedDrafts(builder);
 +	AddGroupDivider(builder);
  	AddGroupTitle(builder, u"Disappearing media"_q);
@@ -4927,7 +4927,7 @@ index 0000000000000000000000000000000000000000..3cfcdcb2dc08030af5b43b738d53732f
 +	const auto available = std::max(
 +		width() - left - st::topBarArrowPadding.right(),
 +		0);
-+	const auto title = Lower(u"Drafts"_q);
++	const auto title = Lower(u"Черновики"_q);
 +	const auto subtitle = DraftsThreadName(_session, _thread);
 +	p.setPen(st::dialogsNameFg);
 +	p.setFont(st::semiboldFont);

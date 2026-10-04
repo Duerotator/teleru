@@ -103,7 +103,7 @@ index 427ca5e96442cf6ba0741b9f1e864e599cc8d343..6630f1ba86a6ddfb53ed75daff0d7fb6
  		::Tele::kOptionScaleOnePercent,
  		{ u"zoom"_q, u"size"_q, u"interface"_q });
  	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Animations"_q);
++	AddGroupTitle(builder, u"Анимации"_q);
 +	AddOptionToggle(
 +		builder,
 +		::Tele::kOptionReduceMotion,
@@ -131,7 +131,7 @@ index 9aab1a4d0528c490acc59c802fd7824da2566862..1d8d04bbce226953da8e10fe604d52a2
  
 +base::options::toggle ReduceMotionOption({
 +	.id = kOptionReduceMotion,
-+	.name = "Reduce motion",
++	.name = "Уменьшение движения (отключение анимаций)",
 +	.description = "Switches on every limit in Battery and animations and "
 +		"stops sticker loops until it's turned off.",
 +});

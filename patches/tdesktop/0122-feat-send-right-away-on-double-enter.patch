@@ -93,12 +93,12 @@ index 1e4423d2ba567030293b7e94e99356ae65f43ed6..a94a90640ff4f7afbceaa3833a885d36
  
 +base::options::toggle DoubleEnterSendOption({
 +	.id = kOptionDoubleEnterSend,
-+	.name = "Send right away on double Enter",
++	.name = "Отправлять сразу по двойному Enter",
 +});
 +
  base::options::toggle InlineWithoutViaOption({
  	.id = kOptionInlineWithoutVia,
- 	.name = "Send inline results without via",
+ 	.name = "Отправлять инлайн-результаты без пометки «через бота»",
 @@ -1281,6 +1287,10 @@ rpl::producer<> SendOlderRepliesChanges() {
  	return SendOlderRepliesOption.changes();
  }

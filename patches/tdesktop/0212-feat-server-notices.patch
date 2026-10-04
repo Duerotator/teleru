@@ -65,7 +65,7 @@ index fe55ea82213ed49575422cd4a61b89220fa6fed7..233c4a3260272b4b65216ae59abb7338
 +		{},
 +		::Tele::kOptionServerUrl);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Backup"_q);
+ 	AddGroupTitle(builder, u"Резервная копия"_q);
  	AddBackup(builder);
 diff --git a/Telegram/SourceFiles/tele/tele_badges.cpp b/Telegram/SourceFiles/tele/tele_badges.cpp
 index fc7d03846d2cf61960b1a383b9a43338a07529a0..a23b2831b547ea9a80f3e5c028fc30288198bc5d 100644
@@ -502,7 +502,7 @@ index eb0cf39d9a65e492938aff3258126d16d36a7f3e..886a9dcd876d994d81434b65dbd0fd32
  
 +base::options::toggle NoticesServerOption({
 +	.id = kOptionNoticesServer,
-+	.name = "Notifications from the server",
++	.name = "Оповещения с сервера tele",
 +	.description = "Notices from the tele server in the notification "
 +		"centre.",
 +	.defaultValue = true,
@@ -510,7 +510,7 @@ index eb0cf39d9a65e492938aff3258126d16d36a7f3e..886a9dcd876d994d81434b65dbd0fd32
 +
  base::options::option<QString> TitleTemplateOption({
  	.id = kOptionTitleTemplate,
- 	.name = "Title bar label",
+ 	.name = "Шаблон заголовка окна",
 @@ -2218,6 +2227,14 @@ rpl::producer<> ServerUsernamesChanges() {
  	return ServerUsernamesOption.changes();
  }

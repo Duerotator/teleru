@@ -1492,12 +1492,12 @@ index c189bb296b356af63cad535725f8b446510ef023..cbd7db96b3954896328bf9c0488d813d
  namespace {
  
 @@ -674,6 +675,13 @@ base::options::toggle DockedGridOption({
- 	.name = "Docked media as album grid",
+ 	.name = "Прикрепленные медиа сеткой альбома",
  });
  
 +base::options::toggle LocalFoldersOption({
 +	.id = kOptionLocalFolders,
-+	.name = "Folders past the limit",
++	.name = "Папки сверх лимита",
 +	.description = "What doesn't fit the server limit stays on this "
 +		"device.",
 +});

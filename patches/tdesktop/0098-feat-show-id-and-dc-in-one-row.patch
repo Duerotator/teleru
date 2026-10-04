@@ -48,7 +48,7 @@ index 17da4bd98a179278db82768384bfca83e4a9711e..2f6c4322213225a76dc9819fd0ea9f85
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1731,6 +1731,7 @@ void FillProfiles(SectionBuilder &builder) {
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Profiles"_q);
+ 	AddGroupTitle(builder, u"Профили"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc);
 +	AddOptionToggle(builder, ::Tele::kOptionMergeIdDc);
  	AddOptionToggle(builder, ::Tele::kOptionNoPhoneInHeader);
@@ -72,7 +72,7 @@ index c5cfe2ea8374bcfc111ada1b6da54741a11b32f0..52505e516c25d4ec50cf4eb2bb6fa18e
  
 +base::options::toggle MergeIdDcOption({
 +	.id = kOptionMergeIdDc,
-+	.name = "ID and DC in one row",
++	.name = "ID и дата-центр в одной строке",
 +	.description = "When both are shown, the DC goes next to the ID"
 +		" in the same row.",
 +});

@@ -99,7 +99,7 @@ index 80fa8fa54fa50dfbcffeb15c7439b3530139e7b0..5a970a3222bfb7f49304ade0f84aa63e
 @@ -597,7 +597,7 @@ base::options::toggle BotApiPeerIdsOption({
  base::options::toggle ShowDcOption({
  	.id = kOptionShowDc,
- 	.name = "Show data center",
+ 	.name = "Показывать дата-центр",
 -	.description = "Known from the profile photo.",
 +	.description = "From the profile photo in profiles, from the file in the media viewer.",
  });

@@ -180,7 +180,7 @@ index 7f2223974cd0c97e15b1e984679ead094c0fa5e7..2a8e5dd045e36bc156d110d088b6077f
  	const auto button = builder.addButton({
  		.id = u"tele-check-updates"_q,
  		.title = ::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
- 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Check for updates"_q);
+ 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Проверить обновления"_q);
  		}),
  		.st = &st::settingsButtonNoIcon,
 -		.onClick = [] {
@@ -194,7 +194,7 @@ index 7f2223974cd0c97e15b1e984679ead094c0fa5e7..2a8e5dd045e36bc156d110d088b6077f
  			} else {
  				::Tele::CheckForUpdates();
 @@ -436,7 +441,11 @@ void AddServer(SectionBuilder &builder) {
- 		.title = rpl::single(::Tele::Lower(u"Server"_q)),
+ 		.title = rpl::single(::Tele::Lower(u"Сервер"_q)),
  		.st = &st::settingsButtonNoIcon,
  		.label = ::Tele::ServerUrlValue() | rpl::map([](const QString &url) {
 -			return url.isEmpty() ? u"off"_q : url;

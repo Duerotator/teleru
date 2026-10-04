@@ -4272,7 +4272,7 @@ index 3f148d15963b403b97ad0e897bc2e2a3196b88a5..ddc297427ba22ddc023d5a61a20e0f1c
 +		"account, Ctrl+Alt+M opens it from any window."_q);
 +	const auto button = AddButton(builder, {
 +		.id = u"tele-mtp-console"_q,
-+		.title = rpl::single(::Tele::Lower(u"MTProto console"_q)),
++		.title = rpl::single(::Tele::Lower(u"Консоль MTProto"_q)),
 +		.st = &st::settingsButtonNoIcon,
 +		.onClick = [=] {
 +			::Tele::ShowMtpConsole(controller->uiShow());
@@ -4478,7 +4478,7 @@ index 0000000000000000000000000000000000000000..583511fe5d5ea7f80f21e0d82e4777de
 +void Console::createWindow(QRect parent) {
 +	_window = std::make_unique<Ui::RpWindow>();
 +	const auto window = _window.get();
-+	window->setWindowTitle(Lower(u"MTProto console"_q));
++	window->setWindowTitle(Lower(u"Консоль MTProto"_q));
 +	window->setMinimumSize({ st::windowMinWidth, st::windowMinHeight });
 +
 +	auto rect = QRect(
@@ -5455,7 +5455,7 @@ index 0000000000000000000000000000000000000000..43d3b6b71355359938ee3cd93315b568
 +	}
 +	_current.resolved = resolved;
 +	_callbacks.status(id, resolved.isEmpty()
-+		? Lower(u"Sending"_q)
++		? Lower(u"Отправка"_q)
 +		: (Lower(u"Sending, "_q) + resolved.join(u", "_q)));
 +	_current.started = crl::now();
 +	_current.requestId = _api.request(

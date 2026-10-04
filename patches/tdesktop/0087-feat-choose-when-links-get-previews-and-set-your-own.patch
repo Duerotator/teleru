@@ -744,14 +744,14 @@ index aa4f6bee7ad0a45f970a00a8c2e437bc3480c73f..c8f1d9560b65522f01208c566b33f033
  
 +base::options::option<QString> LinkPreviewsOption({
 +	.id = kOptionLinkPreviews,
-+	.name = "Automatic link previews",
++	.name = "Автоматический предпросмотр ссылок",
 +	.description = "A preview you add by hand, from the field's right-click "
 +		"menu or the preview options, is always sent.",
 +});
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
- 	.name = "Hide the All chats folder",
+ 	.name = "Скрыть папку «Все чаты»",
 @@ -768,6 +776,24 @@ bool CleanSentLinks() {
  	return CleanSentLinksOption.value();
  }

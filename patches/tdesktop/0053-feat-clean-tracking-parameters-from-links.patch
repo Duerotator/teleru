@@ -140,7 +140,7 @@ index ae1acb075b7a82a5dc16bbff4c336067ca31ebba..25e3b9447da6ed1e0f40e3930920d463
 @@ -973,11 +973,15 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionViewAsTl);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Chats"_q);
+ 	AddGroupTitle(builder, u"Чаты"_q);
 -	AddOptionToggle(builder, ::Tele::kOptionNoLinkWarning);
 -	AddOptionToggle(builder, ::Tele::kOptionOpenLinksInApps);
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
@@ -784,7 +784,7 @@ index 89c5bc7d6e1c22153baad65cd1ba36b5f2a001de..7417340503f33ebf388d825283da89b6
 +
  base::options::toggle HideAllChatsOption({
  	.id = kOptionHideAllChats,
- 	.name = "Hide the All chats folder",
+ 	.name = "Скрыть папку «Все чаты»",
 @@ -508,6 +526,14 @@ bool OpenLinksInApps() {
  	return OpenLinksInAppsOption.value();
  }

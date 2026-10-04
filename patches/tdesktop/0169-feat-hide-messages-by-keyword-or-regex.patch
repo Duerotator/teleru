@@ -711,12 +711,12 @@ index 4ce0005fb36b2e6ab9a4cbff3b2371bc705017fa..91da885368f25527a5a0a5f5af2862fc
  
 +base::options::option<QString> HiddenWordsOption({
 +	.id = kOptionHiddenWords,
-+	.name = "Hidden words",
++	.name = "Фильтр слов",
 +});
 +
  base::options::toggle MessageSecondsOption({
  	.id = kOptionMessageSeconds,
- 	.name = "Show seconds in message times",
+ 	.name = "Секунды во времени сообщений",
 @@ -1465,6 +1471,24 @@ rpl::producer<QString> IgnoredListValue() {
  	});
  }

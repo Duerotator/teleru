@@ -1952,7 +1952,7 @@ index 6c5770d5ad7f2aeac2afb9f294691f6213cc0f95..fd3534130c3467ddaa81448ce7dd62fd
  		FillBots);
 +	add(
 +		u"debug"_q,
-+		u"Debug"_q,
++		u"Отладка"_q,
 +		st::menuIconExperimental,
 +		{ u"logs"_q, u"mtproto"_q, u"network"_q },
 +		FillDebug);

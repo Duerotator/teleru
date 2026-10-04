@@ -103,7 +103,7 @@ index 1da08b725841e34f7a6ab87f4a4a0de0e5ee4848..d7d80f4d6d03131f6d7631639443f4bb
  	AddOptionToggle(builder, ::Tele::kOptionViewAsTl);
 +	AddOptionToggle(builder, ::Tele::kOptionCopyEmojiId);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Chats"_q);
+ 	AddGroupTitle(builder, u"Чаты"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGroupQuickReplies);
 diff --git a/Telegram/SourceFiles/tele/tele_message_menu.cpp b/Telegram/SourceFiles/tele/tele_message_menu.cpp
 index 15c441d02972581c6450ce1ffffd3ec2483be61b..fbf57cddaa2671dc770d5ce40d55b6f84dfa9453 100644
@@ -303,13 +303,13 @@ index 150259e7bd9c754823dc1e305746dfd293cab2f5..0b5c07c1383edfa360c10cf202bdf8a1
  
 +base::options::toggle CopyEmojiIdOption({
 +	.id = kOptionCopyEmojiId,
-+	.name = "Copy custom emoji IDs",
++	.name = "Копировать ID кастомных эмодзи",
 +	.description = "Right-click a custom emoji in a message to copy its ID.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -701,6 +708,10 @@ bool Calcmula() {
  	return CalcmulaOption.value();
  }

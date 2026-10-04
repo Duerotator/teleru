@@ -1155,23 +1155,23 @@ index 526e5e4c4c5eac5386d68d2a5c8b01a59d9a2cc3..281ee44b7292a6acbb937ea228aff1ec
  const char kOptionBotApiPeerIds[] = "tele-bot-api-peer-ids";
  const char kOptionShowDc[] = "tele-show-dc";
 @@ -537,6 +539,17 @@ base::options::toggle NoCollectibleTooltipOption({
- 	.name = "No tooltip for collectible statuses",
+ 	.name = "Скрыть подсказки коллекционных статусов",
  });
  
 +base::options::toggle GiftHiddenDimOption({
 +	.id = kOptionGiftHiddenDim,
-+	.name = "Dim hidden gifts",
++	.name = "Затемнять скрытые подарки",
 +});
 +
 +base::options::toggle GiftSelectOption({
 +	.id = kOptionGiftSelect,
-+	.name = "Select several gifts",
++	.name = "Выбор нескольких подарков",
 +	.description = "Select gifts is in the menu of your gift list.",
 +});
 +
  base::options::toggle PeerIdsWithoutSpacesOption({
  	.id = kOptionPeerIdsWithoutSpaces,
- 	.name = "IDs without spaces",
+ 	.name = "ID без пробелов",
 @@ -1637,6 +1650,14 @@ bool NoCollectibleTooltip() {
  	return NoCollectibleTooltipOption.value();
  }

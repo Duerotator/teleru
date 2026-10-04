@@ -276,7 +276,7 @@ index ecf2d77a88573927efbe429e21dfe2ba90f025aa..eb0cf39d9a65e492938aff3258126d16
  
 +base::options::toggle NoticesLimitsOption({
 +	.id = kOptionNoticesLimits,
-+	.name = "Rate-limit toasts and bar",
++	.name = "Уведомления об ограничениях (Rate Limit) с таймером",
 +	.description = "Counts down Telegram's waits after too many requests, "
 +		"with a bar above the chat list from a minute.",
 +	.defaultValue = true,
@@ -284,7 +284,7 @@ index ecf2d77a88573927efbe429e21dfe2ba90f025aa..eb0cf39d9a65e492938aff3258126d16
 +
  base::options::toggle NoticesTeleToastsOption({
  	.id = kOptionNoticesTeleToasts,
- 	.name = "Log tele toasts",
+ 	.name = "Журнал всплывающих уведомлений tele",
 @@ -2349,6 +2358,10 @@ rpl::producer<bool> NoticesCentreValue() {
  	});
  }

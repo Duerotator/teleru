@@ -1764,12 +1764,12 @@ index 565a211c5edc3b1bdc94d8a2722b8616c3105c55..5c0fa2581b5507a724310ccdaa4feedd
  
 +base::options::toggle BookmarksOption({
 +	.id = kOptionBookmarks,
-+	.name = "Message bookmarks",
++	.name = "Закладки сообщений",
 +});
 +
 +base::options::toggle ReturnPointOption({
 +	.id = kOptionReturnPoint,
-+	.name = "Return to where you were reading",
++	.name = "Возврат к месту чтения после отправки",
 +	.description = "After you send a message while scrolled up.",
 +});
 +

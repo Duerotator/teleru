@@ -1161,7 +1161,7 @@ index 04e9e0ff54b67de6dbf3a57cc4840b0c2467db90..c64229ef0add3d18ff5079bf713ffef6
  
 +base::options::option<QString> AppLinksOption({
 +	.id = kOptionAppLinks,
-+	.name = "Open links in apps",
++	.name = "Открывать ссылки в приложениях",
 +	.description = "Spotify, Steam, Discord, Zoom and more open in their "
 +		"desktop app or in one you choose, instead of the browser.",
 +});

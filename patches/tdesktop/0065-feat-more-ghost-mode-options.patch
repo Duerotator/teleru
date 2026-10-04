@@ -74,7 +74,7 @@ index 982a3518080be5ed8aa6f5394d91061663d3ac2a..1ad81f81d5e34588a87207326d0547c3
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -1106,6 +1106,7 @@ void FillPrivacy(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Ghost mode"_q);
+ 	AddGroupTitle(builder, u"Режим невидимки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGhost);
 +	AddOptionToggle(builder, ::Tele::kOptionGhostInMenu);
  	AddOptionToggle(builder, ::Tele::kOptionGhostRead);
@@ -271,7 +271,7 @@ index 7772d51fd1d7c2deb381822953e1682822cd60ad..f463d7d17d81ed1c96dd2dec61748b4a
 +	}
  	const auto button = Settings::AddButtonWithIcon(
  		container,
- 		rpl::single(Lower(u"Ghost mode"_q)),
+ 		rpl::single(Lower(u"Режим невидимки"_q)),
 diff --git a/Telegram/SourceFiles/tele/tele_ghost.h b/Telegram/SourceFiles/tele/tele_ghost.h
 index df4f394418bf70ffefa2dcd8035febd3d1910c87..dfbbca5b59ab7b2921201f3f04bea07796893cb8 100644
 --- a/Telegram/SourceFiles/tele/tele_ghost.h
@@ -319,7 +319,7 @@ index e0bfb12629b6c1537e3a7c1a0b58edd8a965565b..fe1954902b58dd84aee3abdad5291ac1
 @@ -80,8 +81,13 @@ base::options::toggle InvisibleStoriesOption({
  base::options::toggle GhostOption({
  	.id = kOptionGhost,
- 	.name = "Ghost mode",
+ 	.name = "Режим невидимки",
 -	.description = "Applies the switches below, also toggled from the main "
 -		"menu.",
 +	.description = "Applies the switches below.",
@@ -327,7 +327,7 @@ index e0bfb12629b6c1537e3a7c1a0b58edd8a965565b..fe1954902b58dd84aee3abdad5291ac1
 +
 +base::options::toggle GhostInMenuOption({
 +	.id = kOptionGhostInMenu,
-+	.name = "Ghost mode in the main menu",
++	.name = "Режим невидимки в главном меню",
 +	.description = "A quick switch for ghost mode in the left menu.",
  });
  

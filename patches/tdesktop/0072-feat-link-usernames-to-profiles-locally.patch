@@ -356,7 +356,7 @@ index bf9ea10dcdd92f890285c12ccc8a7181a41c7357..6f1254df1b8665544f208719b49d1bc9
 +
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
- 	AddGroupTitle(builder, u"Title bar"_q);
+ 	AddGroupTitle(builder, u"Заголовок окна"_q);
 @@ -1239,6 +1396,7 @@ void FillChats(SectionBuilder &builder) {
  	AddOptionToggle(builder, ::Tele::kOptionHideSponsored);
  	AddOptionToggle(builder, ::Tele::kOptionHideProxySponsor);
@@ -398,12 +398,12 @@ index 86e082e925191aa1fd5ef5c7c85ed8f45cb85783..a2b64f3a3fa13d80f300fcfa7a674109
  namespace {
  
 @@ -455,6 +456,13 @@ base::options::option<QString> ChatBackgroundsOption({
- 	.description = "Chats with a background only you see, set in a chat's menu.",
+ 	.description = "Чаты с индивидуальным фоном, который видите только вы (настраивается в меню чата).",
  });
  
 +base::options::option<QString> UsernameAliasesOption({
 +	.id = kOptionUsernameAliases,
-+	.name = "Username aliases",
++	.name = "Псевдонимы пользователей (@алиасы)",
 +	.description = "Your own @names for chats, set in a chat's menu. "
 +		"Clicking one opens the linked chat, sending one mentions it.",
 +});

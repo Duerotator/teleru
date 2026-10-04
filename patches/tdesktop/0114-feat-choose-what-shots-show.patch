@@ -131,7 +131,7 @@ index 781543417cb7a67b158dd4bd423f6ba95fec1d64..180c759ff41869f0f2c477655f720fd6
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -1167,6 +1174,14 @@ bool ShotInMenu() {
  	return ShotOption.value();
  }
@@ -615,7 +615,7 @@ index 96b7558af82dd600f223bd6ef9ea852e5dd4b584..14171f0d4b0ec690c6602858b91019cf
 +		Ui::AddDivider(panel);
 +	};
 +
-+	const auto messagesGroup = addGroup(u"Messages"_q);
++	const auto messagesGroup = addGroup(u"Сообщения"_q);
 +	if (shot->hasOutgoing()) {
 +		addToggle(
 +			messagesGroup,
@@ -705,7 +705,7 @@ index 96b7558af82dd600f223bd6ef9ea852e5dd4b584..14171f0d4b0ec690c6602858b91019cf
  	const auto scaleButton = Settings::AddButtonWithLabel(
 -		bottom,
 +		panel,
- 		rpl::single(Lower(u"Scale"_q)),
+ 		rpl::single(Lower(u"Масштаб"_q)),
  		shot->layoutVersionValue() | rpl::map([=](int) {
  			const auto size = shot->exportSize();
 @@ -1360,30 +1639,12 @@ void ShotBox(

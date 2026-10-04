@@ -310,7 +310,7 @@ index dcddf636d897083a57267f8f61ee17fc2c4b5c34..0d7334013d75e0dc21c3de6ca7fa89f7
  
 +base::options::toggle ListKeysOption({
 +	.id = kOptionListKeys,
-+	.name = "Easier scrolling in lists",
++	.name = "Навигация в списках (Page Up, Page Down, Home, End)",
 +	.description = "Page Up, Page Down, Home and End scroll boxes and "
 +		"sections, and a click just outside a box doesn't close it.",
 +});

@@ -214,7 +214,7 @@ index cd50a79dbbd96fb60fbbcd648dbe5c6d3fe05f58..1aacd819c402b1df0dcb518238dfa853
 +
  base::options::toggle HideIgnoredOption({
  	.id = kOptionHideIgnored,
- 	.name = "Hide ignored messages completely",
+ 	.name = "Полностью скрывать сообщения игнорируемых",
 @@ -308,6 +316,10 @@ bool ShowDc() {
  	return ShowDcOption.value();
  }

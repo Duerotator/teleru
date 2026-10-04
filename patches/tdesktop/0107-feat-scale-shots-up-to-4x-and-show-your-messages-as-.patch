@@ -1649,7 +1649,7 @@ index f24bd3f15e58333fb43dc774a0a03b07ebec26c1..96b7558af82dd600f223bd6ef9ea852e
 +	}
 +	const auto scaleButton = Settings::AddButtonWithLabel(
 +		bottom,
-+		rpl::single(Lower(u"Scale"_q)),
++		rpl::single(Lower(u"Масштаб"_q)),
 +		shot->layoutVersionValue() | rpl::map([=](int) {
 +			const auto size = shot->exportSize();
 +			return u"%1x, %2 \u00D7 %3 px"_q

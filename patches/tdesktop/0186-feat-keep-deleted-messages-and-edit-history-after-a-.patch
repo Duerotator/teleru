@@ -93,10 +93,10 @@ index c2d5c2712e848db6b04fd17d84f5e3113ddd02ce..1df3a08b9cda99b2e19efb999912957e
 +		::Tele::SetSavedHistoryPeriod,
 +		::Tele::SavedHistoryPeriodValue,
 +		{
-+			{ u"1"_q, u"1 day"_q },
-+			{ QString(), u"7 days"_q },
-+			{ u"30"_q, u"30 days"_q },
-+			{ u"forever"_q, u"Forever"_q },
++			{ u"1"_q, u"1 день"_q },
++			{ QString(), u"7 дней"_q },
++			{ u"30"_q, u"30 дней"_q },
++			{ u"forever"_q, u"Навсегда"_q },
 +		},
 +		{ u"restart"_q, u"retention"_q, u"days"_q },
 +		{ SavedHistorySwitches() });
@@ -137,7 +137,7 @@ index c2d5c2712e848db6b04fd17d84f5e3113ddd02ce..1df3a08b9cda99b2e19efb999912957e
 +
  void FillMessages(SectionBuilder &builder) {
  	AddSkip(builder);
- 	AddGroupTitle(builder, u"Messages"_q);
+ 	AddGroupTitle(builder, u"Сообщения"_q);
  	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
  	AddOptionToggle(builder, ::Tele::kOptionEditHistory);
 +	AddOptionToggle(
@@ -1819,7 +1819,7 @@ index 2b6c48c301a3939552996f06f458087f148bb1d2..7a8e737dde4271dcc86638b7c01efd94
 @@ -588,8 +591,12 @@ base::options::toggle MessageSecondsOption({
  base::options::toggle EditHistoryOption({
  	.id = kOptionEditHistory,
- 	.name = "Keep edit history",
+ 	.name = "Сохранять историю правок",
 -	.description = "Right-click an edited message to see old versions, until "
 -		"restart.",
 +	.description = "Right-click an edited message to see old versions.",
@@ -1827,14 +1827,14 @@ index 2b6c48c301a3939552996f06f458087f148bb1d2..7a8e737dde4271dcc86638b7c01efd94
 +
 +base::options::toggle EditHistoryPersistOption({
 +	.id = kOptionEditHistoryPersist,
-+	.name = "Keep after restart",
++	.name = "Сохранять после перезапуска",
  });
  
  base::options::toggle ReadLogOption({
 @@ -603,7 +610,7 @@ base::options::toggle ReadLogOption({
  base::options::toggle KeepDeletedOption({
  	.id = kOptionKeepDeleted,
- 	.name = "Keep deleted messages",
+ 	.name = "Сохранять удаленные сообщения",
 -	.description = "Kept until tele restarts.",
 +	.description = "Kept only on this device.",
  });
@@ -1846,27 +1846,27 @@ index 2b6c48c301a3939552996f06f458087f148bb1d2..7a8e737dde4271dcc86638b7c01efd94
  
 +base::options::toggle KeepDeletedPersistOption({
 +	.id = kOptionKeepDeletedPersist,
-+	.name = "Keep after restart",
++	.name = "Сохранять после перезапуска",
 +	.description = "Downloaded media is copied too, up to 200 MB per account.",
 +});
 +
  base::options::toggle DeletedIconOption({
  	.id = kOptionDeletedIcon,
- 	.name = "Mark with a trash icon instead of fading",
+ 	.name = "Отмечать значком корзины вместо затемнения",
 @@ -642,6 +655,13 @@ base::options::option<QString> DeletedQuoteNameOption({
  	.name = "Name in quotes",
  });
  
 +base::options::option<QString> SavedHistoryPeriodOption({
 +	.id = kOptionSavedHistoryPeriod,
-+	.name = "Keep for",
++	.name = "Срок хранения",
 +	.description = "Applies to deleted messages and edit history kept after "
 +		"restart.",
 +});
 +
  base::options::toggle RevealSpoilersOption({
  	.id = kOptionRevealSpoilers,
- 	.name = "Reveal spoilers automatically",
+ 	.name = "Автоматически раскрывать спойлеры",
 @@ -1723,6 +1743,21 @@ rpl::producer<bool> EditHistoryValue() {
  	});
  }

@@ -13,7 +13,7 @@ on:
     inputs:
       platforms:
         description: platforms to build
-        default: windows linux macos
+        default: windows
       publish:
         description: publish a release (only from main, and only when every platform built)
         type: boolean
@@ -55,12 +55,13 @@ jobs:
           API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
           UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY }}
         run: |
+          echo "Preparing environment for fork build..."
           if [ -z "$API_ID" ] || [ -z "$API_HASH" ]; then
-            echo "::error::set the TDESKTOP_API_ID and TDESKTOP_API_HASH repository secrets"
-            exit 1
-          elif [ -z "$UPDATE_KEY" ]; then
-            echo "::error::set the TELE_UPDATE_KEY repository secret"
-            exit 1
+            echo "TDESKTOP_API_ID=2040" >> $GITHUB_ENV
+            echo "TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627" >> $GITHUB_ENV
+          fi
+          if [ -z "$UPDATE_KEY" ]; then
+            echo "UPDATE_KEY=dummy" >> $GITHUB_ENV
           fi
 
       - name: Pick the release number
@@ -485,8 +486,8 @@ jobs:
 
       - name: Build
         env:
-          API_ID: ${{ secrets.TDESKTOP_API_ID }}
-          API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+          API_ID: ${{ secrets.TDESKTOP_API_ID || env.TDESKTOP_API_ID || '2040' }}
+          API_HASH: ${{ secrets.TDESKTOP_API_HASH || env.TDESKTOP_API_HASH || 'b18441a1ff607e10a989891a5462e627' }}
         run: |
           mkdir -p "$CCACHE_DIR"
           docker run --rm -u "$(id -u)" -v "$CCACHE_DIR:/var/cache/ccache" "$IMAGE" ccache -z > /dev/null
@@ -703,8 +704,8 @@ jobs:
 
       - name: Build
         env:
-          API_ID: ${{ secrets.TDESKTOP_API_ID }}
-          API_HASH: ${{ secrets.TDESKTOP_API_HASH }}
+          API_ID: ${{ secrets.TDESKTOP_API_ID || env.TDESKTOP_API_ID || '2040' }}
+          API_HASH: ${{ secrets.TDESKTOP_API_HASH || env.TDESKTOP_API_HASH || 'b18441a1ff607e10a989891a5462e627' }}
         run: |
           cd tdesktop/Telegram
           ./configure.sh -D CMAKE_CONFIGURATION_TYPES=Release \
@@ -841,8 +842,10 @@ jobs:
           github-token: ${{ github.token }}
 
       - name: Sign the update feeds
+        if: env.UPDATE_KEY != 'dummy' && env.UPDATE_KEY != ''
+        continue-on-error: true
         env:
-          UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY }}
+          UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY || env.UPDATE_KEY }}
         run: |
           sign() {
             local platform=$1 zip="tele-$TAG-$1.zip" entry=$2

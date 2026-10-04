@@ -248,7 +248,7 @@ index 25e3b9447da6ed1e0f40e3930920d463dfbf5863..1da08b725841e34f7a6ab87f4a4a0de0
  	AddOptionToggle(builder, ::Tele::kOptionDeletedIcon);
 +	AddOptionToggle(builder, ::Tele::kOptionRevealSpoilers);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Sending"_q);
+ 	AddGroupTitle(builder, u"Отправка"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 7417340503f33ebf388d825283da89b6596a6828..150259e7bd9c754823dc1e305746dfd293cab2f5 100644
@@ -263,12 +263,12 @@ index 7417340503f33ebf388d825283da89b6596a6828..150259e7bd9c754823dc1e305746dfd2
  const char kOptionScreenshotSecretMedia[] = "tele-screenshot-secret-media";
  const char kOptionViewAsTl[] = "tele-view-as-tl";
 @@ -312,6 +313,12 @@ base::options::toggle DeletedIconOption({
- 	.name = "Mark with a trash icon instead of fading",
+ 	.name = "Отмечать значком корзины вместо затемнения",
  });
  
 +base::options::toggle RevealSpoilersOption({
 +	.id = kOptionRevealSpoilers,
-+	.name = "Reveal spoilers automatically",
++	.name = "Автоматически раскрывать спойлеры",
 +	.description = "Text and media spoilers in chats and the chat list.",
 +});
 +

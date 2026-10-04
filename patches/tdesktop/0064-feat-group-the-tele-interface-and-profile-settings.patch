@@ -15,7 +15,7 @@ index 9fb5b0a79d10b863d4df68248debe42bae98c7da..982a3518080be5ed8aa6f5394d910616
  
  void FillInterface(SectionBuilder &builder) {
  	builder.addSkip();
-+	AddGroupTitle(builder, u"Title bar"_q);
++	AddGroupTitle(builder, u"Заголовок окна"_q);
  	AddTitle(builder);
 -	AddOptionToggle(builder, ::Tele::kOptionLowercase);
 -	AddOptionToggle(builder, ::Tele::kOptionBubbleBadges);
@@ -39,15 +39,15 @@ index 9fb5b0a79d10b863d4df68248debe42bae98c7da..982a3518080be5ed8aa6f5394d910616
  
  void FillProfiles(SectionBuilder &builder) {
  	builder.addSkip();
-+	AddGroupTitle(builder, u"Peer IDs"_q);
++	AddGroupTitle(builder, u"Идентификаторы (ID)"_q);
  	AddOptionToggle(builder, ::Info::Profile::kOptionShowPeerIdBelowAbout);
  	AddOptionToggle(builder, ::Tele::kOptionPeerIdsWithoutSpaces);
  	AddOptionToggle(builder, ::Tele::kOptionBotApiPeerIds);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Profiles"_q);
++	AddGroupTitle(builder, u"Профили"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowDc);
 +	AddGroupDivider(builder);
-+	AddGroupTitle(builder, u"Gifts"_q);
++	AddGroupTitle(builder, u"Подарки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionShowGiftIds);
  	AddOptionToggle(builder, ::Tele::kOptionSeeTgButton);
  	builder.addSkip();

@@ -142,17 +142,17 @@ index acb8ce97aae056c8b49fdf2bd837879d480d7163..6d457e87ec87686f5802ed2e2091ca65
  
 +base::options::toggle HideSimilarOption({
 +	.id = kOptionHideSimilar,
-+	.name = "Hide similar channels",
++	.name = "Скрыть похожие каналы",
 +});
 +
 +base::options::toggle HideSimilarJoinOption({
 +	.id = kOptionHideSimilarJoin,
-+	.name = "After joining",
++	.name = "После вступления",
 +});
 +
 +base::options::toggle HideSimilarProfileOption({
 +	.id = kOptionHideSimilarProfile,
-+	.name = "In profiles",
++	.name = "В профилях",
 +});
 +
  base::options::toggle JumpToFirstOption({

@@ -979,7 +979,7 @@ index 0000000000000000000000000000000000000000..ad120ed7e28f2a20410de94bb20a1bbf
 +	box->setWidth(st::boxWideWidth);
 +	const auto content = box->verticalLayout();
 +
-+	Ui::AddSubsectionTitle(content, rpl::single(Lower(u"Scale"_q)));
++	Ui::AddSubsectionTitle(content, rpl::single(Lower(u"Масштаб"_q)));
 +	const auto scales = content->add(
 +		object_ptr<Ui::SettingsSlider>(content, st::defaultTabsSlider),
 +		st::boxRowPadding);

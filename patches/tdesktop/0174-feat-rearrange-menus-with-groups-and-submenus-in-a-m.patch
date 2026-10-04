@@ -291,7 +291,7 @@ index 1e93c256f75296d562d5575ae6cedaa3bd15a993..e195e957aaa1e9344d416fb136924037
  		FillNotifications);
  	add(
  		u"menus"_q,
--		u"Menus"_q,
+-		u"Меню"_q,
 +		u"Menus (beta)"_q,
  		st::menuIconReorder,
  		{ u"context"_q, u"right click"_q, u"message menu"_q },
@@ -3604,7 +3604,7 @@ index 0000000000000000000000000000000000000000..08360c1c01ff3ab69a51bbd1a30e7ad0
 +	const auto &font = st::normalFont;
 +	const auto pill = font->height * 2;
 +	const auto margin = st::boxRowPadding.left() / 2;
-+	const auto presetsText = Lower(u"Presets"_q)
++	const auto presetsText = Lower(u"Пресеты"_q)
 +		+ QString::fromUtf8(" \xe2\x96\xbe");
 +	const auto listMin = margin * 3
 +		+ (font->width(u"+ "_q + Lower(u"Separator"_q)) + pill)
@@ -3635,7 +3635,7 @@ index 0000000000000000000000000000000000000000..08360c1c01ff3ab69a51bbd1a30e7ad0
 +	const auto toolbar = chip->height();
 +	const auto presets = Ui::CreateChild<Pill>(
 +		content,
-+		Lower(u"Presets"_q) + QString::fromUtf8(" \xe2\x96\xbe"),
++		Lower(u"Пресеты"_q) + QString::fromUtf8(" \xe2\x96\xbe"),
 +		nullptr,
 +		toolbar);
 +	const auto more = Ui::CreateChild<Pill>(
@@ -3716,9 +3716,9 @@ index 0000000000000000000000000000000000000000..08360c1c01ff3ab69a51bbd1a30e7ad0
 +			});
 +		};
 +		add(Lower(u"Default"_q), MenuPreset::Default);
-+		add(Lower(u"Upstream order"_q), MenuPreset::Upstream);
-+		add(Lower(u"Minimal"_q), MenuPreset::Minimal);
-+		add(Lower(u"Power user"_q), MenuPreset::Power);
++		add(Lower(u"Стандартный порядок"_q), MenuPreset::Upstream);
++		add(Lower(u"Минимальный"_q), MenuPreset::Minimal);
++		add(Lower(u"Эксперт"_q), MenuPreset::Power);
 +		popupBelow(presets);
 +	});
 +	const auto copy = [=] {
@@ -7103,7 +7103,7 @@ index 27335b086404677113b341deeeeefb215590395e..f271a56959338e331155996f27ed54e3
 -	.description = "Reorder and hide its items.",
 +base::options::option<QString> MenuLayoutsOption({
 +	.id = kOptionMenuLayouts,
-+	.name = "Menus",
++	.name = "Редактор меню",
 +});
 +
 +base::options::option<QString> MessageMenuLegacyOption({

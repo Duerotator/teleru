@@ -97,7 +97,7 @@ index 038494773a727251030814dfa4713ce30c90f754..056e97d9adf2b3f361b82a1b4ed57b8e
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -619,6 +619,7 @@ void TeleSection::setupContent() {
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Chats"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Чаты"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionGroupQuickReplies);
  	AddOptionToggle(content, controller(), ::Tele::kOptionBubbleBadges);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionHideCalls);
@@ -122,14 +122,14 @@ index b023ce2d13d1699fa4bb409ae41b3bd47538e98f..19bcb8cfdd244247d11bf65fdc288e75
  
 +base::options::toggle HideCallsOption({
 +	.id = kOptionHideCalls,
-+	.name = "Hide call buttons",
++	.name = "Скрыть кнопки звонков",
 +	.description = "No call button in the top bar of private chats "
 +		"and in profiles.",
 +});
 +
  base::options::toggle BubbleBadgesOption({
  	.id = kOptionBubbleBadges,
- 	.name = "Badges next to names in messages",
+ 	.name = "Бейджи рядом с именами",
 @@ -188,6 +196,14 @@ bool GroupQuickReplies() {
  	return GroupQuickRepliesOption.value();
  }

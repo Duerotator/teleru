@@ -659,12 +659,12 @@ index 61a7fcfb401bdd5f1358f632b8361b195a400b54..3fa22c705fd983e096646f60f1b47b5c
  
 +base::options::toggle DownloadsPerChatOption({
 +	.id = kOptionDownloadsPerChat,
-+	.name = "Save downloads into a folder per chat",
++	.name = "Сохранять загрузки в отдельную папку для каждого чата",
 +});
 +
  base::options::option<QString> ChatBackgroundsOption({
  	.id = kOptionChatBackgrounds,
- 	.name = "Chat backgrounds",
+ 	.name = "Локальные фоны чатов",
 @@ -1722,6 +1728,10 @@ bool HdPhotos() {
  	return HdPhotosOption.value();
  }

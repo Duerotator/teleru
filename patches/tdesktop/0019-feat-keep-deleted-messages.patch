@@ -1228,7 +1228,7 @@ index 40916b3666b829d00bb2068827845c6a121c35e2..038494773a727251030814dfa4713ce3
 --- a/Telegram/SourceFiles/settings/settings_tele.cpp
 +++ b/Telegram/SourceFiles/settings/settings_tele.cpp
 @@ -631,6 +631,8 @@ void TeleSection::setupContent() {
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Messages"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Сообщения"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionMessageSeconds);
  	AddOptionToggle(content, controller(), ::Tele::kOptionEditHistory);
 +	AddOptionToggle(content, controller(), ::Tele::kOptionKeepDeleted);
@@ -2525,7 +2525,7 @@ index d5978504dfb55a38f701ecb39f35bc1aa8b78503..b023ce2d13d1699fa4bb409ae41b3bd4
  
 +base::options::toggle KeepDeletedOption({
 +	.id = kOptionKeepDeleted,
-+	.name = "Keep deleted messages",
++	.name = "Сохранять удаленные сообщения",
 +	.description = "Messages deleted by others or from your other "
 +		"devices stay in the chat, marked as deleted, until tele "
 +		"restarts. Deleting one here removes it from tele only.",
@@ -2533,14 +2533,14 @@ index d5978504dfb55a38f701ecb39f35bc1aa8b78503..b023ce2d13d1699fa4bb409ae41b3bd4
 +
 +base::options::toggle DeletedIconOption({
 +	.id = kOptionDeletedIcon,
-+	.name = "Mark with a trash icon instead of fading",
++	.name = "Отмечать значком корзины вместо затемнения",
 +	.description = "Show kept deleted messages as usual, with a trash "
 +		"icon next to the time.",
 +});
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -249,6 +266,24 @@ rpl::producer<bool> EditHistoryValue() {
  	});
  }

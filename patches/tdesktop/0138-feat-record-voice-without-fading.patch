@@ -118,12 +118,12 @@ index f858f3b5821aa5beb07d0ef96f3a1cfa4ffb2aea..b6388575e583b587e600b417e6338fee
  
 +base::options::toggle VoiceNoFadeOption({
 +	.id = kOptionVoiceNoFade,
-+	.name = "Record voice without fading",
++	.name = "Запись голоса без затухания в начале",
 +});
 +
  base::options::toggle ConfirmSendOption({
  	.id = kOptionConfirmSend,
- 	.name = "Confirm before sending",
+ 	.name = "Подтверждение перед отправкой",
 @@ -1503,6 +1509,10 @@ rpl::producer<> SilentPerChatChanges() {
  	return SilentPerChatOption.changes();
  }

@@ -549,7 +549,7 @@ index 3375c1a9255c742f93e12226ac3819c2ee98a5c1..c25c28967a5a43a880e754a504a7bf6a
  	AddOptionToggle(builder, ::Tele::kOptionRevealSpoilers);
 +	AddOptionToggle(builder, ::Tele::kOptionCopyProtected);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Sending"_q);
+ 	AddGroupTitle(builder, u"Отправка"_q);
  	AddOptionToggle(builder, ::Tele::kOptionParallelUploads);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 5b83e88e0f9f808c73180496b9a66a90414468c1..80b067b8c2fcbc25ee2c0027ad4a15932f065261 100644
@@ -564,12 +564,12 @@ index 5b83e88e0f9f808c73180496b9a66a90414468c1..80b067b8c2fcbc25ee2c0027ad4a1593
  const char kOptionScreenshotSecretMedia[] = "tele-screenshot-secret-media";
  const char kOptionAllowScreenCapture[] = "tele-allow-screen-capture";
 @@ -438,6 +439,13 @@ base::options::toggle RevealSpoilersOption({
- 	.name = "Reveal spoilers automatically",
+ 	.name = "Автоматически раскрывать спойлеры",
  });
  
 +base::options::toggle CopyProtectedOption({
 +	.id = kOptionCopyProtected,
-+	.name = "Forward protected messages as copies",
++	.name = "Пересылать защищенные сообщения как копии",
 +	.description = "Media is re-uploaded, there is no forwarded header, "
 +		"and copying and saving get unlocked too.",
 +});

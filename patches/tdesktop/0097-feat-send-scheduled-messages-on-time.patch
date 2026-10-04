@@ -108,7 +108,7 @@ index 2c9aa1da65146ea8a17df6b0635a8b42deef227e..c5cfe2ea8374bcfc111ada1b6da54741
  
 +base::options::toggle PunctualScheduledOption({
 +	.id = kOptionPunctualScheduled,
-+	.name = "Send scheduled messages on time",
++	.name = "Отправлять отложенные сообщения вовремя",
 +	.description = "While tele is online, it sends them itself at the set "
 +		"minute instead of waiting for Telegram, which can be a few "
 +		"minutes late.",
@@ -116,7 +116,7 @@ index 2c9aa1da65146ea8a17df6b0635a8b42deef227e..c5cfe2ea8374bcfc111ada1b6da54741
 +
  base::options::option<QString> ChatBackgroundsOption({
  	.id = kOptionChatBackgrounds,
- 	.name = "Chat backgrounds",
+ 	.name = "Локальные фоны чатов",
 @@ -1145,6 +1154,14 @@ bool NoRichPastePrompt() {
  	return NoRichPastePromptOption.value();
  }

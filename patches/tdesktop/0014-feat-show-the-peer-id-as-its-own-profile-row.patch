@@ -52,7 +52,7 @@ index 01b277f29aeee5908a5990a06a8c6d70d9ac646b..848721839bfc8d25284a2d19197e335e
  base::options::toggle ShowPeerIdBelowAbout({
  	.id = kOptionShowPeerIdBelowAbout,
  	.name = "Show Peer IDs in Profile",
--	.description = "Show peer IDs from API below their Bio / Description."
+-	.description = "Отображать технические идентификаторы (ID) под блоком «О себе» / описанием."
 -		" Add contact IDs to exported data.",
 +	.description = "Show peer IDs from API as a separate row in their"
 +		" profile. Add contact IDs to exported data.",
@@ -177,7 +177,7 @@ index ebb93d4bb8699b6fd0f2a56697f37157f92baeb2..d6e87da8a35a3c983c39174b251d0323
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
 +	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Server"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Сервер"_q));
  	AddServer(content, controller());
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
@@ -199,14 +199,14 @@ index 292f053600b34a2fb1495571271a756071e0ad73..b34c5a7d33ad1aef8b9672299c843a7a
  
 +base::options::toggle PeerIdsWithoutSpacesOption({
 +	.id = kOptionPeerIdsWithoutSpaces,
-+	.name = "IDs without spaces",
++	.name = "ID без пробелов",
 +	.description = "Show peer IDs in profiles as plain digits, without "
 +		"grouping them. Copying gives the same text.",
 +});
 +
 +base::options::toggle BotApiPeerIdsOption({
 +	.id = kOptionBotApiPeerIds,
-+	.name = "Bot API style IDs",
++	.name = "ID в стиле Bot API",
 +	.description = "Show peer IDs in profiles the way the Bot API does: "
 +		"basic groups get a minus in front, channels and supergroups "
 +		"get -100 in front.",
@@ -214,7 +214,7 @@ index 292f053600b34a2fb1495571271a756071e0ad73..b34c5a7d33ad1aef8b9672299c843a7a
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -129,6 +146,20 @@ bool ShowGiftIds() {
  	return ShowGiftIdsOption.value();
  }

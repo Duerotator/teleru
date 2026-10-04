@@ -124,7 +124,7 @@ index 461da97add897e22658adce43915fb9c9a7e8739..0c02009a6a15b2b84ca29c706abb47ee
 +		{ u"right click"_q, u"context"_q });
  	AddOptionToggle(builder, ::Tele::kOptionShot);
  	AddGroupDivider(builder);
- 	AddGroupTitle(builder, u"Chats"_q);
+ 	AddGroupTitle(builder, u"Чаты"_q);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 1417bf8d3637dda38f60f11cd5bdf68817353376..bd442cc7e5247c3a8fdffdfc2d51cb619245ae8c 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
@@ -138,17 +138,17 @@ index 1417bf8d3637dda38f60f11cd5bdf68817353376..bd442cc7e5247c3a8fdffdfc2d51cb61
  const char kOptionShotView[] = "tele-shot-view";
  const char kOptionServerUrl[] = "tele-server-url";
 @@ -581,6 +582,11 @@ base::options::toggle CopyMarkdownOption({
- 	.name = "Copy as Markdown and HTML",
+ 	.name = "Копировать как Markdown и HTML",
  });
  
 +base::options::toggle RmbBesideBubbleOption({
 +	.id = kOptionRmbBesideBubble,
-+	.name = "Message menu next to the bubble",
++	.name = "Контекстное меню рядом с сообщением",
 +});
 +
  base::options::toggle ShotOption({
  	.id = kOptionShot,
- 	.name = "Shot in the message menu",
+ 	.name = "Шот в меню сообщений",
 @@ -1421,6 +1427,10 @@ bool CopyMarkdown() {
  	return CopyMarkdownOption.value();
  }

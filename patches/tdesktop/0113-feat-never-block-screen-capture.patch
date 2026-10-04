@@ -123,7 +123,7 @@ index 09424731cbe61ac63b4a012c6c862e1ffd4de4b1..781543417cb7a67b158dd4bd423f6ba9
  
 +base::options::toggle AllowScreenCaptureOption({
 +	.id = kOptionAllowScreenCapture,
-+	.name = "Never block screen capture",
++	.name = "Не блокировать захват экрана",
 +	.description = "Tele windows never hide from screenshots, screen "
 +		"recording or screen sharing (NVIDIA, OBS, Discord), even for "
 +		"protected chats and disappearing media.",
@@ -132,7 +132,7 @@ index 09424731cbe61ac63b4a012c6c862e1ffd4de4b1..781543417cb7a67b158dd4bd423f6ba9
 +
  base::options::toggle ViewAsTlOption({
  	.id = kOptionViewAsTl,
- 	.name = "View as TL",
+ 	.name = "В виде TL",
 @@ -1125,6 +1135,14 @@ bool ScreenshotSecretMedia() {
  	return ScreenshotSecretMediaOption.value();
  }

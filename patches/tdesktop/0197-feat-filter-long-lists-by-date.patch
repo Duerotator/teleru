@@ -1441,14 +1441,14 @@ index f0d3ee113f4a0d2637e255fa97f1a8574879e00c..80fa8fa54fa50dfbcffeb15c7439b353
  
 +base::options::toggle ListDatesOption({
 +	.id = kOptionListDates,
-+	.name = "Date filter in long lists",
++	.name = "Фильтр по дате в длинных списках",
 +	.description = "Star and TON transactions, shared media and profile "
 +		"gifts.",
 +});
 +
  base::options::toggle BookmarksOption({
  	.id = kOptionBookmarks,
- 	.name = "Message bookmarks",
+ 	.name = "Закладки сообщений",
 @@ -2564,6 +2572,10 @@ bool FullChatPreview() {
  	return FullChatPreviewOption.value();
  }

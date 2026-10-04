@@ -140,12 +140,12 @@ index c8ed5d1d7f5784edf07963c96531dec817c134e3..32652a620bb4683b031b85dc5ef8a623
  	const auto content = Ui::CreateChild<Ui::VerticalLayout>(this);
  
 +	Ui::AddSkip(content);
-+	Ui::AddSubsectionTitle(content, rpl::single(u"Title bar"_q));
++	Ui::AddSubsectionTitle(content, rpl::single(u"Заголовок окна"_q));
 +	AddTitle(content, controller());
 +	Ui::AddSkip(content);
 +	Ui::AddDivider(content);
  	Ui::AddSkip(content);
- 	Ui::AddSubsectionTitle(content, rpl::single(u"Stories"_q));
+ 	Ui::AddSubsectionTitle(content, rpl::single(u"Истории"_q));
  	AddOptionToggle(content, controller(), ::Tele::kOptionHideStories);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
 index 2100ac4f7eb5ea69ef0561b91a581ff93c53021e..d0370bbca5569ae652b0317fe755d64f087f7def 100644
@@ -165,7 +165,7 @@ index 2100ac4f7eb5ea69ef0561b91a581ff93c53021e..d0370bbca5569ae652b0317fe755d64f
  
 +base::options::option<QString> TitleTemplateOption({
 +	.id = kOptionTitleTemplate,
-+	.name = "Title bar label",
++	.name = "Шаблон заголовка окна",
 +	.description = "What the label in the title bar shows. Variables in "
 +		"braces are filled in live, parts in square brackets hide when "
 +		"a variable inside is empty or 0. Empty hides the label.",

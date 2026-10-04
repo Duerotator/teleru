@@ -409,13 +409,13 @@ index 3cf4ab5018e91ac86a760be4313f718497933c1d..816d42843e04696f6578b80b53c6f770
  
 +base::options::toggle HideListPreviewsOption({
 +	.id = kOptionHideListPreviews,
-+	.name = "Hide message previews in the chat list",
-+	.description = "Rows shrink to a single line.",
++	.name = "Скрыть предпросмотр сообщений в списке чатов",
++	.description = "Строки чатов становятся компактными и уменьшаются до одной строки.",
 +});
 +
  base::options::toggle ChatListNoReorderAnimationOption({
  	.id = kOptionChatListNoReorderAnimation,
- 	.name = "Move chats instantly in the list",
+ 	.name = "Мгновенное перемещение чатов в списке",
 @@ -1002,6 +1009,14 @@ rpl::producer<> StaticUserpicsListChanges() {
  	return StaticUserpicsListOption.changes();
  }

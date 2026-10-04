@@ -83,7 +83,7 @@ index 4f4183002d45b92e0950971396e174b84243ded7..6084d6709179fd96df5ca2a0ec4b6627
  	}
 +	const auto clear = builder.addButton({
 +		.id = u"tele-clear-badges"_q,
-+		.title = rpl::single(::Tele::Lower(u"Clear cached data"_q)),
++		.title = rpl::single(::Tele::Lower(u"Очистить кэш"_q)),
 +		.st = &st::settingsButtonNoIcon,
 +		.onClick = [=] {
 +			::Tele::ClearBadgesCache(crl::guard(controller, [=](QString text) {

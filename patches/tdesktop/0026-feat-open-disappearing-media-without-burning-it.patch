@@ -211,7 +211,7 @@ index 73bd5d17a7551979eeb278d54eff115673023deb..bbc7d80237b4d962f3e3f972957b0f08
 +
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
- 	.name = "tele server",
+ 	.name = "Сервер tele",
 @@ -363,6 +373,10 @@ rpl::producer<bool> DeletedTrashIconValue() {
  	});
  }

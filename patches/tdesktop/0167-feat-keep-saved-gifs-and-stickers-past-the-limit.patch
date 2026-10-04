@@ -213,8 +213,8 @@ index 843de244515192e42b1541b2dafcab0cccac1a93..2050ba2d512b1253f3ff7e8c222ef62a
  
 +base::options::toggle MediaPastLimitOption({
 +	.id = kOptionMediaPastLimit,
-+	.name = "Saved GIFs and stickers past the limit",
-+	.description = "Extra ones stay on this device.",
++	.name = "Сохраненные GIF и стикеры сверх лимита",
++	.description = "Дополнительные элементы сверх лимита Telegram сохраняются локально на этом устройстве.",
 +});
 +
  base::options::toggle ShowGiftIdsOption({

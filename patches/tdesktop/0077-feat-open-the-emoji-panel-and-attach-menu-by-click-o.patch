@@ -308,25 +308,25 @@ index b03aba4f5b256d35e97e9572df1dad30c94db0e2..84f26d93b79a83bac7a1cbaf7c85382e
  const char kOptionShowRegularGiftIds[] = "tele-show-regular-gift-ids";
  const char kOptionSeeTgButton[] = "tele-seetg-button";
 @@ -292,6 +294,19 @@ base::options::toggle HideReactionsButtonOption({
- 	.description = "No heart button above the input field for unread reactions.",
+ 	.description = "Скрыть кнопку ❤️ над полем ввода при наличии непрочитанных реакций.",
  });
  
 +base::options::toggle EmojiPanelClickOption({
 +	.id = kOptionEmojiPanelClick,
-+	.name = "Open the emoji panel by click only",
-+	.description = "Hovering the emoji button no longer opens stickers and GIFs.",
++	.name = "Открывать панель эмодзи только по клику",
++	.description = "Наведение курсора на кнопку эмодзи больше не открывает панель стикеров и GIF автоматически (только по клику).",
 +});
 +
 +base::options::toggle AttachMenuClickOption({
 +	.id = kOptionAttachMenuClick,
-+	.name = "Open the attach menu by click only",
++	.name = "Открывать меню вложений только по клику",
 +	.description = "Hovering the paperclip no longer opens the attach menu. "
 +		"Applies to chats you open after switching it.",
 +});
 +
  base::options::toggle ShowGiftIdsOption({
  	.id = kOptionShowGiftIds,
- 	.name = "Show gift IDs",
+ 	.name = "Показывать ID подарков",
 @@ -743,6 +758,14 @@ rpl::producer<> HideReactionsButtonChanges() {
  	return HideReactionsButtonOption.changes();
  }

@@ -142,17 +142,17 @@ index cbd7db96b3954896328bf9c0488d813da02031f4..565a211c5edc3b1bdc94d8a2722b8616
  const char kOptionHdPhotos[] = "tele-hd-photos";
  const char kOptionChatBackgrounds[] = "tele-chat-backgrounds";
 @@ -586,6 +587,11 @@ base::options::toggle NoRichPastePromptOption({
- 	.name = "No rich message prompt on paste",
+ 	.name = "Не предлагать отправку форматированного текста как rich message",
  });
  
 +base::options::toggle HideGiftButtonOption({
 +	.id = kOptionHideGiftButton,
-+	.name = "Hide the gift button in the message field",
++	.name = "Скрыть кнопку подарка в строке ввода",
 +});
 +
  base::options::toggle PunctualScheduledOption({
  	.id = kOptionPunctualScheduled,
- 	.name = "Send scheduled messages on time",
+ 	.name = "Отправлять отложенные сообщения вовремя",
 @@ -1313,6 +1319,14 @@ bool NoRichPastePrompt() {
  	return NoRichPastePromptOption.value();
  }

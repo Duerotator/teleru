@@ -163,7 +163,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
 +	const auto button = AddButton(builder, {
  		.id = u"tele-check-updates"_q,
  		.title = ::Tele::UpdateReadyValue() | rpl::map([](bool ready) {
- 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Check for updates"_q);
+ 			return ::Tele::Lower(ready ? u"Restart to update"_q : u"Проверить обновления"_q);
 @@ -404,6 +459,9 @@ void AddUpdates(SectionBuilder &builder) {
  	if (button) {
  		SetupLink(button, u"tele-check-updates"_q);
@@ -181,7 +181,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
 -	const auto server = builder.addButton({
 +	const auto server = AddButton(builder, {
  		.id = option.id(),
- 		.title = rpl::single(::Tele::Lower(u"Server"_q)),
+ 		.title = rpl::single(::Tele::Lower(u"Сервер"_q)),
  		.st = &st::settingsButtonNoIcon,
 @@ -469,7 +527,7 @@ void AddServer(SectionBuilder &builder) {
  	if (server) {
@@ -190,7 +190,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
 -	const auto refresh = builder.addButton({
 +	const auto refresh = AddButton(builder, {
  		.id = u"tele-refresh-badges"_q,
- 		.title = rpl::single(::Tele::Lower(u"Refresh now"_q)),
+ 		.title = rpl::single(::Tele::Lower(u"Обновить сейчас"_q)),
  		.st = &st::settingsButtonNoIcon,
 @@ -479,11 +537,11 @@ void AddServer(SectionBuilder &builder) {
  			}));
@@ -204,7 +204,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
 -	const auto clear = builder.addButton({
 +	const auto clear = AddButton(builder, {
  		.id = u"tele-clear-badges"_q,
- 		.title = rpl::single(::Tele::Lower(u"Clear cached data"_q)),
+ 		.title = rpl::single(::Tele::Lower(u"Очистить кэш"_q)),
  		.st = &st::settingsButtonNoIcon,
 @@ -493,11 +551,11 @@ void AddServer(SectionBuilder &builder) {
  			}));
@@ -483,7 +483,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
  void FillInterface(SectionBuilder &builder) {
 -	builder.addSkip();
 +	AddSkip(builder);
- 	AddGroupTitle(builder, u"Title bar"_q);
+ 	AddGroupTitle(builder, u"Заголовок окна"_q);
  	AddTitle(builder);
  	AddGroupDivider(builder);
 @@ -1605,11 +1663,11 @@ void FillInterface(SectionBuilder &builder) {
@@ -497,7 +497,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
  void FillChats(SectionBuilder &builder) {
 -	builder.addSkip();
 +	AddSkip(builder);
- 	AddGroupTitle(builder, u"Messages"_q);
+ 	AddGroupTitle(builder, u"Сообщения"_q);
  	AddOptionToggle(builder, ::Tele::kOptionMessageSeconds);
  	AddOptionToggle(builder, ::Tele::kOptionEditHistory);
 @@ -1679,11 +1737,11 @@ void FillChats(SectionBuilder &builder) {
@@ -511,7 +511,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
  void FillPrivacy(SectionBuilder &builder) {
 -	builder.addSkip();
 +	AddSkip(builder);
- 	AddGroupTitle(builder, u"Ghost mode"_q);
+ 	AddGroupTitle(builder, u"Режим невидимки"_q);
  	AddOptionToggle(builder, ::Tele::kOptionGhost);
  	AddOptionToggle(builder, ::Tele::kOptionGhostInMenu);
 @@ -1705,11 +1763,11 @@ void FillPrivacy(SectionBuilder &builder) {
@@ -525,7 +525,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
  void FillProfiles(SectionBuilder &builder) {
 -	builder.addSkip();
 +	AddSkip(builder);
- 	AddGroupTitle(builder, u"Peer IDs"_q);
+ 	AddGroupTitle(builder, u"Идентификаторы (ID)"_q);
  	AddOptionToggle(builder, ::Info::Profile::kOptionShowPeerIdBelowAbout);
  	AddOptionToggle(builder, ::Tele::kOptionPeerIdsWithoutSpaces);
 @@ -1726,14 +1784,14 @@ void FillProfiles(SectionBuilder &builder) {
@@ -625,7 +625,7 @@ index db19fd3ca31b1ab6167bd53224a3c01b9d160135..431922c600270497093e60f96b7146d5
  			.title = rpl::single(::Tele::Lower(title)),
  			.st = &st::settingsButtonNoIcon,
 @@ -1938,21 +1999,77 @@ void AddBackup(SectionBuilder &builder) {
- 		u"Import settings..."_q,
+ 		u"Импорт настроек..."_q,
  		::Tele::ImportSettingsBox,
  		{ u"backup"_q, u"restore"_q, u"load"_q, u"file"_q });
 -	AddAbout(builder, ::Tele::Lower(u"Move tele settings to another "
@@ -1219,7 +1219,7 @@ index a686c023698dd151c7ed1846f84f1b629e39187d..09424731cbe61ac63b4a012c6c862e1f
 +
  base::options::toggle GroupQuickRepliesOption({
  	.id = kOptionGroupQuickReplies,
- 	.name = "Quick replies in groups and channels",
+ 	.name = "Быстрые ответы в группах и каналах",
 @@ -763,6 +771,14 @@ void SetChangelogAccounts(const QString &value) {
  	ChangelogAccountsOption.set(value);
  }

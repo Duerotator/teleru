@@ -595,7 +595,7 @@ index 9e0c434d5258f614404d50f76670aaeae5c88dd0..859165cd368ae992b5c0e071de2dad7d
  
 +base::options::toggle HideCommunitiesOption({
 +	.id = kOptionHideCommunities,
-+	.name = "Hide communities",
++	.name = "Скрыть сообщества",
 +	.description = "Their chats stay in the list as regular chats.",
 +});
 +

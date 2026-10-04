@@ -155,13 +155,13 @@ index 5e4027046bddcb7d11bae5ca4746dc4aed13c1d9..2826a4b567ff7f9f7d6e4b2fa0ebcdfe
  
  base::options::toggle HideMentionsButtonOption({
  	.id = kOptionHideMentionsButton,
--	.name = "Hide the mentions button",
+-	.name = "Скрыть кнопку перехода к упоминаниям (@)",
 +	.name = "Hide unread mention markers",
  });
  
  base::options::toggle HideReactionsButtonOption({
  	.id = kOptionHideReactionsButton,
--	.name = "Hide the reactions button",
+-	.name = "Скрыть кнопку перехода к реакциям (❤️)",
 +	.name = "Hide unread reaction markers",
  });
  

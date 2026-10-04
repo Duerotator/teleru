@@ -94,17 +94,17 @@ index 467aaa28597d10c831023c94c3eb049baa18569f..acb8ce97aae056c8b49fdf2bd837879d
  
 +base::options::toggle NoGesturesOption({
 +	.id = kOptionNoGestures,
-+	.name = "Turn off touchpad gestures",
++	.name = "Отключить жесты тачпада",
 +});
 +
 +base::options::toggle NoSwipeReplyOption({
 +	.id = kOptionNoSwipeReply,
-+	.name = "Swipe to reply",
++	.name = "Свайп для ответа",
 +});
 +
 +base::options::toggle NoSwipeBackOption({
 +	.id = kOptionNoSwipeBack,
-+	.name = "Swipe back",
++	.name = "Свайп назад",
 +	.description = "Also covers swiping between tabs, folders and photos.",
 +});
 +

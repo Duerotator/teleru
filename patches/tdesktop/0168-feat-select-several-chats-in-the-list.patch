@@ -838,12 +838,12 @@ index 2050ba2d512b1253f3ff7e8c222ef62aba906d42..4ce0005fb36b2e6ab9a4cbff3b2371bc
  
 +base::options::toggle SelectChatsOption({
 +	.id = kOptionSelectChats,
-+	.name = "Select several chats",
++	.name = "Выбор нескольких чатов",
 +});
 +
  base::options::toggle BookmarksOption({
  	.id = kOptionBookmarks,
- 	.name = "Message bookmarks",
+ 	.name = "Закладки сообщений",
 @@ -2025,6 +2031,20 @@ rpl::producer<bool> UnsortedFolderValue() {
  	});
  }

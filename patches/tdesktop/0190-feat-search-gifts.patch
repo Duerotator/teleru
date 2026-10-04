@@ -889,13 +889,13 @@ index 281ee44b7292a6acbb937ea228aff1ec54911ffd..5368e99c7218f87bc426c92e1c7b9dab
  
 +base::options::toggle GiftSearchOption({
 +	.id = kOptionGiftSearch,
-+	.name = "Search gifts",
++	.name = "Поиск подарков",
 +	.description = "Covers collectible gifts only.",
 +});
 +
  base::options::toggle NoCollectibleTooltipOption({
  	.id = kOptionNoCollectibleTooltip,
- 	.name = "No tooltip for collectible statuses",
+ 	.name = "Скрыть подсказки коллекционных статусов",
 @@ -1646,6 +1653,10 @@ bool SeeTgButton() {
  	return SeeTgButtonOption.value();
  }
