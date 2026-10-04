@@ -282,6 +282,15 @@ jobs:
             ${{ env.TBUILD }}\Libraries
           key: ${{ env.CACHE_KEY }}-${{ github.run_id }}-${{ github.run_attempt }}
 
+      - name: Make room on C
+        shell: pwsh
+        run: |
+          Remove-Item -Recurse -Force -ErrorAction SilentlyContinue C:\Android
+          New-Item -ItemType Directory -Force "$env:RUNNER_TEMP\link" | Out-Null
+          "TMP=$env:RUNNER_TEMP\link" >> $env:GITHUB_ENV
+          "TEMP=$env:RUNNER_TEMP\link" >> $env:GITHUB_ENV
+          Get-PSDrive C, D -ErrorAction SilentlyContinue | Format-Table Name, @{n='free GB';e={[math]::Round($_.Free / 1GB, 1)}}
+
       - name: Build Telegram
         env:
           API_ID: ${{ secrets.TDESKTOP_API_ID }}
