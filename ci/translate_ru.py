@@ -48,8 +48,9 @@ def main():
     if not run(tdesktop, ROOT / "i18n/ru.json", args.report, args.inventory, apply_changes=True):
         return 1
     inventory = json.loads(args.inventory.read_text(encoding='utf-8')) if args.inventory else []
-    apply_overlay(tdesktop)
+    overlay_paths = apply_overlay(tdesktop)
     tracked = subprocess.check_output(['git', '-C', str(tdesktop), 'diff', '--name-only', '--diff-filter=AM'], text=True).splitlines()
+    tracked = sorted(set(tracked) | {p.relative_to(tdesktop).as_posix() for p in overlay_paths})
     files = {p: hashlib.sha256((tdesktop / p).read_bytes()).hexdigest() for p in tracked}
     stamp.write_text(json.dumps({'inputs': inputs, 'files': files, 'report': json.loads(args.report.read_text(encoding='utf-8')), 'inventory': inventory}, ensure_ascii=False), encoding='utf-8')
     print("Russian catalog applied; updater and changelog point to teleru; signed updates required.")

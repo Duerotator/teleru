@@ -1,0 +1,859 @@
+{
+  "options": {
+    "kOptionAliasMenu": {
+      "name": {
+        "source": "Alias item in chat menus",
+        "translation": "Пункт «Псевдоним» в меню чата"
+      }
+    },
+    "kOptionAppIcon": {
+      "name": {
+        "source": "App icon",
+        "translation": "Значок приложения"
+      }
+    },
+    "kOptionAttachMenuClick": {
+      "name": {
+        "source": "Open the attach menu by click only",
+        "translation": "Открывать меню вложений только по нажатию"
+      },
+      "desc": {
+        "source": "Applies to chats opened after the change.",
+        "translation": "Изменение действует для чатов, открытых после его применения."
+      }
+    },
+    "kOptionBackgroundMenu": {
+      "name": {
+        "source": "Background item in chat menus",
+        "translation": "Пункт «Фон» в меню чата"
+      }
+    },
+    "kOptionBubbleBadges": {
+      "name": {
+        "source": "Badges next to names in messages",
+        "translation": "Значки верификации рядом с именами в сообщениях"
+      },
+      "desc": {
+        "source": "Checkmarks and custom verification.",
+        "translation": "Галочки и пользовательские значки верификации."
+      }
+    },
+    "kOptionCalcmulaInline": {
+      "name": {
+        "source": "Inline results after =",
+        "translation": "Вставлять результат после знака ="
+      },
+      "desc": {
+        "source": "Right arrow or Tab inserts the result.",
+        "translation": "Стрелка вправо или Tab вставляет результат."
+      }
+    },
+    "kOptionCalcmulaPreview": {
+      "name": {
+        "source": "Preview calcmula results while typing",
+        "translation": "Показывать результат вычисления при вводе"
+      }
+    },
+    "kOptionChatListNoReorderAnimation": {
+      "name": {
+        "source": "Move chats instantly in the list",
+        "translation": "Мгновенно перемещать чаты в списке"
+      },
+      "desc": {
+        "source": "No pause while the mouse is over the list, except while a chat is pressed.",
+        "translation": "Наведение курсора не задерживает перемещение чатов, кроме случая, когда чат удерживается нажатием."
+      }
+    },
+    "kOptionCopyEmojiId": {
+      "name": {
+        "source": "Copy custom emoji IDs",
+        "translation": "Копировать ID пользовательских эмодзи"
+      }
+    },
+    "kOptionCounterAccounts": {
+      "name": {
+        "source": "Leave out accounts",
+        "translation": "Не учитывать выбранные аккаунты"
+      },
+      "desc": {
+        "source": "Right-click an account in the main menu to leave it out of the count.",
+        "translation": "Нажмите на аккаунт правой кнопкой мыши в главном меню, чтобы исключить его из счётчика."
+      }
+    },
+    "kOptionCounterSkipArchive": {
+      "name": {
+        "source": "Leave out the archive",
+        "translation": "Не учитывать архив"
+      },
+      "desc": {
+        "source": "Archived chats don't add to the taskbar and tray count.",
+        "translation": "Чаты из архива не учитываются в счётчике на панели задач и в области уведомлений."
+      }
+    },
+    "kOptionDeletedIcon": {
+      "name": {
+        "source": "Mark with a trash icon instead of fading",
+        "translation": "Отмечать значком корзины вместо приглушения"
+      }
+    },
+    "kOptionDeletedQuoteName": {
+      "name": {
+        "source": "Name in quotes",
+        "translation": "Имя автора в цитатах"
+      }
+    },
+    "kOptionDockedAttachments": {
+      "name": {
+        "source": "Attach media above the field",
+        "translation": "Показывать вложения над полем ввода"
+      },
+      "desc": {
+        "source": "Replaces the send box; attachments stay in the chat until sent.",
+        "translation": "Заменяет окно отправки; вложения остаются в чате до отправки."
+      }
+    },
+    "kOptionDockedGrid": {
+      "name": {
+        "source": "Docked media as album grid",
+        "translation": "Показывать вложения сеткой альбома"
+      }
+    },
+    "kOptionFullChatPreview": {
+      "name": {
+        "source": "Preview chats in the chat area",
+        "translation": "Просматривать чаты без отметки о прочтении"
+      },
+      "desc": {
+        "source": "Alt+click or holding a userpic opens the chat read-only, leaving messages unread.",
+        "translation": "Alt + нажатие или удержание аватарки открывает чат для просмотра, не отмечая сообщения прочитанными."
+      }
+    },
+    "kOptionGhostOnline": {
+      "name": {
+        "source": "Don't go online",
+        "translation": "Не показывать статус «В сети»"
+      },
+      "desc": {
+        "source": "After sending a message, tele sets you offline right away.",
+        "translation": "После отправки сообщения Теле сразу меняет ваш статус на «Не в сети»."
+      }
+    },
+    "kOptionGhostTyping": {
+      "name": {
+        "source": "Don't send typing",
+        "translation": "Не показывать набор текста"
+      }
+    },
+    "kOptionGiftFakeUpgrade": {
+      "name": {
+        "source": "Fake upgrade in gift menus",
+        "translation": "Пробное улучшение подарка"
+      },
+      "desc": {
+        "source": "Opens the real upgrade box for a regular gift and rolls the result locally. Nothing is bought or sent.",
+        "translation": "Открывает обычное окно улучшения и подбирает результат локально. Ничего не покупается и не отправляется."
+      }
+    },
+    "kOptionGiftHiddenDim": {
+      "name": {
+        "source": "Dim hidden gifts",
+        "translation": "Приглушать скрытые подарки"
+      }
+    },
+    "kOptionGiftQuantity": {
+      "name": {
+        "source": "Send several gifts at once",
+        "translation": "Отправлять несколько одинаковых подарков"
+      }
+    },
+    "kOptionHideIgnored": {
+      "name": {
+        "source": "Hide ignored messages completely",
+        "translation": "Полностью скрывать игнорируемые сообщения"
+      },
+      "desc": {
+        "source": "When off, they are shown faded.",
+        "translation": "При выключенной настройке сообщения показываются приглушёнными."
+      }
+    },
+    "kOptionHideMentionsButton": {
+      "name": {
+        "source": "Hide unread mention markers",
+        "translation": "Скрыть индикатор непрочитанных упоминаний"
+      }
+    },
+    "kOptionHideReactionsButton": {
+      "name": {
+        "source": "Hide unread reaction markers",
+        "translation": "Скрыть индикатор непрочитанных реакций"
+      }
+    },
+    "kOptionIgnoreInMenu": {
+      "name": {
+        "source": "Ignore from the userpic menu",
+        "translation": "Пункт «Игнорировать» в меню аватарки"
+      }
+    },
+    "kOptionKeepSecretMedia": {
+      "name": {
+        "source": "Open disappearing media without burning it",
+        "translation": "Просматривать исчезающие медиа без отметки о просмотре"
+      },
+      "desc": {
+        "source": "No timer starts, right-click one to mark it as viewed.",
+        "translation": "Таймер не запускается; отметить медиа просмотренным можно через меню правой кнопки мыши."
+      }
+    },
+    "kOptionLocalNameMenu": {
+      "name": {
+        "source": "Name item in chat menus",
+        "translation": "Пункт «Имя» в меню чата"
+      }
+    },
+    "kOptionLocalNames": {
+      "name": {
+        "source": "Custom names",
+        "translation": "Собственные имена пользователей"
+      }
+    },
+    "kOptionLocalPasswordConvert": {
+      "name": {
+        "source": "Converting gifts to stars",
+        "translation": "Обмен подарков на звёзды"
+      }
+    },
+    "kOptionLocalPasswordPaidMedia": {
+      "name": {
+        "source": "Paid media",
+        "translation": "Платные фото и видео"
+      }
+    },
+    "kOptionLocalPasswordUpgrade": {
+      "name": {
+        "source": "Upgrading gifts",
+        "translation": "Улучшение подарков"
+      }
+    },
+    "kOptionMuteFolders": {
+      "name": {
+        "source": "Mute folders",
+        "translation": "Отключать уведомления в папках"
+      },
+      "desc": {
+        "source": "From a folder's menu, on this device only.",
+        "translation": "Настраивается в меню папки и действует только на этом устройстве."
+      }
+    },
+    "kOptionNftPurchasePrice": {
+      "name": {
+        "source": "Collectible prices at the purchase date",
+        "translation": "Цены коллекционных объектов на дату покупки"
+      },
+      "desc": {
+        "source": "Usernames and numbers use the TON rate of the purchase day, else Fragment's price.",
+        "translation": "Для имён пользователей и номеров используется курс TON на день покупки, иначе — цена с Fragment."
+      }
+    },
+    "kOptionNoRichPastePrompt": {
+      "name": {
+        "source": "No rich message prompt on paste",
+        "translation": "Не предлагать расширенный редактор при вставке"
+      }
+    },
+    "kOptionNoSwipeBack": {
+      "name": {
+        "source": "Swipe back",
+        "translation": "Возврат и переключение смахиванием"
+      },
+      "desc": {
+        "source": "Also covers swiping between tabs, folders and photos.",
+        "translation": "Также отключает переключение смахиванием между вкладками, папками и фотографиями."
+      }
+    },
+    "kOptionNoSwipeReply": {
+      "name": {
+        "source": "Swipe to reply",
+        "translation": "Ответ смахиванием"
+      }
+    },
+    "kOptionNoticesLimits": {
+      "name": {
+        "source": "Rate-limit toasts and bar",
+        "translation": "Уведомления и индикатор ограничений частоты запросов"
+      },
+      "desc": {
+        "source": "Counts down Telegram's waits when you send, react, join, search or pay too fast, with a bar above the chat list from a minute.",
+        "translation": "Показывает оставшееся время ожидания при слишком частых отправках, реакциях, вступлениях, поиске или оплате; от минуты — с индикатором над списком чатов."
+      }
+    },
+    "kOptionNoticesLogLimits": {
+      "name": {
+        "source": "Log rate limits",
+        "translation": "Записывать ограничения частоты запросов"
+      }
+    },
+    "kOptionNoticesTeleToasts": {
+      "name": {
+        "source": "Log tele toasts",
+        "translation": "Сохранять всплывающие уведомления Теле"
+      }
+    },
+    "kOptionOnlineNotify": {
+      "name": {
+        "source": "Notify when people come online",
+        "translation": "Уведомлять о появлении пользователей в сети"
+      }
+    },
+    "kOptionParallelUploads": {
+      "name": {
+        "source": "Upload media in several chats at once",
+        "translation": "Отправлять медиа в разные чаты одновременно"
+      },
+      "desc": {
+        "source": "Files in one chat still go one after another.",
+        "translation": "В одном чате файлы по-прежнему отправляются по очереди."
+      }
+    },
+    "kOptionPinnedBarMenu": {
+      "name": {
+        "source": "Hide and show the pinned bar",
+        "translation": "Скрывать и показывать панель закреплённых сообщений"
+      },
+      "desc": {
+        "source": "From a chat's menu, in chats where you can't unpin.",
+        "translation": "Настраивается в меню чата, если у вас нет возможности открепить сообщения."
+      }
+    },
+    "kOptionQueueBehindMedia": {
+      "name": {
+        "source": "Queue messages behind uploading media",
+        "translation": "Отправлять сообщения после загрузки вложений"
+      }
+    },
+    "kOptionReduceMotion": {
+      "name": {
+        "source": "Reduce motion",
+        "translation": "Уменьшить анимацию"
+      }
+    },
+    "kOptionReturnPoint": {
+      "name": {
+        "source": "Return to where you were reading",
+        "translation": "Возвращаться к месту чтения после отправки"
+      },
+      "desc": {
+        "source": "After you send a message while scrolled up.",
+        "translation": "После отправки сообщения, если вы прокрутили чат вверх."
+      }
+    },
+    "kOptionRewritePreviewOnly": {
+      "name": {
+        "source": "Rewrite only the preview",
+        "translation": "Заменять ссылку только в предпросмотре"
+      }
+    },
+    "kOptionRichQuote": {
+      "name": {
+        "source": "Quote rich messages",
+        "translation": "Цитировать расширенные сообщения"
+      },
+      "desc": {
+        "source": "The selection goes into your message as a blockquote, in the rich editor when you can send rich messages.",
+        "translation": "Выделенный текст добавляется в ваше сообщение как цитата; если доступны расширенные сообщения, цитата открывается в расширенном редакторе."
+      }
+    },
+    "kOptionScreenshotSecretMedia": {
+      "name": {
+        "source": "Allow screenshots of disappearing media",
+        "translation": "Разрешить скриншоты исчезающих медиа"
+      },
+      "desc": {
+        "source": "Chats that forbid saving stay protected.",
+        "translation": "Чаты с запретом сохранения остаются защищёнными."
+      }
+    },
+    "kOptionSentToBottom": {
+      "name": {
+        "source": "Move late-sent messages to the bottom",
+        "translation": "Перемещать запоздавшие сообщения в конец чата"
+      },
+      "desc": {
+        "source": "When a slow upload finishes after newer messages.",
+        "translation": "Если долгая загрузка завершается после отправки более новых сообщений."
+      }
+    },
+    "kOptionServerUsernames": {
+      "name": {
+        "source": "Usernames from the server",
+        "translation": "Имена пользователей с сервера Теле"
+      },
+      "desc": {
+        "source": "Extra @usernames from the tele server, usable like real ones.",
+        "translation": "Дополнительные @имена с сервера Теле, которыми можно пользоваться как обычными."
+      }
+    },
+    "kOptionShot": {
+      "name": {
+        "source": "Shot in the message menu",
+        "translation": "Снимок сообщения в контекстном меню"
+      },
+      "desc": {
+        "source": "Saves messages as a picture.",
+        "translation": "Сохраняет сообщения в виде изображения."
+      }
+    },
+    "kOptionShotView": {
+      "name": {
+        "source": "Shot view",
+        "translation": "Настройки снимка сообщения"
+      },
+      "desc": {
+        "source": "What the last shot showed.",
+        "translation": "Параметры последнего снимка."
+      }
+    },
+    "kOptionSilenceChats": {
+      "name": {
+        "source": "Silence chats completely",
+        "translation": "Полностью отключать уведомления в чатах"
+      },
+      "desc": {
+        "source": "From the mute menu; mentions and reactions don't notify either.",
+        "translation": "Настраивается в меню отключения уведомлений; упоминания и реакции тоже не вызывают уведомлений."
+      }
+    },
+    "kOptionStarsTools": {
+      "name": {
+        "source": "Search and export star transactions",
+        "translation": "Поиск и экспорт операций со звёздами"
+      },
+      "desc": {
+        "source": "Search and filters load the whole history first.",
+        "translation": "Для поиска и фильтрации сначала загружается вся история."
+      }
+    },
+    "kOptionTitleTemplate": {
+      "name": {
+        "source": "Title bar label",
+        "translation": "Подпись в верхней панели"
+      }
+    },
+    "kOptionTrayIcon": {
+      "name": {
+        "source": "Tray icon",
+        "translation": "Значок в области уведомлений"
+      }
+    },
+    "kOptionUnsortedFolder": {
+      "name": {
+        "source": "Unsorted folder",
+        "translation": "Папка «Без папки»"
+      },
+      "desc": {
+        "source": "Every chat that isn't in another folder, except archived ones.",
+        "translation": "Все чаты, не добавленные в другие папки, кроме архивных."
+      }
+    },
+    "kOptionUsernameAliases": {
+      "name": {
+        "source": "Username aliases",
+        "translation": "Собственные @псевдонимы чатов"
+      }
+    },
+    "kOptionVoiceNoFade": {
+      "name": {
+        "source": "Record voice without fading",
+        "translation": "Записывать голос без плавного изменения громкости"
+      }
+    },
+    "kOptionWebAppsNoFullscreen": {
+      "name": {
+        "source": "Never open web apps in fullscreen",
+        "translation": "Не открывать мини-приложения на весь экран"
+      }
+    },
+    "kOptionWindowTitleTemplate": {
+      "name": {
+        "source": "Window title",
+        "translation": "Заголовок окна на панели задач"
+      }
+    },
+    "kOptionAllowScreenCapture": {
+      "desc": {
+        "source": "Also for protected chats and disappearing media.",
+        "translation": "В том числе в защищённых чатах и при просмотре исчезающих медиа."
+      }
+    },
+    "kOptionBotApiPeerIds": {
+      "desc": {
+        "source": "Like -100 in front of channel and supergroup IDs.",
+        "translation": "Например, с префиксом -100 у ID каналов и супергрупп."
+      }
+    },
+    "kOptionCalcmula": {
+      "desc": {
+        "source": "Messages and captions starting with \"= \" are sent with the result.",
+        "translation": "Сообщения и подписи, начинающиеся с «= » (с пробелом), отправляются с результатом вычисления."
+      }
+    },
+    "kOptionChatBackgrounds": {
+      "desc": {
+        "source": "Chats with a background only you see, set in a chat's menu.",
+        "translation": "Фоны видны только вам и задаются в меню чата."
+      }
+    },
+    "kOptionCleanSentLinks": {
+      "desc": {
+        "source": "Strips the same tracking from links in messages and captions you send.",
+        "translation": "Удаляет те же метки отслеживания из ссылок в отправляемых сообщениях и подписях."
+      }
+    },
+    "kOptionConfirmGifs": {
+      "desc": {
+        "source": "A second click on the same GIF sends it.",
+        "translation": "Повторное нажатие на тот же GIF отправляет его."
+      }
+    },
+    "kOptionConfirmStickers": {
+      "desc": {
+        "source": "A second click on the same sticker sends it.",
+        "translation": "Повторное нажатие на тот же стикер отправляет его."
+      }
+    },
+    "kOptionConfirmVoice": {
+      "desc": {
+        "source": "Recordings stop in the preview instead of sending.",
+        "translation": "Запись остаётся в окне предпросмотра вместо немедленной отправки."
+      }
+    },
+    "kOptionCopyProtected": {
+      "desc": {
+        "source": "Media is re-uploaded, there is no forwarded header, and copying and saving get unlocked too.",
+        "translation": "Медиа отправляются заново без заголовка пересылки; копирование и сохранение также разблокируются."
+      }
+    },
+    "kOptionDownloadsPerChat": {
+      "desc": {
+        "source": "A chat's menu can pick its own folder.",
+        "translation": "Отдельную папку можно выбрать в меню чата."
+      }
+    },
+    "kOptionEditHistory": {
+      "desc": {
+        "source": "Right-click an edited message to see old versions.",
+        "translation": "Нажмите правой кнопкой мыши на изменённое сообщение, чтобы посмотреть предыдущие версии."
+      }
+    },
+    "kOptionGhostSchedule": {
+      "desc": {
+        "source": "You stay offline, messages arrive a few seconds late.",
+        "translation": "Ваш статус остаётся «Не в сети», а сообщения приходят с задержкой в несколько секунд."
+      }
+    },
+    "kOptionGiftSearch": {
+      "desc": {
+        "source": "Covers collectible gifts only.",
+        "translation": "Поиск доступен только для коллекционных подарков."
+      }
+    },
+    "kOptionGiftSelect": {
+      "desc": {
+        "source": "Select gifts is in the menu of your gift list.",
+        "translation": "Пункт «Выбрать подарки» находится в меню вашего списка подарков."
+      }
+    },
+    "kOptionGiftStudioMenu": {
+      "desc": {
+        "source": "Open in gift studio on collectibles, Open in gift grid on profile gift lists and collections.",
+        "translation": "Коллекционные подарки открываются в студии, а списки и коллекции из профиля — в сетке подарков."
+      }
+    },
+    "kOptionHdPhotos": {
+      "desc": {
+        "source": "Ignores the choice from last time.",
+        "translation": "Выбор качества при предыдущей отправке не учитывается."
+      }
+    },
+    "kOptionHideAllChats": {
+      "desc": {
+        "source": "The chat list opens on your first folder.",
+        "translation": "Список чатов открывается на вашей первой папке."
+      }
+    },
+    "kOptionHideCommunities": {
+      "desc": {
+        "source": "Their chats stay in the list as regular chats.",
+        "translation": "Чаты сообществ остаются в списке как обычные чаты."
+      }
+    },
+    "kOptionHideListPreviews": {
+      "desc": {
+        "source": "Rows shrink to a single line.",
+        "translation": "Строки списка чатов становятся однострочными."
+      }
+    },
+    "kOptionInlineAsText": {
+      "desc": {
+        "source": "Ctrl+Shift+Enter, or right-click the cancel button.",
+        "translation": "Ctrl + Shift + Enter или нажатие правой кнопкой мыши на кнопку отмены."
+      }
+    },
+    "kOptionInlineWithoutVia": {
+      "desc": {
+        "source": "The bot's buttons are dropped too.",
+        "translation": "Кнопки бота также удаляются."
+      }
+    },
+    "kOptionKeepDeleted": {
+      "desc": {
+        "source": "Kept only on this device.",
+        "translation": "Сохраняются только на этом устройстве."
+      }
+    },
+    "kOptionKeepDeletedOwn": {
+      "desc": {
+        "source": "Only ones deleted from this device.",
+        "translation": "Только сообщения, удалённые вами с этого устройства."
+      }
+    },
+    "kOptionKeepDeletedPersist": {
+      "desc": {
+        "source": "Downloaded media is copied too, up to 200 MB per account.",
+        "translation": "Загруженные медиа также копируются, до 200 МБ на аккаунт."
+      }
+    },
+    "kOptionKnownSettings": {
+      "desc": {
+        "source": "The tele settings this device has seen, to show the new ones after an update.",
+        "translation": "Настройки Теле, уже показанные на этом устройстве, чтобы выделять новые после обновления."
+      }
+    },
+    "kOptionListDates": {
+      "desc": {
+        "source": "Star and TON transactions, shared media and profile gifts.",
+        "translation": "Операции со звёздами и TON, общие медиа и подарки в профиле."
+      }
+    },
+    "kOptionListKeys": {
+      "desc": {
+        "source": "Page Up, Page Down, Home and End scroll boxes and sections, and a click just outside a box doesn't close it.",
+        "translation": "Page Up, Page Down, Home и End прокручивают окна и разделы; нажатие рядом с окном не закрывает его."
+      }
+    },
+    "kOptionLocalDrafts": {
+      "desc": {
+        "source": "Drafts skip the cloud, and cloud drafts from other devices are ignored.",
+        "translation": "Черновики не отправляются в облако; облачные черновики с других устройств игнорируются."
+      }
+    },
+    "kOptionLocalFolders": {
+      "desc": {
+        "source": "What doesn't fit the server limit stays on this device.",
+        "translation": "Папки сверх серверного лимита остаются только на этом устройстве."
+      }
+    },
+    "kOptionLowercase": {
+      "desc": {
+        "source": "Messages and names stay as they are.",
+        "translation": "Текст сообщений и имена не меняются."
+      }
+    },
+    "kOptionMessageIdMenu": {
+      "desc": {
+        "source": "Click it to copy.",
+        "translation": "Нажмите, чтобы скопировать ID."
+      }
+    },
+    "kOptionMessageSeconds": {
+      "desc": {
+        "source": "Service messages show their time too.",
+        "translation": "У служебных сообщений также показывается время."
+      }
+    },
+    "kOptionMultiQuote": {
+      "desc": {
+        "source": "Quoting again while replying with a quote adds a blockquote to your message instead of changing the reply.",
+        "translation": "Повторное цитирование добавляет цитату в ваш текст, не меняя сообщение, на которое вы отвечаете."
+      }
+    },
+    "kOptionNoPhoneInHeader": {
+      "desc": {
+        "source": "For non-contacts who shared their number, the profile still shows it.",
+        "translation": "Номер пользователя не из контактов, поделившегося им, по-прежнему виден в профиле."
+      }
+    },
+    "kOptionPinSets": {
+      "desc": {
+        "source": "Right-click a set in the panel footer.",
+        "translation": "Нажмите правой кнопкой мыши на набор в нижней части панели."
+      }
+    },
+    "kOptionPunctualScheduled": {
+      "desc": {
+        "source": "Tele sends them itself while it's running.",
+        "translation": "Теле сам отправляет сообщения в назначенное время, пока приложение запущено."
+      }
+    },
+    "kOptionReadLog": {
+      "desc": {
+        "source": "The message menu keeps showing when a private chat read your message.",
+        "translation": "В меню сообщения сохраняется время, когда собеседник прочитал его в личном чате."
+      }
+    },
+    "kOptionSendOlderReplies": {
+      "desc": {
+        "source": "Older than the uploading media.",
+        "translation": "Ответы на сообщения, отправленные раньше загружаемого медиа."
+      }
+    },
+    "kOptionServerUrl": {
+      "desc": {
+        "source": "Source of checkmarks and custom verification, empty turns it off.",
+        "translation": "Источник галочек и пользовательской верификации; пустой адрес отключает сервер."
+      }
+    },
+    "kOptionShowChangelog": {
+      "desc": {
+        "source": "Posted to a local tele chat when you open each account, gone after a restart.",
+        "translation": "Появляется в локальном чате Теле при открытии каждого аккаунта и исчезает после перезапуска."
+      }
+    },
+    "kOptionShowDc": {
+      "desc": {
+        "source": "From the profile photo in profiles, from the file in the media viewer.",
+        "translation": "В профиле — из фотографии профиля, в просмотрщике медиа — из файла."
+      }
+    },
+    "kOptionShowGiftIds": {
+      "desc": {
+        "source": "Click to copy.",
+        "translation": "Нажмите, чтобы скопировать ID."
+      }
+    },
+    "kOptionShowPeerIdBelowAbout": {
+      "desc": {
+        "source": "Show peer IDs from API as a separate row in their profile. Add contact IDs to exported data.",
+        "translation": "ID из API показывается отдельной строкой в профиле; ID контактов добавляются в экспортируемые данные."
+      }
+    },
+    "kOptionShowRegularGiftIds": {
+      "desc": {
+        "source": "The gift type ID, click to copy.",
+        "translation": "ID типа подарка; нажмите, чтобы скопировать."
+      }
+    },
+    "kOptionSilentPerChat": {
+      "desc": {
+        "source": "Adds \"Send silently\" to the chat menu.",
+        "translation": "Добавляет пункт «Отправлять без звука» в меню чата."
+      }
+    },
+    "kOptionStaticUserpicsChats": {
+      "desc": {
+        "source": "Opening the photo still plays it.",
+        "translation": "При открытии фотографии анимация по-прежнему воспроизводится."
+      }
+    },
+    "kOptionStaticUserpicsList": {
+      "desc": {
+        "source": "Also in folders and search results.",
+        "translation": "В том числе в папках и результатах поиска."
+      }
+    },
+    "kOptionStickerCaptionsSend": {
+      "desc": {
+        "source": "A sticker picked while the field has text takes it as a caption, and captions of your stickers can be edited.",
+        "translation": "Выбранный стикер получает текст из поля ввода как подпись; подписи ваших стикеров можно редактировать."
+      }
+    },
+    "kOptionStickerCaptionsShow": {
+      "desc": {
+        "source": "Also in the chat list, replies and notifications.",
+        "translation": "В том числе в списке чатов, ответах и уведомлениях."
+      }
+    },
+    "kOptionStreamerMode": {
+      "desc": {
+        "source": "Hides the app from screen capture, plus phone numbers, notification details and the account and chat in the window title.",
+        "translation": "Скрывает приложение от захвата экрана, а также номера телефонов, содержимое уведомлений, аккаунт и чат в заголовке окна."
+      }
+    },
+    "kOptionTranslateOut": {
+      "desc": {
+        "source": "From the field or send button menu.",
+        "translation": "Доступно в меню поля ввода или кнопки отправки."
+      }
+    },
+    "kOptionViewAsTl": {
+      "desc": {
+        "source": "Opens messages, chats and more on schema.jppgr.am.",
+        "translation": "Открывает сообщения, чаты и другие объекты на внешнем сайте schema.jppgr.am."
+      }
+    }
+  },
+  "contexts": {
+    "settings/settings_tele.cpp": {
+      "Sending": "Отправка сообщений",
+      "sending": "Отправка сообщений",
+      "Uploads": "Отправка файлов",
+      "uploads": "Отправка файлов",
+      "text": "Текст",
+      "roll": "Случайный вариант"
+    },
+    "tele/tele_gift_studio.cpp": {
+      "text": "Текст"
+    },
+    "tele/tele_shot.cpp": {
+      "shot": "Снимок сообщения"
+    }
+  },
+  "strings": {
+    "Sending": "Отправка сообщений",
+    "Uploads": "Отправка файлов",
+    "Chats and messages is now Chats, Messages, Sending, Notifications and Menus. Chat and profile options moved from Interface to Chats, unread counters to Notifications.": "Раздел «Чаты и сообщения» разделён на «Чаты», «Сообщения», «Отправка сообщений», «Уведомления» и «Меню». Настройки чатов и профилей перенесены из «Интерфейса» в «Чаты», а счётчики непрочитанного — в «Уведомления».",
+    "Online notifications": "Уведомления о появлении в сети",
+    "Username aliases": "Собственные @псевдонимы чатов",
+    "Always ghost in": "Всегда включать режим невидимки в чатах",
+    "Never ghost in": "Никогда не включать режим невидимки в чатах",
+    "Always ghost here": "Всегда включать режим невидимки здесь",
+    "Always ghost": "Всегда включать режим невидимки",
+    "Never ghost": "Никогда не включать режим невидимки",
+    "Shot": "Снимок сообщения",
+    "Save shot": "Сохранить снимок",
+    "Shot copied to clipboard.": "Снимок скопирован в буфер обмена.",
+    "Couldn't save the shot.": "Не удалось сохранить снимок.",
+    "Names and badges": "Имена и значки верификации",
+    "Inline buttons": "Кнопки бота",
+    "Rich message": "Расширенное сообщение",
+    "rich messages": "расширенные сообщения",
+    "The rich message can't be read": "Не удалось прочитать расширенное сообщение",
+    "This rich message draft can't be read.": "Не удалось прочитать черновик расширенного сообщения.",
+    "This rich message can't be saved as a draft yet, wait until its media is uploaded.": "Расширенное сообщение пока нельзя сохранить как черновик. Дождитесь загрузки его медиа.",
+    " can spend Stars or give away gifts.": " может тратить звёзды или передавать подарки.",
+    "Convert to stars": "Обменять на звёзды",
+    "Gifts and stars stop asking for a password.": "Трата звёзд и передача подарков больше не будут требовать локального пароля.",
+    "Fake upgrade": "Пробное улучшение",
+    "Fake upgrades show up here.": "Здесь появятся результаты пробных улучшений.",
+    "Unmute folder": "Включить уведомления в папке",
+    "Mute folder": "Отключить уведомления в папке",
+    "Silence completely": "Полностью отключить уведомления",
+    "Aliases, custom names, ignored users, ghost chats and backgrounds, tied to specific chats.": "Псевдонимы, собственные имена, игнорируемые пользователи, режим невидимки и фоны для конкретных чатов.",
+    "People": "Пользователи и чаты",
+    "Same as the app icon": "Как значок приложения",
+    "Imported, %1 %2 changed.": "Импорт завершён. Изменения: %1 %2.",
+    "Will change %1 %2.%3": "Предстоящие изменения: %1 %2.%3",
+    "%1 %2 this tele doesn't know, skipped.": "Пропущены неизвестные этой версии Теле параметры: %1 %2.",
+    "Debug logs": "Отладочные журналы",
+    "Open the logs folder": "Открыть папку журналов",
+    "Clear logs": "Очистить журналы",
+    "There are no debug logs yet, turn them on first.": "Отладочных журналов пока нет. Сначала включите их запись.",
+    "No MTProto entries yet.\n\nTurn on debug logs in tele settings → debug, use the app for a bit and press refresh.": "Записей MTProto пока нет.\n\nВключите отладочные журналы в настройках Теле → Отладка, немного поработайте в приложении и нажмите «Обновить»."
+  },
+  "plurals": {
+    "setting": [
+      "настройка",
+      "настройки",
+      "настроек"
+    ]
+  }
+}
