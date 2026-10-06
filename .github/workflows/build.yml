@@ -1,16 +1,6 @@
 name: Build
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - UPSTREAM
-      - TELE_UPSTREAM.json
-      - 'patches/**'
-      - tele.py
-      - 'ci/**'
-      - 'i18n/**'
-      - .github/workflows/build.yml
   workflow_dispatch:
     inputs:
       platforms:

@@ -1,9 +1,12 @@
 name: Promote
 
 on:
-  workflow_run:
-    workflows: [Build]
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run:
+        description: completed successful Build run to publish
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -12,16 +15,21 @@ permissions:
 jobs:
   promote:
     name: Publish the finished build
-    if: >-
-      github.event.workflow_run.conclusion == 'success'
-      && vars.PROMOTE_RUN != ''
-      && format('{0}', github.event.workflow_run.id) == vars.PROMOTE_RUN
     runs-on: ubuntu-latest
     steps:
       - name: Publish
         env:
           GH_TOKEN: ${{ github.token }}
-          RUN: ${{ github.event.workflow_run.id }}
+          RUN: ${{ inputs.run }}
         run: |
+          if ! [[ "$RUN" =~ ^[0-9]+$ ]]; then
+            echo 'run must be a numeric Build run id'
+            exit 1
+          fi
+          ready=$(gh run view "$RUN" -R "$GITHUB_REPOSITORY" --json conclusion,headBranch,workflowName --jq 'select(.conclusion == "success" and .headBranch == "main" and .workflowName == "Build") | .conclusion')
+          if [ "$ready" != success ]; then
+            echo 'only a successful Build run from main can be published'
+            exit 1
+          fi
           gh workflow run build.yml -R "$GITHUB_REPOSITORY" --ref main -f from_run="$RUN" -f publish=true
           echo "publishing the builds of run $RUN from main"
