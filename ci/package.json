@@ -1,0 +1,5 @@
+{
+  "name": "teleru-localization-checks",
+  "private": true,
+  "dependencies": { "acorn": "8.15.0" }
+}

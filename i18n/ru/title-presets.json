@@ -1,0 +1,14 @@
+{
+  "strings": { "transaction": "операция" },
+  "contexts": {
+    "tele/tele_title_box.cpp": {
+      "{chat|max:40}[ ({chat_unread|k})] – tele": "{chat|max:40}[ ({chat_unread|k})] – teleru",
+      "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – teleru",
+      "tele #{build} · {time:HH:mm}": "teleru #{build} · {time:HH:mm}",
+      "TELE #{build}": "TELERU #{build}",
+      "{name}[ · {unread} unread]": "{name}[ · непрочитанных: {unread}]",
+      "tele {version|short}[ · {unread|k}]": "teleru {version|short}[ · {unread|k}]"
+    },
+    "Resources/tele_html/mtp_inspector.js": { "dc ": "ДЦ " }
+  }
+}

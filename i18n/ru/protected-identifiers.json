@@ -1,0 +1,14 @@
+{
+  "machine": {
+    "tele/tele_app_icons.cpp": {"custom": "Icon setting value", "default": "Icon setting value"},
+    "tele/tele_changelog_history.cpp": {"number": "JSON field", "text": "JSON field", "title": "JSON field", "version": "JSON field"},
+    "tele/tele_chat_backgrounds.cpp": {"none": "Wallpaper storage value", "background": "Encrypted filename"},
+    "tele/tele_drafts.cpp": {"docked": "Encrypted filename"},
+    "tele/tele_ghost.cpp": {"always": "Stored ghost mode", "never": "Stored ghost mode", "ghost": "Encrypted filename"},
+    "tele/tele_gift_grid_cell.cpp": {"backdrop": "Cell serialization field", "collection": "Cell serialization field", "custom": "Ribbon serialization", "gift": "Cell serialization", "limited": "Ribbon serialization", "model": "Cell serialization field", "none": "Ribbon serialization", "symbol": "Cell serialization field"},
+    "tele/tele_link_rewrites.cpp": {"pattern": "Rule serialization discriminator"},
+    "tele/tele_title_box.cpp": {"chat": "Title template variable", "id": "Title template variable", "label": "Title template variable", "name": "Title template variable", "status": "Title template variable", "time": "Title template variable", "unread": "Title template variable", "username": "Title template variable", "version": "Title template variable"},
+    "tele/tele_stars_tools.cpp": {"gift": "CSV and filter identifier", "bot": "CSV and filter identifier", "in": "CSV direction", "out": "CSV direction", "stars": "CSV currency", "ton": "CSV currency"},
+    "Resources/tele_html/mtp_console.js": {"method": "Editor context kind", "optional": "Editor marker", "string": "Grammar type", "name": "Grammar context", "other": "DOM field id", "text": "Editor mode", "form": "Editor mode", "clear": "Modal event id"}
+  }
+}

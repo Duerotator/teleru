@@ -1,5 +1,13 @@
 # tele
 
+## teleru — русская сборка
+
+Этот репозиторий собирает русскую версию [tele](https://github.com/nitreojs/tele). Загрузки: [релизы teleru](https://github.com/Duerotator/teleru/releases/latest).
+
+Сборка использует релиз и commit из `TELE_UPSTREAM.json`, затем накладывает каталог `i18n/ru.json` и дополнения `i18n/ru/`. Переводы не перезаписываются при синхронизации. Новые или изменённые строки блокируют выпуск до проверки перевода.
+
+Настройка автоматических обновлений, ключа подписи и проверка локализации описаны в [инструкции teleru](docs/teleru.md). Хранящаяся ниже исходная документация и локальная очередь `patches/` относятся к унаследованной версии tele; новая сборка берёт очередь из зафиксированного релиза tele, а не из этих старых патчей.
+
 a telegram desktop fork. it isn't a real fork of the code: this repo only holds a queue of patches that get applied on top of every stable [tdesktop](https://github.com/telegramdesktop/tdesktop) release and built here automatically.
 
 ## download

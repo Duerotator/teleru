@@ -1,0 +1,49 @@
+{
+  "strings": {
+    "Telegram": "Telegram",
+    "TikTok": "TikTok",
+    "OpenStreetMap": "OpenStreetMap",
+    "2GIS": "2GIS",
+    "USD": "USD"
+  },
+  "contexts": {
+    "tele/tele_edit_history.cpp": {
+      "photo": "фото",
+      "poll": "опрос",
+      "contact": "контакт",
+      "checklist": "список задач"
+    },
+    "tele/tele_protected.cpp": {
+      "invoices": "счета",
+      "games": "игры",
+      "dice": "игральные кости",
+      "checklists": "списки задач",
+      "giveaways": "розыгрыши"
+    },
+    "tele/tele_shortcuts.cpp": {
+      "invoices": "счета",
+      "games": "игры",
+      "giveaways": "розыгрыши",
+      "venues": "места",
+      "locations": "местоположения",
+      "dice": "игральные кости"
+    },
+    "tele/tele_tgs_rules.cpp": {
+      "expressions": "выражения",
+      "images": "изображения",
+      "repeaters": "повторители"
+    },
+    "tele/tele_title.cpp": {
+      "DEV": "РАЗРАБОТКА",
+      "connecting": "подключение"
+    },
+    "tele/tele_crash.cpp": {
+      "missing": "отсутствует",
+      "raw %1 > %2": "исходный размер %1 > %2",
+      "zip %1 > %2": "размер ZIP %1 > %2"
+    },
+    "tele/tele_peer_id.cpp": {
+      "uncertain": "неточно"
+    }
+  }
+}

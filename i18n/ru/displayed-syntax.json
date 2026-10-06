@@ -1,0 +1,15 @@
+{
+  "contexts": {
+    "settings/settings_tele.cpp": {"log.txt": "log.txt"},
+    "tele/tele_docked_media.cpp": {"cover.png": "cover.png"},
+    "tele/tele_drafts_box.cpp": {"cover.png": "cover.png"},
+    "tele/tele_drafts_compose.cpp": {"image.png": "image.png"},
+    "Resources/tele_html/mtp_console.js": {
+      "@username, @me, me, t.me/username, 123456789, -100…": "@username, @me, me, t.me/username, 123456789, -100…",
+      "name:value …": "name:value …",
+      "true": "true",
+      "0x": "0x"
+    },
+    "Resources/tele_html/mtp_inspector.js": {"true": "true"}
+  }
+}

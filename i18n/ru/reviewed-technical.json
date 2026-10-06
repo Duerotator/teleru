@@ -1,0 +1,607 @@
+{
+  "ignored": {
+    "core/crash_report_window.cpp": {
+      "act=query_report&apiid=%1&version=%2&dmp=%3&platform=%4": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "form-data; name=\"dump\"; filename=\"%1\"": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "act=report": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "platform/linux/specific_linux.cpp": {
+      "dev.starkow.tele._%1": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "settings/settings_tele.cpp": {
+      "toast/voip_invite": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "-never": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/new": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/server": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/backup": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/updates": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_app_links.cpp": {
+      "&pwd=": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "p/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "product/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{app}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{url}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{uri}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "APPDATA": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "--protocol-uri=%1": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "LOCALAPPDATA": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "--url": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "DiscordPTB": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "DiscordCanary": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "app-*": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "Software\\RegisteredApplications": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "Software\\WOW6432Node\\RegisteredApplications": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "\\URLAssociations": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "\\shell\\open\\command": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "ApplicationName": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "%l": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "%L": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "-a": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "x-scheme-handler/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "2gis": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "open -a \"{app}\" {uri}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "\"{app}\" {uri}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "site:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "geo:%1,%2": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{lat}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{lon}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "{title}": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_audio_voice.cpp": {
+      "opus": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_badges.cpp": {
+      "tele/%1-tele.%2": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "prod:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_button_payload.cpp": {
+      "\\n": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "\\r": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "\\t": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_changelog.cpp": {
+      "v%1-tele.%2": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "download/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tag/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_changelog_history.cpp": {
+      "where": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "category": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tag/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_chat_backgrounds.cpp": {
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "_test_": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_collectible_price.cpp": {
+      "yyyy-MM-dd'T'HH:mm:ss'Z'": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "at": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "max_age_seconds": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_copy_markdown.cpp": {
+      "&amp;": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "&lt;": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "&gt;": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "&quot;": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "b": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "i": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "u": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "s": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "<span class=\"tg-spoiler\">": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "</span>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "<a href=\"": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "</a>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "code": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "<pre><code class=\"language-": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "</code></pre>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "<blockquote>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "<blockquote expandable>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "</blockquote>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_crash.cpp": {
+      "<div>%1</div><div style=\"font-weight: normal; color: #808080;\">%2</div>": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_debug_logs.cpp": {
+      "_%1_%2.txt": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "log": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "DebugLogs": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_docked_media.cpp": {
+      "stars_paid_post_amount_max": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_download_folders.cpp": {
+      "download_folder": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_drafts.cpp": {
+      "view/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "index": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_freeze_watchdog.cpp": {
+      "ApiId": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "dd.MM.yyyy hh:mm:ss": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "UserTag": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_ghost.cpp": {
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_collection_link.cpp": {
+      "toast/voip_invite": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_grid_cell.cpp": {
+      "auto": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "sold_out": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "unique": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "model\n": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "symbol\n": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "application/x-tgsticker": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_quantity.cpp": {
+      "PAYMENT_FORM_INVALID": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "PAYMENT_VERIFICATION_NEEDED": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_studio.cpp": {
+      "image/png": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_studio_data.cpp": {
+      "my/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "emoji/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      ".png?size=64": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "original/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "backdrops/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "?sorted": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "symbols/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "models/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_studio_sticker.cpp": {
+      "application/x-tgsticker": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gift_studio_video.cpp": {
+      "webm": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "mp4": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "avio_open": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "sws_getCachedContext": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_gifts.cpp": {
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_ignored.cpp": {
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_invisible.cpp": {
+      "tele-invisible-name:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele-hidden-char:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele-hidden-char-link:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_kept_store.cpp": {
+      "journal": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "media/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "index": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_link_rewrites.cpp": {
+      "domains": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "random": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "first": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_link_rewrites_box.cpp": {
+      "random": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "first": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_links.cpp": {
+      "utm(?:_[a-z_]*)?": "URL tracking-parameter matching expression",
+      "mtm_[a-z_]*": "URL tracking-parameter matching expression",
+      "pk_(?:campaign|kwd|keyword|source|medium|content|cid)": "URL tracking-parameter matching expression",
+      "ga_[a-z_]+": "URL tracking-parameter matching expression",
+      "_ga": "URL tracking-parameter matching expression",
+      "_gl": "URL tracking-parameter matching expression",
+      "fb_action_(?:ids|types)": "URL tracking-parameter matching expression",
+      "fb_(?:source|ref)": "URL tracking-parameter matching expression",
+      "action_(?:object|type|ref)_map": "URL tracking-parameter matching expression",
+      "_openstat": "URL tracking-parameter matching expression",
+      "mc_(?:cid|eid|tc)": "URL tracking-parameter matching expression",
+      "ml_subscriber(?:_hash)?": "URL tracking-parameter matching expression",
+      "_hsenc": "URL tracking-parameter matching expression",
+      "_hsmi": "URL tracking-parameter matching expression",
+      "__hsfp": "URL tracking-parameter matching expression",
+      "__hssc": "URL tracking-parameter matching expression",
+      "__hstc": "URL tracking-parameter matching expression",
+      "oly_(?:anon|enc)_id": "URL tracking-parameter matching expression",
+      "vero_(?:conv|id)": "URL tracking-parameter matching expression",
+      "_kx": "URL tracking-parameter matching expression",
+      "wt_?z?mc": "URL tracking-parameter matching expression",
+      "hmb_(?:campaign|medium|source)": "URL tracking-parameter matching expression",
+      "itm_(?:campaign|medium|source)": "URL tracking-parameter matching expression",
+      "otm_[a-z_]*": "URL tracking-parameter matching expression",
+      "__twitter_impression": "URL tracking-parameter matching expression",
+      "_branch_match_id": "URL tracking-parameter matching expression",
+      "_branch_referrer": "URL tracking-parameter matching expression",
+      "_t": "URL tracking-parameter matching expression",
+      "_d": "URL tracking-parameter matching expression",
+      "__tn__": "URL tracking-parameter matching expression",
+      "__cft__\\[\\d+\\]": "URL tracking-parameter matching expression",
+      "__xts__\\[\\d+\\]": "URL tracking-parameter matching expression",
+      "hc_[a-z_\\[\\]0-9]*": "URL tracking-parameter matching expression",
+      "ref_[a-z_]*": "URL tracking-parameter matching expression",
+      "_rdr": "URL tracking-parameter matching expression",
+      "\\$deep_link": "URL tracking-parameter matching expression",
+      "\\$3p": "URL tracking-parameter matching expression",
+      "\\$original_url": "URL tracking-parameter matching expression",
+      "p[fd]_rd_[a-z]*": "URL tracking-parameter matching expression",
+      "srs?": "URL tracking-parameter matching expression",
+      "__mk_[a-z]{1,3}_[a-z]{1,3}": "URL tracking-parameter matching expression",
+      "colii?d": "URL tracking-parameter matching expression",
+      "_encoding": "URL tracking-parameter matching expression",
+      "ref_?": "URL tracking-parameter matching expression",
+      "cv_ct_[a-z]+": "URL tracking-parameter matching expression",
+      "sb-ci-[a-z]+": "URL tracking-parameter matching expression",
+      "aff_[a-z_]*": "URL tracking-parameter matching expression",
+      "scm[_a-z-]*": "URL tracking-parameter matching expression",
+      "gs_[a-z]*": "URL tracking-parameter matching expression",
+      "_trksid": "URL tracking-parameter matching expression",
+      "_from": "URL tracking-parameter matching expression",
+      "pf_rd_[a-z]*": "URL tracking-parameter matching expression",
+      "ign-itsc[a-z]+": "URL tracking-parameter matching expression"
+    },
+    "tele/tele_local_folders.cpp": {
+      "index": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_local_names.cpp": {
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_local_password.cpp": {
+      "argon2id$%1$%2$%3$%4": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "pbkdf2-sha512$%1$%2$%3": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_menu_apply.cpp": {
+      "clear_selection": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "draft_send": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "select_all": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_menu_registry.cpp": {
+      "reactions,reply,add_tasks,copy_selected,copy_markdown,copy_html,translate_selected,go_to_message,view_replies,edit,edit_history,mark_viewed,mark_read,rename_bookmark,bookmark,factcheck,pin,statistics,poll_results,poll_retract,poll_stop,cancel_download,open_gif,save_gif,sticker_set,fave_sticker,show_in_folder,save_sound,save_as,copy_image,copy_filename,attached_stickers,copy_phone,send_gift,copy_text,translate,copy_link,open_uncleaned,open_username,alias_copy,alias_open,alias_delete,copy_button_data,copy_message_link,forward,add_offer,send_now,ghost_cancel,edit_caption,cancel_upload,delete,download_selected,save_html,report,block_user,select,select_up_to,clear_selection,reschedule,|,info.packs,info.restriction,info.read,info.forwarded,info.edited,info.author,shot,send_as_gif,|,view_as_tl,mtp_inspector,copy_emoji_id,copy_id,|,info.id": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "reactions,reply,edit,forward,pin,|,save_as,cancel_download,cancel_upload,|,copy_selected,copy_text,copy_link,translate,|,select,clear_selection,|,delete,|,info.read,info.forwarded,info.edited": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "reactions,reply,go_to_message,edit,forward,pin,send_now,ghost_cancel,reschedule,|,save_as,copy_image,show_in_folder,sticker_set,fave_sticker,attached_stickers,send_as_gif,open_gif,save_gif,save_sound,cancel_download,edit_caption,cancel_upload,download_selected,save_html,|,poll_results,poll_retract,poll_stop,add_tasks,send_gift,view_replies,factcheck,statistics,add_offer,|,copy_selected,copy_text,copy_markdown,copy_html,copy_link,alias_copy,copy_message_link,copy_id,copy_emoji_id,copy_button_data,copy_filename,copy_phone,translate_selected,translate,open_uncleaned,open_username,alias_open,alias_delete,|,bookmark,rename_bookmark,mark_read,edit_history,shot,mark_viewed,|,select,select_up_to,clear_selection,|,delete,report,block_user,|,view_as_tl,mtp_inspector,|,info.packs,info.restriction,info.read,info.forwarded,info.edited,info.author,info.id": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mute,|,ghost,silent,online_notify,create_topic,info,jump_first,bookmarks,pinned_bar,manage_topic,alias,local_name,hidden_words,view_as_topics,manage,story_archive,support_info,boost,create_poll,create_todo,theme,background,download_folder,no_forwards,discussion,direct_messages,export,deleted,translate,report,clear_history,delete_chat,leave,close_topic,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mute,|,info,manage,manage_topic,|,clear_history,delete_chat,leave,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mute,silent,online_notify,ghost,|,info,create_topic,view_as_topics,jump_first,bookmarks,deleted,pinned_bar,discussion,direct_messages,translate,|,alias,local_name,hidden_words,background,download_folder,|,manage,manage_topic,boost,story_archive,create_poll,create_todo,theme,export,no_forwards,support_info,close_topic,|,report,clear_history,delete_chat,leave,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "new_window,|,ungroup,hide_promotion,archive,pin,info,mute,mark_read,close_topic,add_to_folder,block,ban,clear_history,delete_chat,leave,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "pin,mute,mark_read,|,archive,delete_chat,leave,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "new_window,|,pin,mark_read,mute,archive,add_to_folder,info,|,ungroup,hide_promotion,close_topic,|,block,ban,clear_history,delete_chat,leave,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "edit_folder,mark_read,mute_folder,remove,edit_folders,view_as_tl": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mark_read,edit_folder,edit_folders,|,remove": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mark_read,mute_folder,edit_folder,edit_folders,|,remove,|,view_as_tl": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "ttl,|,support_info,add_contact,share_contact,edit_contact,alias,local_name,hidden_words,background,download_folder,online_notify,pinned_bar,bot_to_group,add_members,send_gift,statistics,boosts,earn,story_archive,manage,personal_channel,topic_link,manage_topic,close_topic,discussion,direct_messages,export,no_forwards,add_to_folder,block,ban,report,leave,delete_contact,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "add_contact,share_contact,edit_contact,|,manage,manage_topic,|,block,leave,delete_contact,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "ttl,|,add_contact,share_contact,edit_contact,send_gift,bot_to_group,add_members,|,online_notify,pinned_bar,alias,local_name,hidden_words,background,download_folder,|,manage,statistics,boosts,earn,story_archive,personal_channel,add_to_folder,export,no_forwards,discussion,direct_messages,topic_link,manage_topic,close_topic,support_info,|,block,ban,report,leave,delete_contact,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "silent,schedule,when_online,|,hd,spoiler,caption,cover,clear_cover,price,|,draft_send,draft_silent,draft_schedule,save_draft,saved_drafts,discarded,no_calc,translate,attach": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "silent,schedule,when_online,|,hd,spoiler,caption,cover,clear_cover,price": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "silent,schedule,when_online,no_calc,attach,|,hd,spoiler,caption,cover,clear_cover,price,|,translate,|,draft_send,draft_silent,draft_schedule,save_draft,saved_drafts,discarded": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting,|,translate,link_preview": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting,|,translate,|,link_preview": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json"
+    },
+    "tele/tele_message_menu.cpp": {
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_mtp_console_requests.cpp": {
+      "inputPeerUser(user_id:%1, access_hash:%2)": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputPeerChat(chat_id:%1)": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputPeerChannel(channel_id:%1, access_hash:%2)": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputPeerSelf": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputUser(user_id:%1, access_hash:%2)": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputUserSelf": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "inputChannel(channel_id:%1, access_hash:%2)": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_mtp_log.cpp": {
+      "mtp*.txt": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_notices.cpp": {
+      "-tele.": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tag/": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_notices_mentions.cpp": {
+      "mention:%1:%2": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_peer_id.cpp": {
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_server_notices.cpp": {
+      "tele/%1-tele.%2": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_settings_io_box.cpp": {
+      "yyyy-MM-dd": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "setting": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "yyyy-MM-dd HH:mm": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_shot.cpp": {
+      "image/png": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_stars_tools.cpp": {
+      "reaction": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "paid_media": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "subscription": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "top_up": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "withdrawal": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "other": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "id,date,direction,amount,nano,currency,peer,peer_id,type,title,description,gift,gift_slug,gift_id,msg_id,giveaway_msg_id": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "yyyy-MM-dd": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_time.cpp": {
+      "ss": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_title.cpp": {
+      "HH:mm": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_title_box.cpp": {
+      "|short": "Title template variable, format modifier or syntax-only example",
+      ":HH:mm:ss": "Title template variable, format modifier or syntax-only example",
+      ":h:mm ap": "Title template variable, format modifier or syntax-only example",
+      ":dd MMM": "Title template variable, format modifier or syntax-only example",
+      ":dd.MM.yyyy": "Title template variable, format modifier or syntax-only example",
+      ":yyyy-MM-dd": "Title template variable, format modifier or syntax-only example",
+      "|lower": "Title template variable, format modifier or syntax-only example",
+      "|short|lower": "Title template variable, format modifier or syntax-only example",
+      "|pad:2": "Title template variable, format modifier or syntax-only example",
+      "|upper": "Title template variable, format modifier or syntax-only example",
+      "|max:20": "Title template variable, format modifier or syntax-only example",
+      "|max:30": "Title template variable, format modifier or syntax-only example",
+      "|k": "Title template variable, format modifier or syntax-only example",
+      "|default:no": "Title template variable, format modifier or syntax-only example",
+      "|default:online": "Title template variable, format modifier or syntax-only example",
+      "{label}": "Title template variable, format modifier or syntax-only example",
+      "{time:HH:mm} · {weekday|short}": "Title template variable, format modifier or syntax-only example",
+      "{weekday|short|lower} {day} {month|short|lower} · {time}": "Title template variable, format modifier or syntax-only example",
+      "[{status} · ]{chat|max:30}": "Title template variable, format modifier or syntax-only example"
+    },
+    "tele/tele_title_template.cpp": {
+      ":none": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_updater.cpp": {
+      ".zip.part": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_username_aliases.cpp": {
+      "test:": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "domain": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "alias_copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "alias_open": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "alias_delete": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_view_tl.cpp": {
+      "tele-tl-*.html": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "dark": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "light": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "&z=1": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "ui/chat/attach/attach_bot_webview.cpp": {
+      "UNSUPPORTED": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "Resources/tele_html/mtp_console.html": {
+      "Ctrl+1": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+2": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+3": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+Shift+F": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "F1": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+Enter": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label"
+    },
+    "Resources/tele_html/mtp_console.js": {
+      "https://schema.jppgr.am/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "InputPeer": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "InputUser": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "InputChannel": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "int": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "long": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "double": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "int128": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "int256": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "true": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "false": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "0x": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "err": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "o": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "v": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "g": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "null": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "!X": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Bool": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "value": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "key": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "top": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "end": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "none": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "obj": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "vec": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "ctor": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "danger": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "me": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "boxSizing": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "width": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "borderTopWidth": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "borderRightWidth": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "borderBottomWidth": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "borderLeftWidth": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "borderStyle": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "paddingTop": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "paddingRight": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "paddingBottom": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "paddingLeft": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontStyle": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontVariant": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontWeight": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontStretch": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontSize": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "lineHeight": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "fontFamily": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "textAlign": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "textIndent": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "letterSpacing": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "wordSpacing": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "tabSize": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "px": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "nearest": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "insertText": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "input": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hint-accepts": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "@username, @me, me, t.me/username, 123456789, -100…": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      ".form-row[data-name=\"": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "missing": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "invalid": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "&amp;": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "&lt;": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "&gt;": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "&quot;": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-method": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-ctor": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "<span class=\"": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "</span>": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-literal": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-invalid": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-number": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-peer": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-word": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-comment": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-key": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-string": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-bracket": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hl-punct": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "w": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "k": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "field-": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "name:value …": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "link": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "base64": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-ctor-link": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "constructor/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-more ui": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-string": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "--td-night": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "dark": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "light": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "result-method link": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "method/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "result-type": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "type/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "error-type": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "result/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      ".json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "ui": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "link ui": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "mode-": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "{\"_\": \"messages.getHistory\", \"peer\": \"@durov\", \"limit\": 10}": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "messages.getHistory peer:@durov limit:10": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "text/plain": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "peers/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "messages.getHistory(peer:@durov, limit:10)": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "{ _: 'messages.getHistory', peer: '@durov', limit: 10, }": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "// line  /* block */": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "10  -100123  +5  0x1f  1.5  1e3  123n": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "\"text\"  'text'": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "silent:true  pinned:false": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "reply_to:null": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "id:[1, 2, 3]  id:[1 2 3]  id:[]": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "{inputPeerUser user_id:1 access_hash:2}": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "inputPeerUser(user_id:1, access_hash:2)": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "inputPeerSelf": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "0xdeadbeef  base64:3q2+7w==  \"text\"": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "bytes": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "me  @me  @durov  durov  t.me/durov  https://t.me/c/1234567890": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "invokeWithoutUpdates query:{users.getUsers id:[me]}": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+Enter": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+Space": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+1  Ctrl+2  Ctrl+3": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+L": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+Shift+F": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "F1": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Ctrl+W": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "Esc": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "cancel": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "history-list": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "history-empty": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "history-clear": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "work": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "editor": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "text-pane": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "form-pane": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hint": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "error": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "hsplit": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "output": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "popup": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "confirm-text": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "confirm-ok": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "confirm-cancel": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "mode-text": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "mode-json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "mode-form": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "check": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "help": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "help-panel": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "help-box": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "highlight": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "format": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "schema.json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "history/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label"
+    },
+    "Resources/tele_html/mtp_inspector.js": {
+      "https://schema.jppgr.am/constructor/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "s": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "r": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "o": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "core_message": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "msg_container": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "rpc_result": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "initConnection": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "--row": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "clear/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      ".json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "--td-night": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "dark": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "light": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "list/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "px": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "none": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "translateY(": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "px)": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "entry/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "find/": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "err": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "[ERROR] (": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "v": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "[ vector<": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "0x0": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "g": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "YES [ BY BIT ": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      " IN FIELD ": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "\\n": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "\" [STRING]": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      " BYTES]": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "link": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-ctor-link": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-more ui": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "true": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "json-jump ui": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "msg_id": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "req_msg_id": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "kinds": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "dcs": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "refresh": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "folder": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "clear": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "main": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "list": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "spacer": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "rows": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "empty": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "split": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
+      "detail": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label"
+    }
+  }
+}

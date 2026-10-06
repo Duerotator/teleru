@@ -5,9 +5,11 @@ on:
     branches: [main]
     paths:
       - UPSTREAM
+      - TELE_UPSTREAM.json
       - 'patches/**'
       - tele.py
       - 'ci/**'
+      - 'i18n/**'
       - .github/workflows/build.yml
   workflow_dispatch:
     inputs:
@@ -32,8 +34,54 @@ concurrency:
   group: build-${{ github.ref }}
 
 jobs:
+  localization:
+    name: Verify Russian overlay before building
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Install localization parser and test dependencies
+        run: |
+          npm ci --prefix ci --ignore-scripts --no-audit --no-fund
+          python3 -m pip install -r ci/requirements.txt
+      - name: Run regression tests
+        run: python3 -m unittest discover -s ci/tests -v
+      - name: Prepare the exact released tele source
+        run: |
+          tag=$(python3 ci/upstream.py version)
+          git clone --quiet --depth 1 --branch "$tag" --recurse-submodules --shallow-submodules https://github.com/telegramdesktop/tdesktop.git "$RUNNER_TEMP/tdesktop"
+          python3 ci/upstream.py apply --tdesktop "$RUNNER_TEMP/tdesktop"
+      - name: Validate and apply the Russian overlay
+        run: python3 ci/translate_ru.py "$RUNNER_TEMP/tdesktop" --inventory localization-inventory.json
+      - name: Preserve the localization report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: localization-report
+          path: |
+            localization-report.json
+            localization-inventory.json
+          if-no-files-found: warn
+      - name: Report a blocked release
+        if: failure() && github.ref == 'refs/heads/main'
+        run: |
+          printf 'Russian overlay validation failed. Release was blocked; inspect localization-report in %s/%s/actions/runs/%s\n' "$GITHUB_SERVER_URL" "$GH_REPO" "$GITHUB_RUN_ID" > issue.md
+          bash ci/issue.sh open teleru-localization-gap 'teleru localization needs review' issue.md
+      - name: Close a resolved localization gap
+        if: github.ref == 'refs/heads/main'
+        run: bash ci/issue.sh close teleru-localization-gap 'Russian overlay validation passed.'
+
   number:
     name: Release number
+    needs: localization
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -60,9 +108,14 @@ jobs:
             echo "TDESKTOP_API_ID=2040" >> $GITHUB_ENV
             echo "TDESKTOP_API_HASH=b18441a1ff607e10a989891a5462e627" >> $GITHUB_ENV
           fi
-          if [ -z "$UPDATE_KEY" ]; then
-            echo "UPDATE_KEY=dummy" >> $GITHUB_ENV
-          fi
+
+      - name: Check the publishing key before compiling
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.publish)
+        env:
+          TELE_UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY }}
+        run: |
+          python3 -m pip install -r ci/requirements.txt
+          python3 ci/update_feed.py check-key
 
       - name: Pick the release number
         id: number
@@ -72,7 +125,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           NUMBER: ${{ inputs.number }}
         run: |
-          upstream=$(tr -d '[:space:]' < UPSTREAM)
+          upstream=$(python3 ci/upstream.py version)
           base="$upstream-tele"
           pattern="^${base//./\\.}\.\([0-9][0-9]*\)$"
           last=$( {
@@ -178,10 +231,11 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python tele\tele.py --tdesktop %TBUILD%\tdesktop apply
+          python tele\ci\upstream.py apply --tdesktop %TBUILD%\tdesktop
 
       - name: Localize to Russian
         run: |
+          call npm ci --prefix tele\ci --ignore-scripts --no-audit --no-fund || exit /b 1
           python tele\ci\translate_ru.py %TBUILD%\tdesktop
 
       - name: Read toolchain versions
@@ -468,7 +522,8 @@ jobs:
             --branch "$UPSTREAM_TAG" https://github.com/telegramdesktop/tdesktop.git tdesktop
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+          python3 tele/ci/upstream.py apply --tdesktop "$GITHUB_WORKSPACE/tdesktop"
+          npm ci --prefix tele/ci --ignore-scripts --no-audit --no-fund
           python3 tele/ci/translate_ru.py "$GITHUB_WORKSPACE/tdesktop"
 
       - name: Free disk space
@@ -697,7 +752,8 @@ jobs:
             --branch "$UPSTREAM_TAG" https://github.com/telegramdesktop/tdesktop.git tdesktop
           git config --global user.name "github-actions[bot]"
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          python3 tele/tele.py --tdesktop "$GITHUB_WORKSPACE/tdesktop" apply
+          python3 tele/ci/upstream.py apply --tdesktop "$GITHUB_WORKSPACE/tdesktop"
+          npm ci --prefix tele/ci --ignore-scripts --no-audit --no-fund
           python3 tele/ci/translate_ru.py "$GITHUB_WORKSPACE/tdesktop"
 
       - name: Restore libraries
@@ -788,13 +844,15 @@ jobs:
 
   publish:
     name: Publish
-    needs: [number, windows]
+    needs: [number, windows, linux, macos]
     if: >-
       !cancelled()
       && github.ref == 'refs/heads/main'
       && (github.event_name == 'push' || inputs.publish)
       && needs.number.result == 'success'
       && (inputs.from_run || needs.windows.result == 'success')
+      && (inputs.from_run || needs.linux.result == 'success' || needs.linux.result == 'skipped')
+      && (inputs.from_run || needs.macos.result == 'success' || needs.macos.result == 'skipped')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -825,8 +883,8 @@ jobs:
             echo "::error::run $RUN finished with '$conclusion'"
             exit 1
           fi
-          if ! git -C tele diff --quiet "$sha" HEAD -- UPSTREAM patches tele.py; then
-            echo "::error::run $RUN built other patches than $GITHUB_SHA"
+          if ! git -C tele diff --quiet "$sha" HEAD -- TELE_UPSTREAM.json UPSTREAM patches tele.py ci i18n .github/workflows/build.yml; then
+            echo "::error::run $RUN used different source, translations or build configuration"
             exit 1
           fi
           echo "publishing the builds of run $RUN ($sha)"
@@ -847,42 +905,27 @@ jobs:
           run-id: ${{ inputs.from_run }}
           github-token: ${{ github.token }}
 
-      - name: Sign the update feeds
-        continue-on-error: true
+      - name: Install feed signing dependencies
+        run: python3 -m pip install -r tele/ci/requirements.txt
+
+      - name: Sign and verify the update feeds
         env:
-          UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY || env.UPDATE_KEY }}
+          TELE_UPDATE_KEY: ${{ secrets.TELE_UPDATE_KEY }}
         run: |
-          sign() {
-            local platform=$1 zip="tele-$TAG-$1.zip" entry=$2
-            if [ ! -f "$zip" ]; then
-              echo "$zip not found, skipping $platform feed"
-              return 0
-            fi
-            [ -n "$(unzip -Z1 "$zip" "$entry")" ]
-            printf '{"tag":"%s","base":%s,"counter":%s,"url":"%s","zip_sha256":"%s","exe_sha256":"%s"}' \
-              "$TAG" "$BASE" "$COUNTER" \
-              "$GITHUB_SERVER_URL/$GH_REPO/releases/download/$TAG/$zip" \
-              "$(sha256sum < "$zip" | cut -c1-64)" \
-              "$(unzip -p "$zip" "$entry" | sha256sum | cut -c1-64)" > "feed-$platform.json"
-            if [ -n "$UPDATE_KEY" ] && [ "$UPDATE_KEY" != "dummy" ]; then
-              openssl pkeyutl -sign -rawin -inkey <(printf '%s\n' "$UPDATE_KEY") -in "feed-$platform.json" -out "feed-$platform.sig"
-              printf '{"feed":"%s","signature":"%s"}\n' "$(base64 -w0 "feed-$platform.json")" "$(base64 -w0 "feed-$platform.sig")" > "tele-update-$platform.json"
-            else
-              printf '{"feed":"%s","signature":""}\n' "$(base64 -w0 "feed-$platform.json")" > "tele-update-$platform.json"
-            fi
-          }
-          sign win64 tele.exe
-          sign linux64 tele || true
-          sign macos tele.app/Contents/MacOS/tele || true
+          platforms=()
+          for platform in win64 linux64 macos; do
+            [ ! -f "tele-$TAG-$platform.zip" ] || platforms+=("$platform")
+          done
+          python3 tele/ci/update_feed.py sign --tag "$TAG" --base "$BASE" --counter "$COUNTER" \
+            --repository "$GH_REPO" --platforms "${platforms[@]}" --legacy-bootstrap
 
       - name: Publish release
         run: |
           previous=$(gh release list --limit 1 --exclude-drafts --json tagName --jq '.[0].tagName // empty')
           echo "PREVIOUS_TAG=$previous" >> "$GITHUB_ENV"
-          python3 tele/ci/notes.py --repo tele --tag "$TAG" --previous "$previous" --upstream "$UPSTREAM_TAG" \
-            --url "$GITHUB_SERVER_URL/$GH_REPO" --rev "$GITHUB_SHA" --out notes.md --json tele-changelog.json || true
+          python3 tele/ci/release_notes.py --tag "$TAG" --repository "$GH_REPO" --out notes.md --json tele-changelog.json
           files=()
-          for f in tele-"$TAG"-*.zip tele-"$TAG"-macos.dmg tele-update-*.json tele-changelog.json; do
+          for f in tele-"$TAG"-*.zip tele-"$TAG"-macos.dmg tele-update-*.json teleru-update-*.json tele-changelog.json; do
             [ -f "$f" ] && files+=("$f")
           done
           gh release create "$TAG" "${files[@]}" \

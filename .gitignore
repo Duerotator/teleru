@@ -2,3 +2,10 @@
 __pycache__/
 /CLAUDE.md
 /.docs/
+/.tele-upstream/
+/.local/
+/localization-report.json
+/localization-inventory.json
+/missing-translations.json
+/ci/node_modules/
+**/__pycache__/

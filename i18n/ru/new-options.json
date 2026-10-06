@@ -1,0 +1,176 @@
+{
+  "options": {
+    "kOptionGhostSchedulePending": {
+      "desc": {
+        "source": "Right-click one to send it now or cancel it.",
+        "translation": "Нажмите на сообщение правой кнопкой мыши, чтобы отправить его сейчас или отменить отправку."
+      },
+      "name": {
+        "source": "Show waiting messages in the chat",
+        "translation": "Показывать ожидающие отправки сообщения в чате"
+      }
+    },
+    "kOptionHideBotEdited": {
+      "desc": {
+        "source": "Bots edit their messages to update them.",
+        "translation": "Боты редактируют сообщения, чтобы обновлять их содержимое."
+      },
+      "name": {
+        "source": "No edited mark on bot messages",
+        "translation": "Не отмечать изменённые сообщения ботов"
+      }
+    },
+    "kOptionInvisibleNames": {
+      "name": {
+        "source": "Show usernames for invisible names",
+        "translation": "Показывать имена пользователей вместо невидимых имён"
+      }
+    },
+    "kOptionInvisibleNamesFallback": {
+      "name": {
+        "source": "Without a username",
+        "translation": "Если нет имени пользователя"
+      }
+    },
+    "kOptionInvisibleNamesPhrase": {
+      "name": {
+        "source": "Phrase",
+        "translation": "Текст замены"
+      }
+    },
+    "kOptionLiveMarkdown": {
+      "desc": {
+        "source": "**Bold**, __italic__, ~~strike~~, ||spoiler||, `code` and ``` blocks keep their markers but look formatted. Lines starting with > are sent as quotes, with >! as expandable quotes.",
+        "translation": "Маркеры **жирного**, __курсива__, ~~зачёркивания~~, ||спойлера||, `кода` и блоков ``` остаются видимыми, но текст выглядит оформленным. Строки с > отправляются как цитаты, а с >! — как сворачиваемые цитаты."
+      },
+      "name": {
+        "source": "Render markdown as you type",
+        "translation": "Отображать Markdown при вводе"
+      }
+    },
+    "kOptionLocalPasswordBotPayments": {
+      "name": {
+        "source": "Bot payments",
+        "translation": "Платежи ботам"
+      }
+    },
+    "kOptionLocalPasswordPaidMessages": {
+      "name": {
+        "source": "Paid messages and suggested posts",
+        "translation": "Платные сообщения и предложенные публикации"
+      }
+    },
+    "kOptionMultiQuote": {
+      "desc": {
+        "source": "Quoting again while replying with a quote adds a blockquote to your message instead of changing the reply.",
+        "translation": "Повторное цитирование при ответе с цитатой добавляет цитату в сообщение, не меняя адресата ответа."
+      },
+      "name": {
+        "source": "Multiple quotes",
+        "translation": "Несколько цитат"
+      }
+    },
+    "kOptionMuteIgnored": {
+      "name": {
+        "source": "Mute ignored messages",
+        "translation": "Отключать уведомления об игнорируемых сообщениях"
+      }
+    },
+    "kOptionNoticesCopies": {
+      "desc": {
+        "source": "Keeps the copied value; click it to copy it again.",
+        "translation": "Сохраняет скопированное значение; нажмите на него, чтобы скопировать повторно."
+      },
+      "name": {
+        "source": "Log copy toasts",
+        "translation": "Сохранять уведомления о копировании"
+      }
+    },
+    "kOptionNoticesLogLimits": {
+      "name": {
+        "source": "Log rate limits",
+        "translation": "Сохранять ограничения частоты запросов"
+      }
+    },
+    "kOptionNoticesMentions": {
+      "desc": {
+        "source": "From groups, including muted ones.",
+        "translation": "Из групп, включая группы с отключёнными уведомлениями."
+      },
+      "name": {
+        "source": "Log mentions and replies",
+        "translation": "Сохранять упоминания и ответы"
+      }
+    },
+    "kOptionReactionsOrder": {
+      "desc": {
+        "source": "These come first in reaction menus, the rest keep the chat's order.",
+        "translation": "Эти реакции показываются первыми; остальные сохраняют порядок, заданный в чате."
+      },
+      "name": {
+        "source": "Reaction order",
+        "translation": "Порядок реакций"
+      }
+    },
+    "kOptionReactionsStripCount": {
+      "desc": {
+        "source": "How many reactions sit above the message menu and which come first.",
+        "translation": "Количество реакций над меню сообщения и порядок их отображения."
+      },
+      "name": {
+        "source": "Reactions in the menu",
+        "translation": "Реакции в меню"
+      }
+    },
+    "kOptionShowHiddenChars": {
+      "desc": {
+        "source": "Only when a whole bio, address, intro, profile name or message is made of them.",
+        "translation": "Только если всё описание, адрес, приветствие, имя профиля или сообщение состоит из таких символов."
+      },
+      "name": {
+        "source": "Show hidden characters",
+        "translation": "Показывать скрытые символы"
+      }
+    },
+    "kOptionSilentVideoAs": {
+      "desc": {
+        "source": "Each one can still be switched before sending.",
+        "translation": "Формат каждого видео можно изменить перед отправкой."
+      },
+      "name": {
+        "source": "Send videos without sound as",
+        "translation": "Отправлять видео без звука как"
+      }
+    },
+    "kOptionStartParam": {
+      "desc": {
+        "source": "On the start button of a bot opened by a link.",
+        "translation": "На кнопке запуска бота, открытого по ссылке."
+      },
+      "name": {
+        "source": "Show the start parameter",
+        "translation": "Показывать параметр запуска"
+      }
+    },
+    "kOptionTrustedAppLinks": {
+      "desc": {
+        "source": "Links to a mini app you've opened before skip the terms box.",
+        "translation": "Ссылки на уже открывавшиеся мини-приложения пропускают окно принятия условий."
+      },
+      "name": {
+        "source": "Don't ask again for trusted mini apps",
+        "translation": "Не спрашивать повторно для знакомых мини-приложений"
+      }
+    },
+    "kOptionWebAppsNoFullscreen": {
+      "desc": {
+        "source": "Mini apps always open in a window and can't go fullscreen.",
+        "translation": "Мини-приложения открываются в окне и не могут перейти в полноэкранный режим."
+      },
+      "name": {
+        "source": "Never open web apps in fullscreen",
+        "translation": "Не открывать веб-приложения на весь экран"
+      }
+    }
+  }
+}

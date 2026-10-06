@@ -18,7 +18,7 @@ defaults:
 
 jobs:
   canary:
-    name: Apply the patches to upstream dev
+    name: Validate the pinned tele release and Russian overlay
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
@@ -27,26 +27,29 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Clone tdesktop dev
+      - name: Clone the pinned Telegram Desktop base
         id: clone
         run: |
-          git -c advice.detachedHead=false clone --quiet --depth 50 --recurse-submodules --shallow-submodules \
-            --branch dev https://github.com/telegramdesktop/tdesktop.git ../tdesktop
+          tag=$(python3 ci/upstream.py version)
+          git -c advice.detachedHead=false clone --quiet --depth 1 --recurse-submodules --shallow-submodules \
+            --branch "$tag" https://github.com/telegramdesktop/tdesktop.git ../tdesktop
           sha=$(git -C ../tdesktop rev-parse HEAD)
           echo "sha=$sha" >> "$GITHUB_OUTPUT"
-          echo "upstream dev is at $sha: $(git -C ../tdesktop log -1 --format='%cs %s')"
+          echo "pinned Telegram Desktop base is $tag at $sha"
 
       - name: Apply patches
         id: apply
         run: |
           git config --global user.name 'github-actions[bot]'
           git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          python3 -u tele.py apply 2>&1 | tee apply.log
+          npm ci --prefix ci --ignore-scripts --no-audit --no-fund
+          python3 -u ci/upstream.py apply --tdesktop ../tdesktop 2>&1 | tee apply.log
+          python3 ci/translate_ru.py ../tdesktop 2>&1 | tee -a apply.log
 
       - name: Close the conflict issue
         env:
           SHA: ${{ steps.clone.outputs.sha }}
-        run: bash ci/issue.sh close canary-conflict "Patches apply cleanly to upstream dev at ${SHA:0:10}."
+        run: bash ci/issue.sh close canary-conflict "Pinned tele source and Russian overlay validated at ${SHA:0:10}."
 
       - name: Report conflicts
         if: failure() && steps.apply.outcome == 'failure'
@@ -54,21 +57,22 @@ jobs:
           SHA: ${{ steps.clone.outputs.sha }}
         run: |
           {
-            echo "The patches don't apply to upstream dev at [${SHA:0:10}](https://github.com/telegramdesktop/tdesktop/commit/$SHA). The next release will likely need the same fix, so it's cheaper to fix it now."
+            echo "Pinned tele source or Russian overlay validation failed on the Telegram Desktop base [${SHA:0:10}](https://github.com/telegramdesktop/tdesktop/commit/$SHA). No release should be published until this is resolved."
             echo
             echo '```'
             cat apply.log
             echo '```'
             echo
-            echo 'Resolve it locally against dev:'
+            echo 'Reproduce on a fresh checkout of the pinned base:'
             echo
             echo '```'
-            echo 'git -C ../tdesktop fetch origin dev'
-            echo 'git -C ../tdesktop checkout --detach origin/dev'
-            echo 'python tele.py apply'
-            echo '# fix what it reports, git add, git am --continue, then: python tele.py continue'
+            echo 'python ci/upstream.py version'
+            echo 'git clone --branch <printed tag> --recurse-submodules https://github.com/telegramdesktop/tdesktop.git ../tdesktop'
+            echo 'python ci/upstream.py apply --tdesktop ../tdesktop'
+            echo 'npm ci --prefix ci --ignore-scripts'
+            echo 'python ci/translate_ru.py ../tdesktop'
             echo '```'
             echo
             echo "Run: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID"
           } > issue.md
-          bash ci/issue.sh open canary-conflict "Patches don't apply to upstream dev" issue.md
+          bash ci/issue.sh open canary-conflict 'Pinned tele source or localization validation failed' issue.md
