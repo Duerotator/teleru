@@ -4,6 +4,12 @@ set -euo pipefail
 action=$1
 label=$2
 
+enabled=$(gh repo view --json hasIssuesEnabled --jq '.hasIssuesEnabled')
+if [ "$enabled" != true ]; then
+  echo "repository issues are disabled; skipping issue notification"
+  exit 0
+fi
+
 case "$action" in
   open)
     export TITLE=$3
