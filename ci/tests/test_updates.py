@@ -81,7 +81,9 @@ class UpdateTests(unittest.TestCase):
             upstream.read_lock(path)
 
     def test_current_lock_valid(self):
-        self.assertEqual(upstream.read_lock()['tag'], 'v7.2.9-tele.17')
+        data = upstream.read_lock()
+        self.assertEqual(data['tag'].split('-tele.')[0], data['tdesktop'])
+        self.assertEqual(len(data['commit']), 40)
 
     def test_metadata_replacement_requires_one_constant(self):
         self.assertEqual(replace_constant('constexpr auto kKey = "abc"\n"def";', 'kKey', 'ru'), 'constexpr auto kKey = "ru";')
