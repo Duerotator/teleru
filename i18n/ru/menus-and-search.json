@@ -238,5 +238,14 @@
     "{app} is the chosen program, {url} the original link, {uri} the app link, quote paths with spaces.": "{app} — выбранная программа, {url} — исходная ссылка, {uri} — ссылка приложения. Пути с пробелами заключайте в кавычки.",
     "Only installed apps are listed, a custom app can be any program.": "В списке только установленные приложения. В качестве своего приложения можно выбрать любую программу.",
     "(empty)": "(пусто)"
+  },
+  "contexts": {
+    "tele/tele_build.cpp": {
+      "tele #%1": "ТЕЛЕ #%1",
+      "tele dev": "ТЕЛЕ DEV"
+    },
+    "tele/tele_peer_id.cpp": {
+      "uploaded %1": "загружено: %1"
+    }
   }
 }

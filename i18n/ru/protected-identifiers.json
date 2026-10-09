@@ -9,6 +9,7 @@
     "tele/tele_link_rewrites.cpp": {"pattern": "Rule serialization discriminator"},
     "tele/tele_title_box.cpp": {"chat": "Title template variable", "id": "Title template variable", "label": "Title template variable", "name": "Title template variable", "status": "Title template variable", "time": "Title template variable", "unread": "Title template variable", "username": "Title template variable", "version": "Title template variable"},
     "tele/tele_stars_tools.cpp": {"gift": "CSV and filter identifier", "bot": "CSV and filter identifier", "in": "CSV direction", "out": "CSV direction", "stars": "CSV currency", "ton": "CSV currency"},
+    "tele/tele_start_menu.cpp": {"tele.lnk": "Start menu shortcut filename", "tele dev.lnk": "Start menu shortcut filename", "Telegram.lnk": "Start menu shortcut filename"},
     "Resources/tele_html/mtp_console.js": {"method": "Editor context kind", "optional": "Editor marker", "string": "Grammar type", "name": "Grammar context", "other": "DOM field id", "text": "Editor mode", "form": "Editor mode", "clear": "Modal event id"}
   }
 }
