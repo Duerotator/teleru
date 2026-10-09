@@ -237,7 +237,50 @@
     "App": "Приложение",
     "{app} is the chosen program, {url} the original link, {uri} the app link, quote paths with spaces.": "{app} — выбранная программа, {url} — исходная ссылка, {uri} — ссылка приложения. Пути с пробелами заключайте в кавычки.",
     "Only installed apps are listed, a custom app can be any program.": "В списке только установленные приложения. В качестве своего приложения можно выбрать любую программу.",
-    "(empty)": "(пусто)"
+    "(empty)": "(пусто)",
+    "Message type": "Тип сообщения",
+    "All messages": "Все сообщения",
+    "Photos": "Фотографии",
+    "Videos": "Видеозаписи",
+    "Files": "Файлы",
+    "Music": "Музыка",
+    "Voice messages": "Голосовые сообщения",
+    "Round videos": "Видеосообщения",
+    "GIFs": "GIF",
+    "Links": "Ссылки",
+    "Peek last seen": "Подсмотреть время захода",
+    "Delete kept chat": "Удалить сохранённый чат",
+    "Delete kept topic": "Удалить сохранённую тему",
+    "Delete chat": "Удалить чат",
+    "Delete topic": "Удалить тему",
+    "Start secret chat": "Начать секретный чат",
+    "Accept secret chat": "Принять секретный чат",
+    "Delete secret chat": "Удалить секретный чат",
+    "Experimental": "Экспериментальные функции",
+    "money": "деньги",
+    "crypto": "криптовалюта",
+    "gram": "gram",
+    "birthday": "день рождения",
+    "confetti": "конфетти",
+    "cake": "торт",
+    "gift": "подарок",
+    "mention": "упоминание",
+    "tag": "тег",
+    "photos": "фотографии",
+    "videos": "видеозаписи",
+    "files": "файлы",
+    "media": "медиа",
+    "links": "ссылки",
+    "last seen": "время захода",
+    "privacy": "конфиденциальность",
+    "chat": "чат",
+    "topic": "тема",
+    "removed": "удалённый",
+    "banned": "заблокирован",
+    "secret chat": "секретный чат",
+    "encrypted": "зашифровано",
+    "e2e": "e2e",
+    "freshgram": "freshgram"
   },
   "contexts": {
     "tele/tele_build.cpp": {
@@ -246,6 +289,9 @@
     },
     "tele/tele_peer_id.cpp": {
       "uploaded %1": "загружено: %1"
+    },
+    "settings/settings_tele.cpp": {
+      "Experimental": "Экспериментальные функции"
     }
   }
 }

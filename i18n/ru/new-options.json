@@ -339,6 +339,76 @@
         "source": "Record voice in higher quality",
         "translation": "Записывать голосовые сообщения в повышенном качестве"
       }
+    },
+    "kOptionForceWallet": {
+      "desc": {
+        "source": "The server may still refuse it for your account.",
+        "translation": "Сервер всё ещё может отклонить его для вашего аккаунта."
+      },
+      "name": {
+        "source": "Wallet before telegram turns it on",
+        "translation": "Кошелёк до включения сервером Telegram"
+      }
+    },
+    "kOptionHideBirthdays": {
+      "desc": {
+        "source": "Includes the gift button the message field shows on birthdays.",
+        "translation": "Включая кнопку подарка в поле ввода в день рождения."
+      },
+      "name": {
+        "source": "Hide birthday banners and effects",
+        "translation": "Скрывать поздравления с днём рождения"
+      }
+    },
+    "kOptionChainMentions": {
+      "desc": {
+        "source": "Right-click or Tab in the mention list adds the person and opens the list for the next one.",
+        "translation": "ПКМ или Tab в списке упоминаний добавляет пользователя и открывает список для следующего."
+      },
+      "name": {
+        "source": "Mention several people in a row",
+        "translation": "Последовательное упоминание пользователей"
+      }
+    },
+    "kOptionSearchTypes": {
+      "desc": {
+        "source": "With an empty query it lists every message of that type.",
+        "translation": "При пустом запросе отображает все сообщения выбранного типа."
+      },
+      "name": {
+        "source": "Message type filter in chat search",
+        "translation": "Фильтр по типу сообщений в поиске по чату"
+      }
+    },
+    "kOptionPeekLastSeen": {
+      "desc": {
+        "source": "Briefly shows them your last seen to read theirs, then undoes it.",
+        "translation": "Ненадолго открывает ваш статус для них, чтобы узнать их время захода, а затем возвращает настройки."
+      },
+      "name": {
+        "source": "Peek at hidden last seen",
+        "translation": "Подсмотреть скрытое время захода"
+      }
+    },
+    "kOptionKeepDeletedChats": {
+      "desc": {
+        "source": "They stay in the list until you delete them again.",
+        "translation": "Остаются в списке, пока вы не удалите их повторно вручную."
+      },
+      "name": {
+        "source": "Deleted chats and topics",
+        "translation": "Удалённые чаты и темы"
+      }
+    },
+    "kOptionSecretChats": {
+      "desc": {
+        "source": "Text only and needs a local passcode, removing it deletes the chats.",
+        "translation": "Только текст; требуется локальный пароль, при сбросе которого чаты удаляются."
+      },
+      "name": {
+        "source": "Secret chats (prototype)",
+        "translation": "Секретные чаты (прототип)"
+      }
     }
   }
 }

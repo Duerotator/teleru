@@ -268,16 +268,9 @@
       "reactions,reply,edit,forward,pin,|,save_as,cancel_download,cancel_upload,|,copy_selected,copy_text,copy_link,translate,|,select,clear_selection,|,delete,|,info.read,info.forwarded,info.edited": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "reactions,reply,go_to_message,edit,forward,pin,send_now,ghost_cancel,reschedule,|,save_as,copy_image,show_in_folder,sticker_set,fave_sticker,attached_stickers,send_as_gif,open_gif,save_gif,save_sound,cancel_download,edit_caption,cancel_upload,download_selected,save_html,|,poll_results,poll_retract,poll_stop,add_tasks,send_gift,view_replies,factcheck,statistics,add_offer,|,copy_selected,copy_text,copy_markdown,copy_html,copy_link,alias_copy,copy_message_link,copy_id,copy_emoji_id,copy_button_data,copy_filename,copy_phone,translate_selected,translate,open_uncleaned,open_username,alias_open,alias_delete,|,bookmark,rename_bookmark,mark_read,edit_history,shot,mark_viewed,|,select,select_up_to,clear_selection,|,delete,report,block_user,|,view_as_tl,mtp_inspector,|,info.packs,info.restriction,info.read,info.forwarded,info.edited,info.author,info.id": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "reactions,reply,go_to_message,edit,forward,pin,send_now,ghost_cancel,reschedule,|,save_as,copy_image,show_in_folder,sticker_set,fave_sticker,attached_stickers,send_as_gif,open_gif,save_gif,save_sound,cancel_download,edit_caption,cancel_upload,download_selected,save_html,|,poll_results,poll_retract,poll_stop,add_tasks,send_gift,view_replies,factcheck,statistics,add_offer,|,copy_selected,copy_text,copy_markdown,copy_html,copy_link,alias_copy,copy_message_link,copy_id,copy_emoji_id,copy_button_data,copy_filename,copy_file_path,copy_phone,translate_selected,translate,open_uncleaned,open_username,alias_open,alias_delete,|,bookmark,rename_bookmark,mark_read,edit_history,shot,mark_viewed,|,select,select_up_to,clear_selection,|,delete,report,block_user,|,view_as_tl,mtp_inspector,|,info.packs,info.restriction,info.read,info.forwarded,info.edited,info.author,info.id": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "mute,|,ghost,silent,online_notify,create_topic,info,jump_first,bookmarks,pinned_bar,manage_topic,alias,local_name,hidden_words,view_as_topics,manage,story_archive,support_info,boost,create_poll,create_todo,theme,background,download_folder,no_forwards,discussion,direct_messages,export,deleted,translate,report,clear_history,delete_chat,leave,close_topic,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "mute,|,info,manage,manage_topic,|,clear_history,delete_chat,leave,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "mute,silent,online_notify,ghost,|,info,create_topic,view_as_topics,jump_first,bookmarks,deleted,pinned_bar,discussion,direct_messages,translate,|,alias,local_name,hidden_words,background,download_folder,|,manage,manage_topic,boost,story_archive,create_poll,create_todo,theme,export,no_forwards,support_info,close_topic,|,report,clear_history,delete_chat,leave,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "new_window,|,ungroup,hide_promotion,archive,pin,info,mute,mark_read,close_topic,add_to_folder,block,ban,clear_history,delete_chat,leave,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "pin,mute,mark_read,|,archive,delete_chat,leave,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "new_window,|,pin,mark_read,mute,archive,add_to_folder,info,|,ungroup,hide_promotion,close_topic,|,block,ban,clear_history,delete_chat,leave,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "edit_folder,mark_read,mute_folder,remove,edit_folders,view_as_tl": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "mark_read,edit_folder,edit_folders,|,remove": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "mark_read,mute_folder,edit_folder,edit_folders,|,remove,|,view_as_tl": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "ttl,|,support_info,add_contact,share_contact,edit_contact,alias,local_name,hidden_words,background,download_folder,online_notify,pinned_bar,bot_to_group,add_members,send_gift,statistics,boosts,earn,story_archive,manage,personal_channel,topic_link,manage_topic,close_topic,discussion,direct_messages,export,no_forwards,add_to_folder,block,ban,report,leave,delete_contact,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "add_contact,share_contact,edit_contact,|,manage,manage_topic,|,block,leave,delete_contact,delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "ttl,|,add_contact,share_contact,edit_contact,send_gift,bot_to_group,add_members,|,online_notify,pinned_bar,alias,local_name,hidden_words,background,download_folder,|,manage,statistics,boosts,earn,story_archive,personal_channel,add_to_folder,export,no_forwards,discussion,direct_messages,topic_link,manage_topic,close_topic,support_info,|,block,ban,report,leave,delete_contact,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "silent,schedule,when_online,|,hd,spoiler,caption,cover,clear_cover,price,|,draft_send,draft_silent,draft_schedule,save_draft,saved_drafts,discarded,no_calc,translate,attach": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
@@ -285,7 +278,19 @@
       "silent,schedule,when_online,no_calc,attach,|,hd,spoiler,caption,cover,clear_cover,price,|,translate,|,draft_send,draft_silent,draft_schedule,save_draft,saved_drafts,discarded": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting,|,translate,link_preview": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
       "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting,|,translate,|,link_preview": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
-      "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json"
+      "undo,redo,|,cut,copy,paste,delete,|,select_all,|,formatting": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "kept_delete_chat": "Tagged menu action identifier",
+      "kept_delete_topic": "Tagged menu action identifier",
+      "peek_last_seen": "Menu action identifier",
+      "secret_start": "Menu action identifier",
+      "mute,|,ghost,silent,online_notify,peek_last_seen,create_topic,info,secret_start,jump_first,bookmarks,pinned_bar,manage_topic,alias,local_name,hidden_words,view_as_topics,manage,story_archive,support_info,boost,create_poll,create_todo,theme,background,download_folder,no_forwards,discussion,direct_messages,export,deleted,translate,report,clear_history,delete_chat,leave,kept_delete_chat,close_topic,delete_topic,kept_delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mute,|,info,manage,manage_topic,|,clear_history,delete_chat,leave,kept_delete_chat,delete_topic,kept_delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "mute,silent,online_notify,peek_last_seen,ghost,|,info,secret_start,create_topic,view_as_topics,jump_first,bookmarks,deleted,pinned_bar,discussion,direct_messages,translate,|,alias,local_name,hidden_words,background,download_folder,|,manage,manage_topic,boost,story_archive,create_poll,create_todo,theme,export,no_forwards,support_info,close_topic,|,report,clear_history,delete_chat,leave,kept_delete_chat,delete_topic,kept_delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "new_window,|,ungroup,hide_promotion,archive,pin,info,mute,mark_read,close_topic,add_to_folder,block,ban,clear_history,delete_chat,leave,delete_topic,kept_delete_chat,kept_delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "pin,mute,mark_read,|,archive,delete_chat,leave,kept_delete_chat,delete_topic,kept_delete_topic": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "new_window,|,pin,mark_read,mute,archive,add_to_folder,info,|,ungroup,hide_promotion,close_topic,|,block,ban,clear_history,delete_chat,leave,kept_delete_chat,delete_topic,kept_delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "ttl,|,support_info,add_contact,share_contact,edit_contact,secret_start,alias,local_name,hidden_words,background,download_folder,online_notify,peek_last_seen,pinned_bar,bot_to_group,add_members,send_gift,statistics,boosts,earn,story_archive,manage,personal_channel,topic_link,manage_topic,close_topic,discussion,direct_messages,export,no_forwards,add_to_folder,block,ban,report,leave,delete_contact,delete_topic,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json",
+      "ttl,|,add_contact,share_contact,edit_contact,secret_start,send_gift,bot_to_group,add_members,|,online_notify,peek_last_seen,pinned_bar,alias,local_name,hidden_words,background,download_folder,|,manage,statistics,boosts,earn,story_archive,personal_channel,add_to_folder,export,no_forwards,discussion,direct_messages,topic_link,manage_topic,close_topic,support_info,|,block,ban,report,leave,delete_contact,delete_topic,|,view_as_tl,mtp_inspector": "Serialized menu layout: action IDs and separators; visible group captions translated in embedded-ui.json"
     },
     "tele/tele_message_menu.cpp": {
       "toast/copy": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
@@ -604,6 +609,29 @@
       "empty": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
       "split": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label",
       "detail": "Reviewed DOM/protocol/grammar token, unmodified diagnostic format or executable syntax example; not a translated menu label"
+    },
+    "tele/secret/secret_manager.cpp": {
+      "/tele_secret": "URL route identifier",
+      "CHAT_ID_INVALID": "MTProto error code",
+      "RANDOM_ID_DUPLICATE": "MTProto error code"
+    },
+    "tele/secret/secret_protocol.cpp": {
+      "ENCRYPTION_": "MTProto error code prefix"
+    },
+    "tele/tele_search_types.cpp": {
+      "\ntype": "Search filter token prefix"
+    },
+    "tele/tele_peek.cpp": {
+      "tele_peek": "Encrypted local storage filename"
+    },
+    "main/main_app_config.cpp": {
+      "wallet_available": "Telegram server app configuration key"
+    },
+    "dialogs/suggestions/suggestion_birthday_contacts.cpp": {
+      "BIRTHDAY_CONTACTS_TODAY": "Promo suggestion identifier"
+    },
+    "dialogs/suggestions/suggestion_birthday_setup.cpp": {
+      "BIRTHDAY_SETUP": "Promo suggestion identifier"
     }
   }
 }

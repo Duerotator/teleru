@@ -163,6 +163,20 @@
     "@Stickers": "@Stickers",
     "%1x%2": "%1×%2",
     "Collectibles": "Коллекционные подарки",
-    "Extras": "Дополнительно"
+    "Extras": "Дополнительно",
+    "This chat was deleted.": "Этот чат был удалён.",
+    "This topic was deleted.": "Эта тема была удалена.",
+    "Delete this chat and its kept messages from this device?": "Удалить этот чат и сохранённые сообщения с этого устройства?",
+    "Delete this topic and its kept messages from this device?": "Удалить эту тему и сохранённые сообщения с этого устройства?",
+    "Start a secret chat with %1?": "Начать секретный чат с %1?",
+    "%1 invited you to a secret chat. Accept it on this device?": "%1 приглашает вас в секретный чат. Принять его на этом устройстве?",
+    "Accept": "Принять",
+    "Decline": "Отклонить",
+    "Not now": "Не сейчас",
+    "End and delete the secret chat?": "Завершить и удалить секретный чат?",
+    "Delete the secret chat from this device?": "Удалить секретный чат с этого устройства?",
+    "Delete %1 messages for both of you?": "Удалить %1 сообщений для обоих участников?",
+    "Delete this message for both of you?": "Удалить это сообщение для обоих участников?",
+    "Accept the invite in the chat menu.": "Примите приглашение в меню чата."
   }
 }
