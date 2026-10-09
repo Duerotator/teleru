@@ -6,6 +6,7 @@
       "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – ТЕЛЕ",
       "tele #{build} · {time:HH:mm}": "ТЕЛЕ #{build} · {time:HH:mm}",
       "TELE #{build}": "ТЕЛЕ #{build}",
+      "tele #{build}": "ТЕЛЕ #{build}",
       "{name}[ · {unread} unread]": "{name}[ · непрочитанных: {unread}]",
       "tele {version|short}[ · {unread|k}]": "ТЕЛЕ {version|short}[ · {unread|k}]"
     },

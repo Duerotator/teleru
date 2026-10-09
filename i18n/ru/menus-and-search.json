@@ -1,5 +1,8 @@
 {
   "strings": {
+    "Copy file path": "Копировать путь к файлу",
+    "Copy owner ID": "Копировать ID владельца",
+    "Owner ID copied to clipboard.": "ID владельца скопирован в буфер обмена.",
     "github": "GitHub",
     "off": "выкл.",
     "on": "вкл.",

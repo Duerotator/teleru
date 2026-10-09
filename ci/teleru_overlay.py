@@ -12,7 +12,7 @@ def plan_russian_titles(tdesktop, catalog=None, cmake_text=None):
     source = root / 'Telegram/SourceFiles'
     catalog = catalog if catalog is not None else load_catalog(Path(__file__).resolve().parents[1] / 'i18n/ru.json')
     entry = catalog.get('title_template', {})
-    if entry.get('source') != 'TELE #{build}':
+    if entry.get('source') not in ('TELE #{build}', 'tele #{build}'):
         raise ValueError('Russian default title must bind to the upstream template')
     translated = entry.get('translation')
     validate_translation(entry['source'], translated)
@@ -20,7 +20,7 @@ def plan_russian_titles(tdesktop, catalog=None, cmake_text=None):
         raise ValueError('Russian default title must preserve #{build}')
     options = source / 'tele/tele_options.cpp'
     text = options.read_text(encoding='utf-8')
-    default = '.defaultValue = u"TELE #{build}"_q,'
+    default = '.defaultValue = u"tele #{build}"_q,' if '.defaultValue = u"tele #{build}"_q,' in text else '.defaultValue = u"TELE #{build}"_q,'
     include = '#include "tele/tele_title_template.h"'
     if text.count(default) != 1 or text.count(include) != 1:
         raise ValueError('Upstream default title changed; review localization')
@@ -34,7 +34,7 @@ def plan_russian_titles(tdesktop, catalog=None, cmake_text=None):
     header = source / 'tele/tele_russian_title.h'
     if header.exists():
         raise ValueError('Russian title helper already exists; prepare fresh source')
-    legacy = ['TELE #{build}', 'TELE {build}', 'TELERU #{build}', translated]
+    legacy = ['TELE #{build}', 'tele #{build}', 'TELE {build}', 'tele {build}', 'TELERU #{build}', translated]
     conditions = '\n\t\t|| '.join('source == ' + encode_cpp(value, 'u') + '_q' for value in legacy)
     helper = '#pragma once\n\n#include "tele/tele_lowercase.h"\n\nnamespace Tele {\n\ninline QString RussianDefaultTitle(const QString &source) {\n\treturn (' + conditions + ')\n\t\t? Lower(' + encode_cpp(translated, 'u') + '_q)\n\t\t: source;\n}\n\n}\n'
     cmake = root / 'Telegram/CMakeLists.txt'

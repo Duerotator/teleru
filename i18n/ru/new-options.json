@@ -171,6 +171,174 @@
         "source": "Never open web apps in fullscreen",
         "translation": "Не открывать веб-приложения на весь экран"
       }
+    },
+    "kOptionBigExport": {
+      "desc": {
+        "source": "10000 messages per HTML file instead of 1000, files downloaded in 1 MB parts.",
+        "translation": "По 10 000 сообщений в одном HTML-файле вместо 1 000; файлы скачиваются частями по 1 МБ."
+      },
+      "name": {
+        "source": "Bigger, faster chat export",
+        "translation": "Увеличенный и ускоренный экспорт чатов"
+      }
+    },
+    "kOptionBubblePadding": {
+      "desc": {
+        "source": "13 px on the sides and 7 on top, like older Telegram Desktop.",
+        "translation": "По 13 пикселей по бокам и 7 сверху, как в прежних версиях Telegram Desktop."
+      },
+      "name": {
+        "source": "Classic text padding",
+        "translation": "Классические отступы текста"
+      }
+    },
+    "kOptionCopyFilePath": {
+      "desc": {
+        "source": "For files saved on this computer.",
+        "translation": "Для файлов, сохранённых на этом компьютере."
+      },
+      "name": {
+        "source": "Copy file path",
+        "translation": "Копировать путь к файлу"
+      }
+    },
+    "kOptionDeletedOutOfLists": {
+      "desc": {
+        "source": "They stay in the chat itself.",
+        "translation": "Они остаются только внутри самого чата."
+      },
+      "name": {
+        "source": "Leave them out of the chat list and unread counts",
+        "translation": "Не показывать их в списке чатов и счётчиках непрочитанных"
+      }
+    },
+    "kOptionFontFix": {
+      "desc": {
+        "source": "For fonts that come out shifted or cut off.",
+        "translation": "Для шрифтов, которые отображаются со смещением или обрезаются."
+      },
+      "name": {
+        "source": "Fix fonts picked in chat settings",
+        "translation": "Исправлять шрифты, выбранные в настройках чатов"
+      }
+    },
+    "kOptionForwardOneByOne": {
+      "desc": {
+        "source": "Albums stay together; many at once can hit rate limits.",
+        "translation": "Альбомы пересылаются целиком; отправка большого количества сообщений может вызвать ограничения Telegram."
+      },
+      "name": {
+        "source": "Forward messages one by one",
+        "translation": "Пересылать сообщения по одному"
+      }
+    },
+    "kOptionHideBubbleTails": {
+      "name": {
+        "source": "Hide bubble tails",
+        "translation": "Скрывать хвостики у облачков сообщений"
+      }
+    },
+    "kOptionMediaUploadDate": {
+      "desc": {
+        "source": "In the media viewer, when it differs from the message date.",
+        "translation": "В окне просмотра медиа, если дата загрузки отличается от даты отправки сообщения."
+      },
+      "name": {
+        "source": "Show when photos and files were uploaded",
+        "translation": "Показывать дату загрузки медиа"
+      }
+    },
+    "kOptionNoEmojiOutline": {
+      "name": {
+        "source": "No outline on large emoji",
+        "translation": "Без обводки у крупных эмодзи"
+      }
+    },
+    "kOptionOnlineInBigGroups": {
+      "name": {
+        "source": "Show online members in big groups",
+        "translation": "Показывать участников в сети в больших группах"
+      }
+    },
+    "kOptionPhotoQuality": {
+      "desc": {
+        "source": "JPEG quality 94 instead of 87, for slightly bigger files.",
+        "translation": "Качество JPEG 94 вместо 87 ценой немного большего размера файлов."
+      },
+      "name": {
+        "source": "Compress photos less",
+        "translation": "Сжимать фотографии меньше"
+      }
+    },
+    "kOptionQuickRepliesByName": {
+      "desc": {
+        "source": "A message that is exactly /name sends that quick reply.",
+        "translation": "Сообщение вида /name автоматически отправляет соответствующий быстрый ответ."
+      },
+      "name": {
+        "source": "Send quick replies by name",
+        "translation": "Отправлять быстрые ответы по названию"
+      }
+    },
+    "kOptionSelectMany": {
+      "desc": {
+        "source": "Up to 10000; deleting and forwarding go out in parts of 100.",
+        "translation": "До 10 000 сообщений; удаление и пересылка выполняются частями по 100 штук."
+      },
+      "name": {
+        "source": "Select more than 100 messages",
+        "translation": "Выбирать более 100 сообщений"
+      }
+    },
+    "kOptionSmallWindow": {
+      "desc": {
+        "source": "256x256 px instead of 380x480.",
+        "translation": "256×256 пикселей вместо 380×480."
+      },
+      "name": {
+        "source": "Smaller minimum window size",
+        "translation": "Меньший минимальный размер окна"
+      }
+    },
+    "kOptionSmoothScroll": {
+      "desc": {
+        "source": "Eases each mouse wheel step, like profiles already do.",
+        "translation": "Сглаживает каждый шаг колёсика мыши аналогично прокрутке в профилях."
+      },
+      "name": {
+        "source": "Smooth wheel scrolling",
+        "translation": "Плавная прокрутка колёсиком мыши"
+      }
+    },
+    "kOptionStickerSetOwner": {
+      "desc": {
+        "source": "From the menu of a sticker or emoji set.",
+        "translation": "В контекстном меню набора стикеров или эмодзи."
+      },
+      "name": {
+        "source": "Copy the owner ID of sticker sets",
+        "translation": "Копировать ID владельца наборов стикеров"
+      }
+    },
+    "kOptionThinBrush": {
+      "desc": {
+        "source": "The smallest brush is 1 px instead of 3.4 px.",
+        "translation": "Минимальная толщина кисти составляет 1 пиксель вместо 3,4."
+      },
+      "name": {
+        "source": "Thinner brush in the photo editor",
+        "translation": "Более тонкая кисть в фоторедакторе"
+      }
+    },
+    "kOptionVoiceQuality": {
+      "desc": {
+        "source": "128 kbps instead of 32, so voice messages are 4 times bigger.",
+        "translation": "Битрейт 128 кбит/с вместо 32, при этом размер голосовых сообщений увеличивается в 4 раза."
+      },
+      "name": {
+        "source": "Record voice in higher quality",
+        "translation": "Записывать голосовые сообщения в повышенном качестве"
+      }
     }
   }
 }

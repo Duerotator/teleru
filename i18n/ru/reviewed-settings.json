@@ -461,6 +461,10 @@
       }
     },
     "kOptionVoiceNoFade": {
+      "desc": {
+        "source": "Also keeps the first 0.4 seconds, which are cut otherwise.",
+        "translation": "Также сохраняет первые 0,4 секунды, которые иначе обрезаются."
+      },
       "name": {
         "source": "Record voice without fading",
         "translation": "Записывать голос без плавного изменения громкости"
