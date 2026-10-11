@@ -156,6 +156,8 @@
     "This can't be sent in secret chats yet.": "Это пока нельзя отправить в секретном чате.",
     "Hold to view": "Удерживайте для просмотра",
     "file": "файл",
-    "Albums stay together; many at once can hit rate limits.": "Альбомы не разбиваются; отправка большого числа медиа может ограничить частоту запросов."
+    "Albums stay together; many at once can hit rate limits.": "Альбомы не разбиваются; отправка большого числа медиа может ограничить частоту запросов.",
+    "Secret chats need tele's passcode lock. With it on, tele asks for your passcode every time it starts.": "Секретные чаты требуют код-пароль tele. При его включении tele будет запрашивать код-пароль при каждом запуске.",
+    "Secret chats need tele's passcode lock. tele will ask for the passcode every time it starts.": "Секретные чаты требуют код-пароль tele. При его включении tele будет запрашивать код-пароль при каждом запуске."
   }
 }
