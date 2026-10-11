@@ -135,6 +135,27 @@
     "Couldn't get the encryption parameters.": "Не удалось получить параметры шифрования.",
     "The encryption keys don't match.": "Ключи шифрования не совпадают.",
     "The secret chat answer is invalid.": "Некорректный ответ на запрос секретного чата.",
-    "The secret chat request is invalid.": "Некорректный запрос на создание секретного чата."
+    "The secret chat request is invalid.": "Некорректный запрос на создание секретного чата.",
+    "Money is turned off in tele settings.": "Кошелёк отключён в настройках tele.",
+    "Messages disappear for both of you this long after they're read.": "Сообщения исчезают для обоих собеседников спустя указанное время после прочтения.",
+    "Self-destruct timer": "Таймер самоуничтожения",
+    "The secret chat isn't ready.": "Секретный чат ещё не готов.",
+    "%1 set the self-destruct timer to %2": "%1 устанавливает таймер самоуничтожения на %2",
+    "%1 took a screenshot": "%1 делает снимок экрана",
+    "%1 turned off the self-destruct timer": "%1 отключает таймер самоуничтожения",
+    "You set the self-destruct timer to %1": "Вы установили таймер самоуничтожения на %1",
+    "You turned off the self-destruct timer": "Вы отключили таймер самоуничтожения",
+    "Location: ": "Геолокация: ",
+    "Couldn't download the file: ": "Не удалось скачать файл: ",
+    "Couldn't send the file: ": "Не удалось отправить файл: ",
+    "Files over 100 MB can't be downloaded in secret chats.": "Файлы более 100 МБ нельзя скачивать в секретных чатах.",
+    "Files over 100 MB can't be sent in secret chats.": "Файлы более 100 МБ нельзя отправлять в секретных чатах.",
+    "This sticker can't be sent in secret chats.": "Этот стикер нельзя отправить в секретном чате.",
+    "[This file couldn't be verified]": "[Не удалось проверить подлинность файла]",
+    "[This media isn't supported in tele yet]": "[Этот тип медиа пока не поддерживается в tele]",
+    "This can't be sent in secret chats yet.": "Это пока нельзя отправить в секретном чате.",
+    "Hold to view": "Удерживайте для просмотра",
+    "file": "файл",
+    "Albums stay together; many at once can hit rate limits.": "Альбомы не разбиваются; отправка большого числа медиа может ограничить частоту запросов."
   }
 }

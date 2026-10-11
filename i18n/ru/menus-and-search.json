@@ -280,7 +280,20 @@
     "secret chat": "секретный чат",
     "encrypted": "зашифровано",
     "e2e": "e2e",
-    "freshgram": "freshgram"
+    "freshgram": "freshgram",
+    "Remove my messages": "Удалить все мои сообщения",
+    "Stop removing my messages": "Остановить удаление моих сообщений",
+    "Removing your messages": "Удаление ваших сообщений",
+    "Remove %1 of your messages from %2 for everyone? This can't be undone.": "Удалить %1 ваших сообщений из %2 для всех? Это действие нельзя отменить.",
+    "Remove %1 of your messages from %2 for both of you? This can't be undone.": "Удалить %1 ваших сообщений из %2 для вас обоих? Это действие нельзя отменить.",
+    "Removed %1 messages.": "Удалено %1 сообщений.",
+    "Removed 1 message.": "Удалено 1 сообщение.",
+    "Stopped. ": "Остановлено. ",
+    "You have no messages here.": "Здесь нет ваших сообщений.",
+    "Rate limited, going on in %1 s.": "Ограничение частоты запросов, продолжение через %1 с.",
+    "Couldn't count your messages: ": "Не удалось подсчитать сообщения: ",
+    "Couldn't remove messages: ": "Не удалось удалить сообщения: ",
+    "Copy Transaction Link": "Скопировать ссылку на транзакцию"
   },
   "contexts": {
     "tele/tele_build.cpp": {

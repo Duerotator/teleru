@@ -61,7 +61,7 @@ def collect(tdesktop):
         raise ValueError('Missing tele HTML resources')
     records = []
     for file in sorted(resources.rglob('*')):
-        if file.suffix not in ('.html', '.js'):
+        if file.suffix not in ('.html', '.js') or 'monaco' in file.parts:
             continue
         text = file.read_text(encoding='utf-8')
         items = html_literals(text) if file.suffix == '.html' else js_literals(text)

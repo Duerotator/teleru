@@ -402,12 +402,74 @@
     },
     "kOptionSecretChats": {
       "desc": {
-        "source": "Text only and needs a local passcode, removing it deletes the chats.",
-        "translation": "Только текст; требуется локальный пароль, при сбросе которого чаты удаляются."
+        "source": "Needs the passcode lock at startup, turning it off deletes the chats.",
+        "translation": "Требуется код-пароль при запуске; при отключении пароля чаты удаляются."
       },
       "name": {
-        "source": "Secret chats (prototype)",
-        "translation": "Секретные чаты (прототип)"
+        "source": "Secret chats β",
+        "translation": "Секретные чаты β"
+      }
+    },
+    "kOptionCompactFolders": {
+      "desc": {
+        "source": "Applies when folders show icons only.",
+        "translation": "Применяется, когда для папок включены только значки."
+      },
+      "name": {
+        "source": "Compact icon folders",
+        "translation": "Компактные папки-значки"
+      }
+    },
+    "kOptionNoMoney": {
+      "name": {
+        "source": "Turn off Money",
+        "translation": "Отключить раздел «Кошелёк»"
+      }
+    },
+    "kOptionNoticesScripts": {
+      "desc": {
+        "source": "Toasts and notifications from scripts, their faults and grant requests.",
+        "translation": "Всплывающие уведомления скриптов, их ошибки и запросы разрешений."
+      },
+      "name": {
+        "source": "Log script notices",
+        "translation": "Журналировать уведомления скриптов"
+      }
+    },
+    "kOptionProfilePhotoBg": {
+      "name": {
+        "source": "Blurred photo as profile background β",
+        "translation": "Размытое фото в качестве фона профиля β"
+      }
+    },
+    "kOptionRemoveMyMessages": {
+      "desc": {
+        "source": "Adds it to chat menus; deletes for everyone, newest first.",
+        "translation": "Добавляет пункт в меню чата; удаляет для всех начиная с новых."
+      },
+      "name": {
+        "source": "Remove my messages",
+        "translation": "Удалить все мои сообщения"
+      }
+    },
+    "kOptionWalletKeepOld": {
+      "desc": {
+        "source": "Only when this device holds your current wallet's key.",
+        "translation": "Только если на этом устройстве сохранён ключ от вашего текущего кошелька."
+      },
+      "name": {
+        "source": "Use your wallet while an old one stays on this device",
+        "translation": "Использовать кошелёк, сохраняя старый на этом устройстве"
+      }
+    },
+    "kOptionWalletRotate": {
+      "desc": {
+        "source": "The old words stop working and the network takes a small fee.",
+        "translation": "Старые слова перестают действовать, а сеть взимает небольшую комиссию."
+      },
+      "name": {
+        "source": "Update the secret phrase without a backup",
+        "translation": "Сменить секретную фразу без резервной копии"
       }
     }
   }
