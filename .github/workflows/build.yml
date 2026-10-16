@@ -296,6 +296,21 @@ jobs:
         id: prepare
         run: |
           call tele\ci\msvc.cmd || exit /b 1
+          rem a cache trimmed before the trim kept the wallet binding source holds tdesktop_rust without it and its
+          rem source stages without their sources, so all three build again
+          set "keys=%TBUILD%\Libraries\win64\cache_keys"
+          if not exist "%TBUILD%\Libraries\win64\tlottie\Cargo.toml" (
+            del /f /q "%keys%\tlottie*" 2>nul
+            if exist "%TBUILD%\Libraries\win64\tlottie" rmdir /s /q "%TBUILD%\Libraries\win64\tlottie"
+          )
+          if not exist "%TBUILD%\Libraries\win64\wallet-engine\Cargo.toml" (
+            del /f /q "%keys%\wallet-engine*" 2>nul
+            if exist "%TBUILD%\Libraries\win64\wallet-engine" rmdir /s /q "%TBUILD%\Libraries\win64\wallet-engine"
+          )
+          if not exist "%TBUILD%\Libraries\win64\tdesktop_rust\out\src\wallet_engine\wallet_engine.cpp" (
+            del /f /q "%keys%\tdesktop_rust*" 2>nul
+            if exist "%TBUILD%\Libraries\win64\tdesktop_rust" rmdir /s /q "%TBUILD%\Libraries\win64\tdesktop_rust"
+          )
           %TBUILD%\tdesktop\Telegram\build\prepare\win.bat silent
 
       - name: Trim libraries
@@ -310,7 +325,7 @@ jobs:
             exit 0
           fi
           # upstream ci's filter: keep what linking needs, drop sources and intermediates
-          find "$libs" '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' ')' -type f ')' -o -empty ')' -delete
+          find "$libs" '(' '(' ! '(' -name '*.lib' -o -name '*.a' -o -name '*.exe' -o -name '*.h' -o -name '*.hpp' -o -name '*.inc' -o -name '*.cmake' -o -name '*.pc' -o -path '*/include/*' -o -path '*/objects-*' -o -path '*/cache_keys/*' -o -path '*/patches/*' -o -path '*/nv-codec-headers/*' -o -path '*/src/wallet_engine/*' -o '(' '(' -path '*/tlottie/*' -o -path '*/wallet-engine/*' ')' ! -path '*/target/*' ')' ')' -type f ')' -o '(' -empty ! -path '*/tlottie/*' ! -path '*/wallet-engine/*' ')' ')' -delete
           # the atl step only trusts a prepare that fully finished for this CACHE_KEY
           if [ "$PREPARE_OUTCOME" = success ]; then
             echo "$CACHE_KEY" > "$libs/cache_keys/tele-prepared"

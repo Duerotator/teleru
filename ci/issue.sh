@@ -4,6 +4,12 @@ set -euo pipefail
 action=$1
 label=$2
 
+if [ -n "${GH_REPO:-}" ]; then
+  gh() { command gh -R "$GH_REPO" "$@"; }
+elif [ -n "${GITHUB_REPOSITORY:-}" ]; then
+  gh() { command gh -R "$GITHUB_REPOSITORY" "$@"; }
+fi
+
 enabled=$(gh repo view --json hasIssuesEnabled --jq '.hasIssuesEnabled')
 if [ "$enabled" != true ]; then
   echo "repository issues are disabled; skipping issue notification"
