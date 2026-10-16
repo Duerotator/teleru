@@ -438,8 +438,8 @@
     },
     "kOptionProfilePhotoBg": {
       "name": {
-        "source": "Blurred photo as profile background β",
-        "translation": "Размытое фото в качестве фона профиля β"
+        "source": "Blurred photo as profile background",
+        "translation": "Размытое фото в качестве фона профиля"
       }
     },
     "kOptionRemoveMyMessages": {
@@ -470,6 +470,94 @@
       "name": {
         "source": "Update the secret phrase without a backup",
         "translation": "Сменить секретную фразу без резервной копии"
+      }
+    },
+    "kOptionWalletPrivateKeys": {
+      "name": {
+        "source": "Import wallets from private keys",
+        "translation": "Импорт кошельков по закрытому ключу"
+      }
+    },
+    "kOptionWalletCopyWords": {
+      "name": {
+        "source": "Copy secret words without waiting",
+        "translation": "Копировать секретные слова без ожидания"
+      }
+    },
+    "kOptionHtmlBubbles": {
+      "desc": {
+        "source": "Shows .tgw files as cards and adds an HTML playground chat.",
+        "translation": "Отображает файлы .tgw в виде карточек и добавляет чат-песочницу HTML."
+      },
+      "name": {
+        "source": "HTML bubbles β",
+        "translation": "HTML-сообщения β"
+      }
+    },
+    "kOptionScrollStats": {
+      "desc": {
+        "source": "Writes one line per smooth wheel glide to log.txt.",
+        "translation": "Записывает данные о каждом плавном скролле колёсиком в log.txt."
+      },
+      "name": {
+        "source": "Log scroll frame rate",
+        "translation": "Журнал частоты кадров прокрутки"
+      }
+    },
+    "kOptionScrollZoom": {
+      "desc": {
+        "source": "Hold Ctrl or Cmd while scrolling to switch photos.",
+        "translation": "Удерживайте Ctrl или Cmd при прокрутке для переключения фотографий."
+      },
+      "name": {
+        "source": "Scroll to zoom in the media viewer",
+        "translation": "Масштабирование прокруткой в просмотрщике"
+      }
+    },
+    "kOptionMoneyCardDesigns": {
+      "desc": {
+        "source": "Pick a design in Money's menu.",
+        "translation": "Выбрать оформление в меню раздела Money."
+      },
+      "name": {
+        "source": "Money card designs",
+        "translation": "Дизайн карты Money"
+      }
+    },
+    "kOptionMoneyHideBalances": {
+      "desc": {
+        "source": "Hides the \"You also have\" rows above the Money card.",
+        "translation": "Скрывает строки «У вас также есть» над картой Money."
+      },
+      "name": {
+        "source": "Hide other balances",
+        "translation": "Скрыть другие балансы"
+      }
+    },
+    "kOptionStickerFormats": {
+      "desc": {
+        "source": "In your sets and the panel's search.",
+        "translation": "В ваших наборах и в поиске панели."
+      },
+      "name": {
+        "source": "Filter stickers and emoji by format",
+        "translation": "Фильтрация стикеров и эмодзи по формату"
+      }
+    },
+    "kOptionRecoverForwarded": {
+      "desc": {
+        "source": "When you open one from a forward.",
+        "translation": "При переходе к посту из пересланного сообщения."
+      },
+      "name": {
+        "source": "Recover deleted channel posts from forwards",
+        "translation": "Восстановление удалённых постов из пересылок"
+      }
+    },
+    "kOptionProfilePhotoBgWhole": {
+      "name": {
+        "source": "Fill the whole profile",
+        "translation": "Заполнять весь профиль"
       }
     }
   }
