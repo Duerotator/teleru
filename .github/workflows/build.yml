@@ -390,7 +390,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           echo "Building ${UPSTREAM_TAG:-UPSTREAM} for Windows failed: $GITHUB_SERVER_URL/$GH_REPO/actions/runs/$GITHUB_RUN_ID" > issue.md
-          bash tele/ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" issue.md
+          (cd tele && bash ci/issue.sh open build-failure "Build failed: ${UPSTREAM_TAG:-UPSTREAM}" ../issue.md)
 
       - name: Notify
         if: always()
