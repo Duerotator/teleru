@@ -11,7 +11,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from localization import ROOT, load_catalog, resolve, validate_translation
-from teleru_overlay import apply_overlay, plan_russian_plurals, plan_russian_titles
+from teleru_overlay import apply_overlay, plan_russian_plurals
 import translate_ru
 
 
@@ -52,42 +52,14 @@ class ReviewedTranslationTests(unittest.TestCase):
         self.assertEqual(catalog['contexts']['settings/settings_tele.cpp']['Sending'], 'Отправка сообщений')
         self.assertEqual(catalog['strings']['Scheduled messages'], 'Отложенные сообщения')
 
-    def title_fixture(self, root):
-        _, cmake = self.fixture(root)
-        options = root / 'Telegram/SourceFiles/tele/tele_options.cpp'
-        options.write_text('#include "tele/tele_title_template.h"\n.defaultValue = u"TELE #{build}"_q,\nreturn TitleTemplateOption.value();\nreturn TitleTemplateOption.value();\nreturn WindowTitleTemplateOption.value();\nreturn WindowTitleTemplateOption.value();\n', encoding='utf-8')
-        return options, cmake
-
-    def test_standard_title_is_cyrillic_and_cmake_keeps_both_helpers(self):
+    def test_overlay_does_not_inject_russian_title_helper(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            options, cmake = self.title_fixture(root)
-            first = plan_russian_plurals(root)
-            changes = plan_russian_titles(root, cmake_text=first[cmake])
-            self.assertIn('.defaultValue = u"ТЕЛЕ #{build}"_q,', changes[options])
-            self.assertEqual(changes[options].count('RussianDefaultTitle('), 4)
+            _, cmake = self.fixture(root)
+            changes = plan_russian_plurals(root)
             self.assertIn('tele/tele_russian_plural.h', changes[cmake])
-            self.assertIn('tele/tele_russian_title.h', changes[cmake])
-            helper = changes[root / 'Telegram/SourceFiles/tele/tele_russian_title.h']
-            self.assertIn('source == u"TELE #{build}"_q', helper)
-            self.assertIn('Lower(u"ТЕЛЕ #{build}"_q)', helper)
-            self.assertIn(': source;', helper)
-
-    def test_changed_default_title_blocks(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            options, _ = self.title_fixture(root)
-            options.write_text(options.read_text().replace('TELE #{build}', 'TELE {version}'))
-            with self.assertRaises(ValueError):
-                plan_russian_titles(root)
-
-    def test_title_translation_keeps_build_variable(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            self.title_fixture(root)
-            for translation in ['ТЕЛЕ', 'ТЕЛЕ {build}', 'ТЕЛЕ #{version}', 'ТЕЛЕ #{build} {name}', 'ТЕЛЕ #{build} #{build}']:
-                with self.assertRaises(ValueError):
-                    plan_russian_titles(root, {'title_template': {'source': 'TELE #{build}', 'translation': translation}})
+            self.assertNotIn('tele/tele_russian_title.h', changes[cmake])
+            self.assertNotIn(root / 'Telegram/SourceFiles/tele/tele_russian_title.h', changes)
 
     def test_workflows_only_start_by_request(self):
         for path in (ROOT / '.github/workflows').glob('*.yml'):

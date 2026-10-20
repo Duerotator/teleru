@@ -1,19 +1,19 @@
 {
-  "strings": { "transaction": "операция" },
+  "strings": {
+    "transaction": "операция"
+  },
   "contexts": {
     "tele/tele_title_box.cpp": {
-      "{chat|max:40}[ ({chat_unread|k})] – tele": "{chat|max:40}[ ({chat_unread|k})] – ТЕЛЕ",
-      "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – ТЕЛЕ",
-      "tele #{build} · {time:HH:mm}": "ТЕЛЕ #{build} · {time:HH:mm}",
-      "TELE #{build}": "ТЕЛЕ #{build}",
-      "tele #{build}": "ТЕЛЕ #{build}",
+      "{chat|max:40}[ ({chat_unread|k})] – tele": "{chat|max:40}[ ({chat_unread|k})] – tele",
+      "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – tele",
+      "tele #{build} · {time:HH:mm}": "tele #{build} · {time:HH:mm}",
+      "TELE #{build}": "TELE #{build}",
+      "tele #{build}": "tele #{build}",
       "{name}[ · {unread} unread]": "{name}[ · непрочитанных: {unread}]",
-      "tele {version|short}[ · {unread|k}]": "ТЕЛЕ {version|short}[ · {unread|k}]"
+      "tele {version|short}[ · {unread|k}]": "tele {version|short}[ · {unread|k}]"
     },
-    "Resources/tele_html/mtp_inspector.js": { "dc ": "ДЦ " }
-  },
-  "title_template": {
-    "source": "TELE #{build}",
-    "translation": "ТЕЛЕ #{build}"
+    "Resources/tele_html/mtp_inspector.js": {
+      "dc ": "ДЦ "
+    }
   }
 }

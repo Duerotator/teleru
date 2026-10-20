@@ -94,8 +94,8 @@ everything below is inside the patched tree (tdesktop after `tele.py checkout`),
 
 `Telegram/CMakeLists.txt` declares `set(TELE_BUILD 0 CACHE STRING "tele release number, 0 for local builds")` and passes it as a compile definition to `tele/tele_build.cpp` only, so changing it rebuilds one file. `Tele::BuildNumber()` returns it.
 
-- ci builds with `-D TELE_BUILD=<N>`, the release number. the title bar shows `TELE #N`, the main menu `build #N`.
-- `0` is a local build: the title bar shows `TELE DEV`, the main menu `dev build`, the self-updater stays off ("local builds don't update themselves") and what's new is never fetched.
+- ci builds with `-D TELE_BUILD=<N>`, the release number. the title bar shows `tele #N`, the main menu `build #N`.
+- `0` is a local build: the title bar shows `tele dev`, the main menu `dev build`, the self-updater stays off ("local builds don't update themselves") and what's new is never fetched.
 
 ### options
 
@@ -255,7 +255,7 @@ rows are grouped in README by the release that introduced them, newest first, un
 
 ## build numbering
 
-- a release is tagged `<UPSTREAM>-tele.<N>`, e.g. `v7.2.9-tele.10`.
+- a release is tagged `<UPSTREAM>-tele.<N>`, e.g. `v7.3.1-tele.22`.
 - `N` counts the releases on one upstream tag, starting from 1. it's the `TELE_BUILD` of that release.
 - the updater compares `(base, counter)`: upstream's `AppVersion` first, then `N`. so a release on a newer upstream tag is always newer, even when its `N` starts again at 1.
 

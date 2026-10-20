@@ -31,7 +31,7 @@ git checkout next
 python tele.py checkout
 ```
 
-`checkout` fetches the tag from `UPSTREAM`, puts tdesktop and every submodule on a `tele` branch at that tag and applies the queue as commits. when it finishes, tdesktop is the tele source tree: `git log v7.2.9..tele` (with the tag from `UPSTREAM`) shows one commit per patch.
+`checkout` fetches the tag from `UPSTREAM`, puts tdesktop and every submodule on a `tele` branch at that tag and applies the queue as commits. when it finishes, tdesktop is the tele source tree: `git log v7.3.1..tele` (with the tag from `UPSTREAM`) shows one commit per patch.
 
 when you run `checkout` again later, it refuses as long as there is uncommitted or unexported work in the tree, and lists what it found. export it, or pass `--force` to throw it away.
 
