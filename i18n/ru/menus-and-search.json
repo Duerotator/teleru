@@ -320,7 +320,15 @@
     "Send as .tgw to…": "Отправить как .tgw в…",
     "Script log": "Журнал скрипта",
     "Hide these rows": "Скрыть эти строки",
-    "Reset the playground": "Сбросить песочницу"
+    "Reset the playground": "Сбросить песочницу",
+    "Media viewer": "Просмотр медиа",
+    "mouse 4": "кнопка 4",
+    "side button": "боковая кнопка",
+    "log": "лог",
+    "code": "код",
+    "ban": "бан",
+    "permissions": "права",
+    "admin": "администратор"
   },
   "contexts": {
     "tele/tele_build.cpp": {

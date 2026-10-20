@@ -559,6 +559,32 @@
         "source": "Fill the whole profile",
         "translation": "Заполнять весь профиль"
       }
+    },
+    "kOptionViewerMouseBack": {
+      "name": {
+        "source": "Close the media viewer with mouse back",
+        "translation": "Закрывать просмотр медиа кнопкой «Назад» на мыши"
+      }
+    },
+    "kOptionRestrictMenu": {
+      "desc": {
+        "source": "For group admins, without deleting the message.",
+        "translation": "Для администраторов групп, без удаления сообщения."
+      },
+      "name": {
+        "source": "Restrict in message and userpic menus",
+        "translation": "Ограничение доступа в меню сообщений и аватарок"
+      }
+    },
+    "kOptionQuickView": {
+      "desc": {
+        "source": "JSON, code, text and CSV files open formatted, like .md files.",
+        "translation": "Файлы JSON, кода, текста и CSV открываются отформатированными, как файлы .md."
+      },
+      "name": {
+        "source": "Open text files in tele",
+        "translation": "Открывать текстовые файлы в tele"
+      }
     }
   }
 }

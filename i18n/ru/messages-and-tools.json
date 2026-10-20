@@ -181,6 +181,9 @@
     "No sets to remove.": "Нет наборов для удаления.",
     "Manage emoji sets": "Управление наборами эмодзи",
     "Archive": "В архив",
-    "? You can add them back from Archived.": "? Вы сможете восстановить их из архива."
+    "? You can add them back from Archived.": "? Вы сможете восстановить их из архива.",
+    "Skipped messages": "Пропущенные сообщения",
+    "1 message skipped": "1 сообщение пропущено",
+    " messages skipped": " пропущенных сообщений"
   }
 }

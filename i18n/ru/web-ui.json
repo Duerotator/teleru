@@ -252,7 +252,8 @@
     "Also delete the files %1 kept in its file area? They are in %2.": "Также удалить файлы, которые %1 хранил в своей рабочей области? Они находятся в %2.",
     "Still uploading, a moment.": "Ещё загружается, подождите немного.",
     "This result is gone, search again.": "Этот результат устарел, выполните поиск снова.",
-    "%1\" needs the grant %2 to send from the panel. Allow it on the script's page in the Scripts manager.": "«%1» требует разрешение %2 для отправки из панели. Разрешите его на странице скрипта в менеджере скриптов."
+    "%1\" needs the grant %2 to send from the panel. Allow it on the script's page in the Scripts manager.": "«%1» требует разрешение %2 для отправки из панели. Разрешите его на странице скрипта в менеджере скриптов.",
+    "InputPeer, InputUser, InputChannel, InputNotifyPeer and InputDialogPeer": "InputPeer, InputUser, InputChannel, InputNotifyPeer и InputDialogPeer"
   },
   "contexts": {
     "Resources/tele_html/mtp_console.js": {
