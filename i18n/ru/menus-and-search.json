@@ -332,8 +332,8 @@
   },
   "contexts": {
     "tele/tele_build.cpp": {
-      "tele #%1": "tele #%1",
-      "tele dev": "tele dev"
+      "tele #%1": "Теле #%1",
+      "tele dev": "Теле dev"
     },
     "tele/tele_peer_id.cpp": {
       "uploaded %1": "загружено: %1"

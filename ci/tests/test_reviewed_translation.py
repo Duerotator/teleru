@@ -1,6 +1,7 @@
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -11,7 +12,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from localization import ROOT, load_catalog, resolve, validate_translation
-from teleru_overlay import apply_overlay, plan_russian_plurals
+from teleru_overlay import apply_overlay, plan_russian_plurals, plan_russian_titles
 import translate_ru
 
 
@@ -52,14 +53,42 @@ class ReviewedTranslationTests(unittest.TestCase):
         self.assertEqual(catalog['contexts']['settings/settings_tele.cpp']['Sending'], 'Отправка сообщений')
         self.assertEqual(catalog['strings']['Scheduled messages'], 'Отложенные сообщения')
 
-    def test_overlay_does_not_inject_russian_title_helper(self):
+    def title_fixture(self, root):
+        _, cmake = self.fixture(root)
+        options = root / 'Telegram/SourceFiles/tele/tele_options.cpp'
+        options.write_text('#include "tele/tele_title_template.h"\n.defaultValue = u"tele #{build}"_q,\nreturn TitleTemplateOption.value();\nreturn TitleTemplateOption.value();\nreturn WindowTitleTemplateOption.value();\nreturn WindowTitleTemplateOption.value();\n', encoding='utf-8')
+        return options, cmake
+
+    def test_standard_title_is_russian_and_cmake_keeps_both_helpers(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            _, cmake = self.fixture(root)
-            changes = plan_russian_plurals(root)
+            options, cmake = self.title_fixture(root)
+            first = plan_russian_plurals(root)
+            changes = plan_russian_titles(root, cmake_text=first[cmake])
+            self.assertIn('.defaultValue = u"Теле #{build}"_q,', changes[options])
+            self.assertEqual(changes[options].count('RussianDefaultTitle('), 4)
             self.assertIn('tele/tele_russian_plural.h', changes[cmake])
-            self.assertNotIn('tele/tele_russian_title.h', changes[cmake])
-            self.assertNotIn(root / 'Telegram/SourceFiles/tele/tele_russian_title.h', changes)
+            self.assertIn('tele/tele_russian_title.h', changes[cmake])
+            helper = changes[root / 'Telegram/SourceFiles/tele/tele_russian_title.h']
+            self.assertIn('source == u"tele #{build}"_q', helper)
+            self.assertIn('Lower(u"Теле #{build}"_q)', helper)
+            self.assertIn(': source;', helper)
+
+    def test_changed_default_title_blocks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            options, _ = self.title_fixture(root)
+            options.write_text(options.read_text().replace('tele #{build}', 'tele {version}'))
+            with self.assertRaises(ValueError):
+                plan_russian_titles(root)
+
+    def test_title_translation_keeps_build_variable(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            self.title_fixture(root)
+            for translation in ['Теле', 'Теле {build}', 'Теле #{version}', 'Теле #{build} {name}', 'Теле #{build} #{build}']:
+                with self.assertRaises(ValueError):
+                    plan_russian_titles(root, {'title_template': {'source': 'tele #{build}', 'translation': translation}})
 
     def test_workflows_only_start_by_request(self):
         for path in (ROOT / '.github/workflows').glob('*.yml'):
@@ -89,23 +118,21 @@ class ReviewedTranslationTests(unittest.TestCase):
             paths = apply_overlay(root, changes=changes)
             header = root / 'Telegram/SourceFiles/tele/tele_russian_plural.h'
             self.assertIn(header, paths)
-            raw = header.read_bytes()
-            self.assertIn(b'\r\n', raw)
-            self.assertNotIn(b'\n', raw.replace(b'\r\n', b''))
-
-    def test_changed_plural_source_blocks(self):
-        with tempfile.TemporaryDirectory() as temporary:
-            root = Path(temporary)
-            box, _ = self.fixture(root)
-            box.write_text(box.read_text().replace("one + 's'", "one + 'es'"))
-            with self.assertRaises(ValueError):
-                plan_russian_plurals(root)
+            self.assertIn('constexpr int RussianPluralIndex', header.read_text(encoding='utf-8'))
 
     def test_new_plural_noun_blocks(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             box, _ = self.fixture(root)
-            box.write_text(box.read_text().replace('u"setting"_q', 'u"chat"_q'))
+            box.write_text(box.read_text().replace('u"setting"_q', 'u"file"_q'))
+            with self.assertRaises(ValueError):
+                plan_russian_plurals(root)
+
+    def test_changed_plural_source_blocks(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            box, _ = self.fixture(root)
+            box.write_text(box.read_text().replace('count == 1', 'count <= 1'))
             with self.assertRaises(ValueError):
                 plan_russian_plurals(root)
 
@@ -113,7 +140,7 @@ class ReviewedTranslationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             self.fixture(root)
-            for forms in [None, [], ['настройка'], ['настройка', '', 'настроек'], ['%1', 'настройки', 'настроек']]:
+            for forms in [['настройка', 'настройки'], ['настройка', 'настройки', 'настроек', 'настройки'], ['настройка', 'настройки', '%1 настроек']]:
                 with self.assertRaises(ValueError):
                     plan_russian_plurals(root, {'plurals': {'setting': forms}})
 

@@ -122,13 +122,17 @@ jobs:
             gh release list --limit 1000 --json tagName --jq '.[].tagName'
             git ls-remote --tags "$GITHUB_SERVER_URL/$GH_REPO.git" | sed -n 's|^[0-9a-f]*\trefs/tags/||p'
           } | sed -n "s/$pattern/\1/p" | sort -n | tail -n1)
-          number=$(( ${last:-0} + 1 ))
+          upstream_num=$(python3 -c "import json; tag=json.load(open('TELE_UPSTREAM.json'))['tag']; print(tag.split('-tele.')[-1])")
           if [ -n "$NUMBER" ]; then
             if ! [[ "$NUMBER" =~ ^[1-9][0-9]*$ ]] || [ "$NUMBER" -le "${last:-0}" ]; then
               echo "::error::the release number has to be above ${last:-0}, got '$NUMBER'"
               exit 1
             fi
             number=$NUMBER
+          elif [ -n "$upstream_num" ] && [ "$upstream_num" -gt "${last:-0}" ]; then
+            number=$upstream_num
+          else
+            number=$(( ${last:-0} + 1 ))
           fi
           version=$(curl -fsSL "https://raw.githubusercontent.com/telegramdesktop/tdesktop/$upstream/Telegram/build/version" \
             | tr -d '\r' | sed -n 's/^AppVersion *\([0-9][0-9]*\)$/\1/p')

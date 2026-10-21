@@ -4,16 +4,20 @@
   },
   "contexts": {
     "tele/tele_title_box.cpp": {
-      "{chat|max:40}[ ({chat_unread|k})] – tele": "{chat|max:40}[ ({chat_unread|k})] – tele",
-      "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – tele",
-      "tele #{build} · {time:HH:mm}": "tele #{build} · {time:HH:mm}",
-      "TELE #{build}": "TELE #{build}",
-      "tele #{build}": "tele #{build}",
+      "{chat|max:40}[ ({chat_unread|k})] – tele": "{chat|max:40}[ ({chat_unread|k})] – Теле",
+      "[({unread|k}) ]{name|short} – tele": "[({unread|k}) ]{name|short} – Теле",
+      "tele #{build} · {time:HH:mm}": "Теле #{build} · {time:HH:mm}",
+      "TELE #{build}": "Теле #{build}",
+      "tele #{build}": "Теле #{build}",
       "{name}[ · {unread} unread]": "{name}[ · непрочитанных: {unread}]",
-      "tele {version|short}[ · {unread|k}]": "tele {version|short}[ · {unread|k}]"
+      "tele {version|short}[ · {unread|k}]": "Теле {version|short}[ · {unread|k}]"
     },
     "Resources/tele_html/mtp_inspector.js": {
       "dc ": "ДЦ "
     }
+  },
+  "title_template": {
+    "source": "tele #{build}",
+    "translation": "Теле #{build}"
   }
 }
