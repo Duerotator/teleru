@@ -1,18 +1,18 @@
-# tele server
+# сервер tele
 
-tele can pull extra account data, like checkmarks, custom verification, scam / fake marks and support marks, from an optional server (settings → tele → server). it only ever downloads one public list and never tells the server which accounts you look at. the list is hashed, so it can't just be read off as a list of accounts. tele checks it every 10 minutes, and "refresh now" fetches it right away. leave the field empty to turn it off. "clear cached data" drops the list tele saved, so the marks disappear until the next fetch.
+tele может загружать дополнительные данные профилей — галочки, персональную верификацию, метки scam / fake и метки поддержки — с опционального сервера (настройки → tele → сервер). клиент всегда загружает единый публичный список и никогда не сообщает серверу, какие именно профили или чаты вы открываете. список хешируется, поэтому его невозможно прочитать как открытый перечень аккаунтов. tele проверяет обновления каждые 10 минут, а кнопка «обновить сейчас» загружает актуальные данные мгновенно. оставьте поле пустым, чтобы отключить сервер. кнопка «очистить кеш» удаляет сохранённые списки, возвращая стандартный вид до следующего запроса.
 
-the same server takes crash reports. after a crash, tele offers to send the report: a short text with the version, platform and the crash reason, plus a minidump of the crashed process. you can look at it first and untick your username. tele also offers it when there's no dump, when the crash happened in another version, or after a graphics crash. with the server field empty, nothing is offered.
+тот же сервер принимает отчеты о падениях (crash reports). в случае сбоя tele предлагает отправить отчет: краткую сводку с версией приложения, платформой и причиной падения, а также минидамп завершившегося процесса. вы можете просмотреть отчет перед отправкой и снять галочку со своего имени пользователя. tele также предлагает отправку, если дамп не сформировался, если сбой произошел в другой версии или при ошибках графической подсистемы. если поле адреса сервера пустое, диалог отправки не появляется.
 
-on windows and linux, tele also catches freezes: when the main thread is stuck for 15 seconds, a watchdog writes a minidump. next launch, tele says it froze last time and offers to send that report the same way.
+в Windows и Linux tele также отслеживает зависания интерфейса: если главный поток блокируется на 15 секунд, фоновый сторожевой таймер (watchdog) формирует минидамп. при следующем запуске tele сообщает о зависании и предлагает отправить аналогичный отчет.
 
-the server can also post notices. they show up in the notification centre (main menu → notifications), and some also as a one-time toast. turn them off with settings → tele → server → notifications from the server. they need the notification centre on.
+сервер также может публиковать системные уведомления. они отображаются в центре уведомлений (главное меню → уведомления), а некоторые — как однократные всплывающие тосты. их можно отключить в меню: настройки → tele → сервер → уведомления от сервера (требуется включенный центр уведомлений).
 
-## running your own server
+## запуск собственного сервера
 
-any server that serves the same format works: point settings → tele → server at it. the list never contains account ids, only keys that can't be turned back into ids without trying them one by one.
+подойдет любой сервер, отдающий данные в требуемом формате: укажите его адрес в: настройки → tele → сервер. список никогда не содержит открытых ID аккаунтов — только хешированные ключи, которые невозможно восстановить обратно в ID без полного перебора.
 
-tele asks `GET <server>/v1/badges` and expects json like this:
+tele выполняет запрос `GET <server>/v1/badges` и ожидает JSON следующего формата:
 
 ```json
 {
@@ -25,15 +25,15 @@ tele asks `GET <server>/v1/badges` and expects json like this:
 }
 ```
 
-- `salt` is 8 to 64 random bytes in standard base64 with padding.
-- `argon2` are the argon2id costs: `memory` in KiB (1024 to 65536), `passes` (1 to 8), `lanes` (1 to 8), and `memory × passes` at most 65536. the official server uses 8192 / 1 / 1.
-- each key in `peers` is `base64url` without padding of `argon2id(password, salt)` with those costs, a 16-byte output, version `0x13`, no secret and no associated data.
-- the password is the utf-8 string `<scope>:<id>`:
-  - `scope` is `prod`, or `test` for accounts on telegram's test servers;
-  - `id` is the bot api style id: users as is (`777000`), channels and supergroups as `-100` followed by the channel id (`-1001234567890`). basic groups can't have entries.
-- every field of an entry is optional: `checkmark`, `scam`, `fake` and `support` are booleans (false by default), `icon` is a custom emoji document id as a decimal string, `description` is plain text shown under the verification in the profile, and `supportText` (1 to 64 characters, users only) replaces the word "support" under the name of a support account. tele ignores fields it doesn't know, but rejects the whole list when a known field has the wrong type or length.
+- `salt` — от 8 до 64 случайных байт в стандартном Base64 с паддингом.
+- `argon2` — параметры затрат Argon2id: `memory` в КиБ (от 1024 до 65536), `passes` (от 1 до 8), `lanes` (от 1 до 8), причем произведение `memory × passes` не должно превышать 65536. официальный сервер использует параметры 8192 / 1 / 1.
+- каждый ключ в объекте `peers` — это строка `base64url` без символов паддинга от `argon2id(password, salt)` с указанными параметрами, 16-байтным выводом, версией `0x13`, без секретного ключа и без ассоциированных данных.
+- пароль формируется как UTF-8 строка `<scope>:<id>`:
+  - `scope` принимает значение `prod`, либо `test` для тестовых серверов Telegram;
+  - `id` — числовой ID в формате Bot API: для пользователей как есть (`777000`), для каналов и супергрупп — с префиксом `-100` (`-1001234567890`). базовые группы не поддерживаются.
+- каждое поле записи является необязательным: `checkmark`, `scam`, `fake` и `support` имеют логический тип boolean (по умолчанию false), `icon` — числовой ID документа кастомного эмодзи в виде десятичной строки, `description` — открытый текст под блоком верификации в профиле, а `supportText` (от 1 до 64 символов, только для пользователей) заменяет плашку «поддержка» под именем служебного аккаунта. tele пропускает неизвестные поля, но отклоняет весь список, если известный параметр имеет недопустимый тип или длину.
 
-with the salt above, `prod:777000` gives `iguxbtP_SnLvK69aBff2OQ` and `prod:-1001234567890` gives `w5Zbi-HfwlqkJ6S4wjwqcw`. check your implementation against these two before anything else. in python:
+с солью из примера выше строка `prod:777000` дает ключ `iguxbtP_SnLvK69aBff2OQ`, а `prod:-1001234567890` — `w5Zbi-HfwlqkJ6S4wjwqcw`. проверьте свою серверную реализацию на этих двух значениях перед публикацией. пример на Python:
 
 ```python
 from argon2.low_level import hash_secret_raw, Type
@@ -44,7 +44,7 @@ raw = hash_secret_raw(b"prod:777000", bytes(range(16)), time_cost=1, memory_cost
 print(base64.urlsafe_b64encode(raw).rstrip(b"=").decode())  # iguxbtP_SnLvK69aBff2OQ
 ```
 
-the list can also give accounts extra usernames. they're public anyway, so they come as plain text, in an optional `usernames` object next to `peers`:
+список также может сопоставлять аккаунтам дополнительные имена пользователей (username). они и так публичны, поэтому передаются открытым текстом в необязательном объекте `usernames` рядом с `peers`:
 
 ```json
 "usernames": {
@@ -53,22 +53,22 @@ the list can also give accounts extra usernames. they're public anyway, so they 
 }
 ```
 
-- each key is the extra username, 2 to 32 latin letters, digits and underscores. `username` is the real public username of the account that gets it, 4 to 32 of them. both start with a letter and are compared ignoring case.
-- `position` is optional: the place of the extra username among the account's usernames, counting from 0, so 0 makes it the main one in the profile. without it, the username goes after the real ones. a position past the end puts it last.
-- tele skips a bad entry on its own and keeps the rest: a wrong name, an extra username equal to its account's username, the same key twice in different case, or a `position` that isn't a whole number from 0 to 1000. only the first 1000 good entries count. `usernames` never makes tele reject the list, and `salt`, `argon2` and `peers` are still required (`peers` can be empty).
-- they only apply to accounts on telegram's main servers, not the test ones.
+- каждый ключ — дополнительный юзернейм: от 2 до 32 латинских букв, цифр и знаков подчеркивания. значение `username` — настоящий публичный юзернейм целевого аккаунта (от 4 до 32 символов). оба начинаются с буквы и сопоставляются без учета регистра.
+- параметр `position` опционален: он указывает порядковый номер юзернейма среди юзернеймов аккаунта, начиная с 0 (0 делает его основным в профиле). если параметр опущен, имя добавляется после реальных юзернеймов. значение, превышающее число юзернеймов, помещает его последним.
+- tele автоматически отфильтровывает некорректные записи и сохраняет остальные: недопустимое имя, дополнительный юзернейм, совпадающий с собственным юзернеймом аккаунта, повторение ключа в другом регистре или значение `position` вне диапазона целых чисел от 0 до 1000. учитываются только первые 1000 валидных записей. объект `usernames` никогда не приводит к отклонению всего списка; поля `salt`, `argon2` и `peers` по-прежнему обязательны (`peers` может быть пустым объектом).
+- дополнительные юзернеймы применяются только к основным серверам Telegram, исключая тестовые.
 
-with settings → tele → usernames from the server on (the default), the profile of @teleAppUpdates shows @tele, and `@tele` in messages, `t.me/tele` and `tg://resolve?domain=tele` open @teleAppUpdates, even when someone really owns @tele. the menu on such a link can still open the real one. your own aliases come first. `@tele` in a message you send becomes `@teleAppUpdates`, so other apps see the real username.
+при включенном тумблере: настройки → tele → юзернеймы с сервера (включен по умолчанию), в профиле @teleAppUpdates будет отображаться @tele, а ввод `@tele` в тексте, переход по `t.me/tele` или `tg://resolve?domain=tele` откроет профиль @teleAppUpdates, даже если имя @tele занято кем-то другим. контекстное меню такой ссылки по-прежнему позволяет открыть реального владельца. ваши локальные псевдонимы имеют приоритет. при отправке сообщения юзернейм `@tele` автоматически заменяется на `@teleAppUpdates`, чтобы внешние приложения видели настоящий адрес.
 
-to keep it that way:
+рекомендации по безопасности сервера:
 
-- serve the keys sorted, so their order says nothing about the accounts behind them.
-- change the salt from time to time (the official server derives a new one every month), so lists from different times can't be compared key by key. every key has to be recomputed with the new salt.
-- keep the costs within the limits above: tele computes one key for every account it shows, and rejects a list that asks for more.
+- отдавайте ключи отсортированными, чтобы порядок следования не раскрывал связей между аккаунтами.
+- периодически меняйте соль (официальный сервер генерирует новую соль каждый месяц), чтобы списки за разные периоды нельзя было сравнивать ключ к ключу. каждый ключ пересчитывается с новой солью.
+- держите вычислительную сложность в установленных пределах: tele рассчитывает ключ для каждого отображаемого аккаунта и отклоняет список с завышенными требованиями.
 
-tele also rejects a list over 4 MiB or with more than 100000 entries, and then keeps using the last good one. it sends `If-None-Match` with `"<hex sha256 of the body it has>"`, so answering `304` when that matches the current body saves traffic, and a server can't tag clients with its own etags.
+tele также отклоняет список размером более 4 МиБ или содержащий более 100 000 записей, продолжая использовать последнюю валидную копию. при запросе клиент передает заголовок `If-None-Match` со значением `"<hex sha256 тела текущего кеша>"`, поэтому возврат ответа `304 Not Modified` при совпадении существенно экономит трафик и не позволяет серверу маркировать клиентов собственными ETag.
 
-the same json can carry an optional `notices` array next to `peers`:
+тот же JSON может содержать необязательный массив `notices` рядом с `peers`:
 
 ```json
 "notices": [{
@@ -89,18 +89,18 @@ the same json can carry an optional `notices` array next to `peers`:
 }]
 ```
 
-- `id` is 1 to 64 latin letters, digits and dashes. `rev` is a whole number from 0. bump it when you edit a notice: tele replaces the old entry in the notification centre, but toasts each id only once.
-- `type` is `info`, `success`, `warning` or `critical`, and picks the colour of the toast. `toast: true` shows the toast; otherwise the notice only goes to the notification centre.
-- `title` or `text` must not be empty. `text` is cut at 4096 characters and `entities` at 256. entities work like the bot api: `offset` and `length` count utf-16 units.
-- `photo` is optional. its `url` is relative to the server (`/…`, not `//…`) and serves a jpeg or png up to 1 MB.
-- `buttons` are at most 2, and their urls start with `http://`, `https://` or `tg://`.
-- `builds`, `platforms`, `users`, `from` and `until` are optional filters. `builds.min` and `builds.max` are tele build numbers, each can be null. `platforms` are `windows`, `linux` and `macos`. `from` and `until` are unix seconds.
-- `users` are keys made exactly like the keys in `peers`, with the same salt, costs and scope, so the list doesn't say who a notice is for. null means everyone.
-- tele reads at most 64 notices. a notice that leaves the feed stays in the notification centre history.
+- `id` — от 1 до 64 латинских букв, цифр и дефисов. `rev` — целое число, начиная с 0. увеличивайте его при редактировании уведомления: tele обновит старую запись в центре уведомлений, но всплывающий тост показывает для каждого `id` только один раз.
+- `type` принимает значения `info`, `success`, `warning` или `critical`, определяя цвет плашки тоста. параметр `toast: true` активирует всплывающее уведомление; иначе уведомление попадает только в центр уведомлений.
+- `title` или `text` должны быть заполнены. `text` ограничивается 4096 символами, а массив `entities` — 256 элементами. сущности форматирования работают аналогично Bot API: `offset` и `length` считаются в единицах UTF-16.
+- `photo` опционально. его адрес `url` задается относительно сервера (`/…`, не `//…`) и отдает изображение JPEG или PNG размером до 1 МБ.
+- `buttons` — не более 2 кнопок, ссылки которых начинаются с `http://`, `https://` или `tg://`.
+- `builds`, `platforms`, `users`, `from` и `until` — опциональные фильтры аудитории. `builds.min` и `builds.max` задают номера сборок tele (могут быть null). `platforms` принимает значения `windows`, `linux` и `macos`. `from` и `until` — секунды UNIX timestamp.
+- `users` — ключи, сформированные в точности как ключи в `peers` (с той же солью и параметрами Argon2), благодаря чему список не раскрывает адресатов. значение null означает отправку всем пользователям.
+- tele читает не более 64 активных уведомлений. уведомление, исчезнувшее из серверной ленты, сохраняется в локальной истории центра уведомлений.
 
-crash reports are optional. tele speaks the same protocol as telegram's own crash server, at `<server>/v1/crash.php`:
+прием отчетов о падениях опционален. tele использует протокол, совместимый с краш-сервером Telegram Desktop, по адресу `<server>/v1/crash.php`:
 
-- `GET ?act=query_report&apiid=…&version=…&dmp=0|1&platform=…` answers `Report` as plain text when the server wants the report. anything else makes tele say thanks and send nothing.
-- `POST ?act=report` is `multipart/form-data` with `platform` (like `Windows64Bit`, `Linux`, `MacOS`), `version` (like `7002009`), `report` (the report text) and, when there is one, `dump` (a zip with one `.dmp` minidump, under 20 MiB). answer `Done`, or `Done <id>` to have tele show "crash report #id sent".
-- when there's no dump, the crash came from another version or the report is a freeze, the report text starts with `Tele-Note: <reason>` lines, like `Tele-Note: freeze 15 s`. freeze reports come through the same endpoint.
-- answer `404` to both if you don't collect crashes.
+- `GET ?act=query_report&apiid=…&version=…&dmp=0|1&platform=…` возвращает открытый текст `Report`, если сервер ожидает отчет. любой другой ответ сообщает tele, что отчет не требуется.
+- `POST ?act=report` передается как `multipart/form-data` с полями `platform` (например, `Windows64Bit`, `Linux`, `MacOS`), `version` (например, `7002009`), `report` (текст отчета) и опциональным `dump` (zip-архив с одним минидампом `.dmp` размером до 20 МиБ). сервер отвечает `Done` либо `Done <id>`, чтобы tele показал подтверждение «отчет о падении #id отправлен».
+- если дамп отсутствует, сбой произошел в другой версии или отчет описывает зависание интерфейса, текст отчета начинается со строк вида `Tele-Note: <reason>` (например, `Tele-Note: freeze 15 s`). отчеты о зависаниях поступают на тот же эндпоинт.
+- верните код `404` на оба запроса, если вы не собираете отчеты об ошибках.

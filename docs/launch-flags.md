@@ -1,9 +1,9 @@
-# launch flags
+# флаги запуска
 
-start tele with any of these to keep it off the network on its own for that launch. telegram's own connection works as usual, and your settings stay as they are.
+запустите tele с любым из этих флагов, чтобы отключить его собственные сетевые функции на время одного запуска. собственное подключение telegram работает в штатном режиме, а ваши настройки сохраняются.
 
-- `-noteleserver`: nothing goes to the tele server: no checkmark or other mark updates (the saved ones still show) and no crash reports.
-- `-noteleupdate`: no update checks, no downloads, no what's new.
-- `-teleoffline`: both of the above, and every other outside service is off too: calcmula, ton prices of collectibles (gram.rin.ms), the gift studio, fake upgrades and the gift grid (their parts come from api.changes.tg), view as tl doesn't open inside tele (schema.jppgr.am), and scripts installed from a link aren't checked for updates. features that only use telegram, like gif and video conversion, link previews and shots, keep working.
+- `-noteleserver`: никакие данные не отправляются на сервер tele: не обновляются галочки и значки верификации (сохранённые продолжают отображаться) и не отправляются отчеты о падениях.
+- `-noteleupdate`: проверка обновлений, фоновая загрузка и окно «что нового» отключены.
+- `-teleoffline`: включает оба флага выше, а также отключает все внешние сервисы: калькулятор calcmula, цены коллекционных предметов в TON (gram.rin.ms), студию подарков, симуляцию прокачки и сетку подарков (их детали загружаются с api.changes.tg), просмотр TL-схем внутри tele (schema.jppgr.am), а также проверку обновлений скриптов, установленных по ссылке. функции, использующие исключительно telegram (конвертация GIF и видео, предпросмотр ссылок и снимки сообщений), продолжают работать.
 
-the flags stay on when tele restarts itself, like after an update. on windows, add them to a shortcut after `tele.exe`; on linux, `./tele -teleoffline`; on macos, `open -a tele --args -teleoffline`. a shortcut with `-noteleserver` keeps even the very first launch away from the tele server. to turn the server off for good, empty its field in settings.
+флаги сохраняются и при автоматическом перезапуске tele, например после обновления. в Windows добавьте их в свойства ярлыка после `tele.exe`; в Linux: `./tele -teleoffline`; в macOS: `open -a tele --args -teleoffline`. ярлык с флагом `-noteleserver` гарантирует изоляцию от сервера tele даже при первом запуске. чтобы выключить сервер навсегда, просто очистите поле его адреса в настройках.

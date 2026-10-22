@@ -1,27 +1,27 @@
-# title bar template
+# шаблоны заголовка окна
 
-settings → tele → interface. the title bar label and the window title both take a template.
+настройки → tele → интерфейс. текст в заголовке панели и название окна программы поддерживают шаблоны с переменными.
 
-the default is `tele #{build}`. empty hides the label.
+по умолчанию используется `tele #{build}`. пустое значение скрывает текст.
 
-- `{build}` (the build number, `DEV` for local builds), `{version}`
-- `{time}`, `{date}`, `{weekday}`, `{day}`, `{month}`, or any qt format like `{time:HH:mm:ss}` and `{date:dd MMM}`
+- `{build}` (номер сборки, `DEV` для локальных сборок), `{version}`
+- `{time}`, `{date}`, `{weekday}`, `{day}`, `{month}`, или любой формат Qt, например `{time:HH:mm:ss}` и `{date:dd MMM}`
 - `{name}`, `{username}`, `{id}`, `{accounts}`
 - `{unread}`, `{chat}`, `{chat_unread}`, `{status}`
 
-any variable takes modifiers after `|`, applied left to right: `{weekday|short|lower}` is `sun`, `{date:dddd|upper}` is `SUNDAY`.
+любая переменная принимает модификаторы после символа `|`, применяемые слева направо: `{weekday|short|lower}` вернет `вс`, `{date:dddd|upper}` вернет `ВОСКРЕСЕНЬЕ`.
 
-- `lower`, `upper`: `{weekday|lower}` is `sunday`
-- `title` capitalizes every word, `cap` only the first letter
-- `short` is the compact form, wherever it sits in the chain: `Sun` and `Sep` for weekday and month, the first name for `{name}` and for people in `{chat}`, `7.2` for `{version}`, `1.2k` for counters, `…` for `{status}`. other variables stay as they are
-- `first`, `last`: the first or last word, `{name|first}`
-- `max:N` cuts to N characters with `…`, `{chat|max:20}`
-- `pad:N` pads to N characters, with zeros for numbers: `{day|pad:2}` is `07`
-- `k` shortens numbers: `1234` is `1.2k`, `15000` is `15k`, `2500000` is `2.5m`
-- `default:text` shows text when the value is empty or 0, `{status|default:online}`
+- `lower`, `upper`: `{weekday|lower}` — в нижнем регистре
+- `title` делает первую букву каждого слова заглавной, `cap` — только первую букву строки
+- `short` задаёт компактную форму в любом месте цепочки: короткий день недели и месяц, только имя для `{name}` и для собеседников в `{chat}`, `7.2` для `{version}`, `1.2k` для счётчиков, `…` для `{status}`. остальные переменные остаются без изменений
+- `first`, `last`: первое или последнее слово, например `{name|first}`
+- `max:N` обрезает строку до N символов с добавлением `…`, `{chat|max:20}`
+- `pad:N` дополняет строку до N символов (нулями для чисел): `{day|pad:2}` даст `07`
+- `k` сокращает большие числа: `1234` превратится в `1.2k`, `15000` в `15k`, `2500000` в `2.5m`
+- `default:текст` задаёт текст, если значение пусто или равно 0, например `{status|default:online}`
 
-`[ … ]` hides its part when a variable inside is empty or 0, so `tele #{build}[ · {unread} unread]` doesn't show "· 0 unread". a `default` counts as filled. doubled brackets are literal. a `|` that isn't followed by modifiers stays part of a qt format, and `'|'` in quotes always does. a variable or modifier with a typo is shown as typed. account and activity variables stay empty while the app is locked with a passcode.
+конструкция `[ … ]` скрывает свой фрагмент, если переменная внутри пуста или равна 0. например, `tele #{build}[ · {unread} непрочит.]` не покажет "· 0 непрочит.". значение `default` считается заполненным. двойные скобки `[[ … ]]` выводятся как обычные символы. символ `|`, за которым не следуют модификаторы, считается частью формата Qt, а `'|'` в кавычках — всегда частью формата. переменная или модификатор с опечаткой выводятся буквально как набрано. переменные аккаунта и активности остаются пустыми, пока приложение заблокировано локальным паролем (код-паролем).
 
-the editor highlights variables in the field and points out mistakes under the preview. below are all the variables as chips: click one to insert it, right-click for its other forms with their current values, hover to see the value now. presets has a few ready templates.
+редактор шаблона подсвечивает переменные в поле ввода и указывает на ошибки под окном предпросмотра. ниже расположены кнопки-чипы со всеми доступными переменными: клик вставляет переменную, правый клик открывает альтернативные формы с текущими значениями, наведение показывает подсказку с актуальным значением. кнопка «пресеты» содержит готовые шаблоны.
 
-the window title (what the taskbar, alt+tab and the system window frame show) takes the same template, set next to the label. `{label}` puts the rendered label there, so `{label}` alone keeps both in sync. empty keeps telegram's own title, and a template that renders to nothing leaves the title blank.
+заголовок окна системы (то, что отображается на панели задач, в Alt+Tab и в рамке окна ОС) настраивается рядом по тем же правилам. переменная `{label}` подставляет отрендеренный текст из панели, поэтому `{label}` синхронизирует заголовок окна с панелью. пустое значение оставляет стандартный заголовок Telegram Desktop, а шаблон, возвращающий пустую строку, оставляет заголовок окна чистым.
