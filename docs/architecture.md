@@ -150,7 +150,7 @@ tele rearranges seven menus: the message menu, the chat ⋯ menu, the chat list 
 
 ### tele server client
 
-`tele/tele_badges.*` downloads the public badge list from the server in the `tele-server-url` option and applies checkmarks, custom verification, scam, fake and support marks and extra usernames. `tele/tele_crash.*` routes crash reports to the same server. the protocol is documented in the README section [tele server](../README.md#tele-server). the client only downloads a list and never tells the server which accounts it looks at.
+`tele/tele_badges.*` downloads the public badge list from the server in the `tele-server-url` option and applies checkmarks, custom verification, scam, fake and support marks and extra usernames. `tele/tele_crash.*` routes crash reports to the same server. the protocol is documented in the README section [tele server](server.md). the client only downloads a list and never tells the server which accounts it looks at.
 
 the badge json can carry a `notices` array. `tele/tele_badges.cpp` (`ParseFeed`) parses it, and `tele/tele_server_notices.*` filters notices by build, platform, user key and time, fetches photos and shows toasts. they land in the notification centre, `tele/tele_notices*.*`: a per-account encrypted history (30 days, 300 entries) behind main menu → notifications, which also logs tele toasts, rate limits, updates, sent crash and freeze reports and online alerts.
 

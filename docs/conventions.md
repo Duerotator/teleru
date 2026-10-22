@@ -111,6 +111,6 @@ off by default has to mean exactly upstream's behaviour. with the option off, th
 tele is a client for people who care what leaves their machine.
 
 - no new third-party network requests without a setting that controls them. the setting defaults to off.
-- every network request tele adds checks the launch flags at its lowest level: `Tele::OfflineForLaunch()` for third-party services, `Tele::ServerOffForLaunch()` for the tele server, `Tele::UpdatesOffForLaunch()` for github updates and what's new. update the [launch flags](../README.md#launch-flags) section of README when a flag starts covering something new.
+- every network request tele adds checks the launch flags at its lowest level: `Tele::OfflineForLaunch()` for third-party services, `Tele::ServerOffForLaunch()` for the tele server, `Tele::UpdatesOffForLaunch()` for github updates and what's new. update the [launch flags](launch-flags.md) section of README when a flag starts covering something new.
 - never send account data to the tele server: no ids, usernames, contacts or messages. the client downloads a public list and does the matching locally. the only exception is a crash report, which leaves only after the user clicks send, shows its text first and lets the user untick their username.
-- the tele server protocol is public in README ([tele server](../README.md#tele-server)). a change to it is a documented, backwards compatible change there, not a hidden one in the code.
+- the tele server protocol is public in README ([tele server](server.md)). a change to it is a documented, backwards compatible change there, not a hidden one in the code.

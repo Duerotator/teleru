@@ -81,7 +81,7 @@ a dev build is a real client on a real account. set it up so a bug can't hurt an
 
 - **separate data.** on windows, tele keeps its data next to the exe, so `out\Debug` gets its own `tdata`. on linux and macos, a dev build would share the data of an installed tele (`~/.local/share/tele`, `~/Library/Application Support/tele`); start it with upstream's `-workdir <folder>` to keep it apart.
 - **test accounts.** use a secondary account, or telegram's test servers: a plain right-click on "add account" offers the test server. test accounts are free and disposable.
-- **tele's own network off.** start with `-teleoffline` to keep tele away from the tele server, github updates and third-party services while you work on something unrelated. `-noteleserver` and `-noteleupdate` turn off one of them. see [launch flags](../README.md#launch-flags).
+- **tele's own network off.** start with `-teleoffline` to keep tele away from the tele server, github updates and third-party services while you work on something unrelated. `-noteleserver` and `-noteleupdate` turn off one of them. see [launch flags](launch-flags.md).
 - **logs.** settings → tele → debug turns debug logs on, opens the logs folder and has an mtproto inspector that browses the logged requests and responses. upstream's `-debug` launch flag also turns debug logs on from the start.
 
 ## making a change
