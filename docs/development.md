@@ -1,25 +1,25 @@
-# development
+# разработка
 
-how to get the tele sources, build them, run a dev build safely, make a change and turn it into a patch. read [architecture](architecture.md) first for how the queue works, and [conventions](conventions.md) for how the code should look.
+как получить исходные тексты tele, собрать их, безопасно запустить dev-сборку, внести изменение и превратить его в патч. предварительно ознакомьтесь с [архитектурой](architecture.md) для понимания работы очереди и [соглашениями](conventions.md) по оформлению кода.
 
-## prerequisites
+## предварительные требования
 
-- everything upstream needs to build telegram desktop at the tag in `UPSTREAM`. read upstream's `docs/building-win.md`, `docs/building-linux.md` or `docs/building-mac.md` **from that tag** (they are in your tdesktop checkout after `tele.py checkout`), not from upstream's default branch: toolchains and library versions change between releases.
-- python 3 and git on `PATH`.
-- a git identity (`user.name`, `user.email`): `tele.py` creates commits with `git am`.
-- your own `api_id` and `api_hash` from [my.telegram.org](https://my.telegram.org), see upstream's `docs/api_credentials.md`. never use the official telegram desktop credentials, and never try to reuse the credentials of tele's ci.
-- a lot of disk space and time. a first build prepares every library from source: expect tens of gigabytes and an hour or more.
+- всё необходимое для сборки Telegram Desktop на теге, указанном в `UPSTREAM`. прочитайте инструкции апстрима `docs/building-win.md`, `docs/building-linux.md` или `docs/building-mac.md` **из этого тега** (они находятся в вашем клоне tdesktop после `tele.py checkout`), а не из ветки master: версии инструментов и библиотек меняются между релизами.
+- Python 3 и Git в переменной окружения `PATH`.
+- настройки пользователя Git (`user.name`, `user.email`): утилита `tele.py` создает коммиты через `git am`.
+- собственные `api_id` и `api_hash`, полученные на [my.telegram.org](https://my.telegram.org) (см. `docs/api_credentials.md` в апстриме). никогда не используйте официальные ключи Telegram Desktop и не пытайтесь использовать ключи CI tele.
+- достаточное количество дискового пространства и времени. первая сборка компилирует все сторонние библиотеки из исходников: рассчитывайте на десятки гигабайт и час или более времени.
 
-## getting the sources
+## получение исходного кода
 
-put the tele repository and a tdesktop clone next to each other. `tele.py` looks for `../tdesktop` by default. on windows, upstream's prepare script also expects `ThirdParty` and `Libraries` next to `tdesktop`, so one build folder holds everything:
+разместите репозиторий tele и клон tdesktop рядом друг с другом. `tele.py` по умолчанию ожидает `../tdesktop`. в Windows скрипт подготовки библиотек апстрима также ожидает папки `ThirdParty` и `Libraries` рядом с `tdesktop`, поэтому все файлы располагаются в одной рабочей директории:
 
 ```
 <BuildPath>/
-  ThirdParty/     created by upstream's prepare script (windows)
-  Libraries/      created by upstream's prepare script (windows)
-  tdesktop/       upstream clone, driven by tele.py
-  tele/           this repository
+  ThirdParty/     создается скриптом подготовки апстрима (windows)
+  Libraries/      создается скриптом подготовки апстрима (windows)
+  tdesktop/       клон апстрима, управляемый tele.py
+  tele/           репозиторий tele
 ```
 
 ```
@@ -31,38 +31,38 @@ git checkout next
 python tele.py checkout
 ```
 
-`checkout` fetches the tag from `UPSTREAM`, puts tdesktop and every submodule on a `tele` branch at that tag and applies the queue as commits. when it finishes, tdesktop is the tele source tree: `git log v7.3.1..tele` (with the tag from `UPSTREAM`) shows one commit per patch.
+команда `checkout` запрашивает тег из `UPSTREAM`, переводит tdesktop и каждый подмодуль на ветку `tele` на этом теге и накладывает очередь патчей в виде коммитов. по завершении tdesktop готов к работе: команда `git log v7.3.1..tele` (с тегом из `UPSTREAM`) отобразит по одному коммиту на каждый патч.
 
-when you run `checkout` again later, it refuses as long as there is uncommitted or unexported work in the tree, and lists what it found. export it, or pass `--force` to throw it away.
+при повторном запуске `checkout` откажется выполняться при наличии неэкспортированной или незафиксированной работы, выводя обнаруженные изменения. выполните экспорт или укажите флаг `--force` для сброса.
 
-## building
+## сборка
 
-follow upstream's build doc for your platform, starting from the "prepare libraries" step: the clone step is already done. the tele specifics:
+следуйте руководству по сборке апстрима для вашей операционной системы, начиная со шага «подготовка библиотек» (этап клонирования уже выполнен). специфика tele:
 
-- configure with your own credentials and upstream's updater off:
+- сконфигурируйте сборку с собственными учетными данными и отключенным апдейтером апстрима:
 
   ```
-  -D TDESKTOP_API_ID=<your id> -D TDESKTOP_API_HASH=<your hash> -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON
+  -D TDESKTOP_API_ID=<ваш id> -D TDESKTOP_API_HASH=<ваш hash> -D DESKTOP_APP_DISABLE_AUTOUPDATE=ON
   ```
 
-  `DESKTOP_APP_DISABLE_AUTOUPDATE=ON` keeps upstream's own updater out of the build, so it can never replace your build with an official telegram. ci passes it too.
-- leave `TELE_BUILD` at its default, `0`. that makes a dev build: the title bar says `TELE DEV`, the self-updater and what's new are off. only set a real number when you test the updater itself, and go back to `0` afterwards.
-- to test crash reports, add `-D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF`, like ci.
-- the binary is called `tele`: `out/Debug/tele.exe` on windows, `out/Debug/tele.app` on macos, `out/Debug/tele` on linux (or `Release`). an old `Telegram.exe` in `out` is from a build before the rename.
-- after moving tdesktop to another tag, run upstream's prepare script again: each tag's `Telegram/build/prepare/prepare.py` can pin other library versions.
+  флаг `DESKTOP_APP_DISABLE_AUTOUPDATE=ON` исключает встроенный автоапдейтер Telegram из сборки, предотвращая случайную замену вашей сборки на официальный клиент. CI также использует этот флаг.
+- оставьте `TELE_BUILD` по умолчанию равным `0`. это создаст dev-сборку: в заголовке окна будет написано `TELE DEV`, а самообновление и загрузка новостей будут отключены. устанавливайте реальный номер только при тестировании самого механизма автообновления.
+- для тестирования отчетов о сбоях добавьте `-D DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF`, как в CI.
+- исполняемый файл называется `tele`: `out/Debug/tele.exe` в Windows, `out/Debug/tele.app` в macOS, `out/Debug/tele` в Linux (или `Release`).
+- после переключения tdesktop на другой тег запустите скрипт подготовки апстрима повторно, так как новый тег может использовать другие версии библиотек.
 
-### windows
+### Windows
 
-upstream's doc uses visual studio. once `configure.bat x64 ...` has run (without `x64` you get a 32-bit project), you can also build from the terminal it asks you to set up:
+документация апстрима использует Visual Studio. после выполнения `configure.bat x64 ...` (без `x64` генерируется 32-битный проект) вы также можете выполнять сборку прямо из настроенного терминала:
 
 ```
 cd <BuildPath>\tdesktop\Telegram
 cmake --build ..\out --config Debug --parallel --target Telegram
 ```
 
-- `win.bat skip-release silent` prepares only the debug libraries and rebuilds stale ones without asking. that's all a debug build needs.
-- `-- /p:LinkIncremental=true` at the end of the build command turns incremental linking on for that build only. after one full link, rebuilding a single edited `.cpp` takes seconds instead of minutes. a build without the flag throws the incremental state away.
-- older msvc toolsets can fail to build libjxl with `_sub_overflow_i32` not found. force-include `intrin.h` for that one stage, then continue:
+- `win.bat skip-release silent` подготавливает только отладочные библиотеки и пересобирает устаревшие без лишних вопросов.
+- параметр `-- /p:LinkIncremental=true` в конце команды сборки включает инкрементальную линковку. после одной полной линковки пересборка единственного измененного `.cpp` занимает секунды вместо минут.
+- старые инструментарии MSVC могут падать при сборке libjxl из-за отсутствия `_sub_overflow_i32`. принудительно подключите `intrin.h` для этого шага:
 
   ```
   set CL=/FIintrin.h
@@ -71,94 +71,85 @@ cmake --build ..\out --config Debug --parallel --target Telegram
   tdesktop\Telegram\build\prepare\win.bat skip-release silent
   ```
 
-### linux and macos
+### Linux и macOS
 
-build as upstream describes. for linux that's the docker build environment from `prepare/linux.sh`, with the `-D` options above appended to the `build.sh` command. for macos, pass them to `./configure.sh`.
+собирайте по инструкции апстрима: для Linux используется Docker-окружение из `prepare/linux.sh` с флагами `-D`, переданными в команду `build.sh`. для macOS передайте их в `./configure.sh`.
 
-## running a dev build safely
+## безопасный запуск dev-сборки
 
-a dev build is a real client on a real account. set it up so a bug can't hurt an account you care about:
+dev-сборка — это полноценный рабочий клиент в реальной учетной записи. настройте его так, чтобы ошибка не повредила важные данные:
 
-- **separate data.** on windows, tele keeps its data next to the exe, so `out\Debug` gets its own `tdata`. on linux and macos, a dev build would share the data of an installed tele (`~/.local/share/tele`, `~/Library/Application Support/tele`); start it with upstream's `-workdir <folder>` to keep it apart.
-- **test accounts.** use a secondary account, or telegram's test servers: a plain right-click on "add account" offers the test server. test accounts are free and disposable.
-- **tele's own network off.** start with `-teleoffline` to keep tele away from the tele server, github updates and third-party services while you work on something unrelated. `-noteleserver` and `-noteleupdate` turn off one of them. see [launch flags](launch-flags.md).
-- **logs.** settings → tele → debug turns debug logs on, opens the logs folder and has an mtproto inspector that browses the logged requests and responses. upstream's `-debug` launch flag also turns debug logs on from the start.
+- **изолированные данные.** в Windows tele хранит данные рядом с exe-файлом, поэтому `out\Debug` получает собственную папку `tdata`. в Linux и macOS dev-сборка по умолчанию делит данные с установленной версией (`~/.local/share/tele`, `~/Library/Application Support/tele`); запускайте с параметром апстрима `-workdir <путь_к_папке>`, чтобы изолировать профиль.
+- **тестовые аккаунты.** используйте вспомогательный аккаунт или тестовые серверы Telegram: правый клик по кнопке «добавить аккаунт» предлагает переключиться на тестовый сервер. тестовые аккаунты бесплатны и безопасны для экспериментов.
+- **отключение сетевых служб tele.** запускайте с флагом `-teleoffline`, чтобы изолировать tele от сервера tele, обновлений GitHub и сторонних сервисов во время работы над несвязанным кодом. флаги `-noteleserver` и `-noteleupdate` отключают соответствующие компоненты раздельно. см. [флаги запуска](launch-flags.md).
+- **логирование.** меню: настройки → tele → отладка включает подробные отладочные логи, открывает папку с ними и содержит инспектор MTProto для анализа сетевых запросов и ответов. флаг запуска апстрима `-debug` включает логи с самого старта приложения.
 
-## making a change
+## внесение изменений
 
-all work happens in the tdesktop tree, as commits on the `tele` branch.
+вся разработка ведется в дереве tdesktop в виде коммитов на ветке `tele`.
 
-1. **edit** in the repository that owns the file: the tdesktop root, or inside the submodule (`Telegram/lib_ui` and so on). follow [conventions](conventions.md).
-2. **build and run** the dev build. exercise the change by hand, with the option on and off. off has to behave exactly like upstream.
-3. **commit.**
-   - a new feature is one new commit at the end of the queue: `feat: <what it does>`. adding it at the end keeps every existing patch number and README link.
-   - a fix or improvement of a patch that isn't released yet goes into that patch's commit: `git commit --fixup <commit>`, then `git rebase -i --autosquash <UPSTREAM tag>`.
-   - a fix of a released patch can be its own `fix:` commit at the end. the maintainer may fold it into the feature's patch before the next release.
-   - commit changes to a submodule inside the submodule. never commit a moved submodule pointer in the root: `export` rejects it.
-4. **export** from the tele repository:
+1. **внесение правок** в репозиторий, содержащий нужный файл: в корень tdesktop или внутри подмодуля (`Telegram/lib_ui` и т.д.). соблюдайте [соглашения](conventions.md).
+2. **сборка и запуск** dev-сборки. проверьте работу изменения вручную во включенном и выключенном состоянии опции. в выключенном состоянии поведение должно быть неотличимо от апстрима.
+3. **коммит.**
+   - новая функция оформляется как один коммит в конце очереди: `feat: <что делает>`. добавление в конец сохраняет нумерацию всех существующих патчей и ссылки в документации.
+   - исправление еще не выпущенного патча объединяется с коммитом этого патча: `git commit --fixup <коммит>`, затем `git rebase -i --autosquash <тег UPSTREAM>`.
+   - исправление уже выпущенного патча оформляется отдельным коммитом `fix:` в конце очереди. мейнтейнер может объединить его с основным патчем перед следующим релизом.
+   - фиксируйте изменения подмодулей внутри самого подмодуля. никогда не коммитьте смещенный указатель подмодуля в корневом репозитории: `export` отклонит такую операцию.
+4. **экспорт** из репозитория tele:
 
    ```
    python tele.py export
    ```
 
-   this rewrites `patches/` from the commits and prints the patch count per group. `git status` in the tele repository shows exactly which patches your change touched. a change in one feature should touch one patch.
-5. **readme row.** for a new patch, add a row to the patch table in `README.md` (see [the readme row](#the-readme-row)).
-6. **dry run** against pristine upstream (see [proving the queue applies](#proving-the-queue-applies)).
-7. **commit and open a pull request** in the tele repository against `next`, with `patches/`, `README.md` and nothing else unless the change needs it:
+   команда перезаписывает каталог `patches/` из коммитов и выводит количество патчей в каждой группе. `git status` в репозитории tele наглядно покажет, какие патчи затронуты. изменение одной функции должно затрагивать ровно один патч.
+5. **строка в таблице.** для нового патча добавьте строку в таблицу документации в `README.md` и `docs/releases.md` (см. [строка патча](#the-patch-row)).
+6. **тестовый прогон** на чистом апстриме (см. [проверка наложения очереди](#proving-the-queue-applies)).
+7. **коммит и pull request** в репозиторий tele в ветку `next` с каталогом `patches/`, `README.md` и сопутствующей документацией:
 
    ```
-   git add -A patches README.md
-   git commit -m "feat: <what it does>"
+   git add -A patches README.md docs/
+   git commit -m "feat: <что делает>"
    ```
 
-to drop a patch, remove its commit (`git rebase -i`) and export again.
+для удаления патча удалите его коммит (`git rebase -i`) и выполните экспорт заново.
 
-## the readme row
+<a id="the-patch-row"></a>
+## строка патча
 
-every patch has one row in the table in `README.md`, under the heading of the release that introduces it. release notes and the in-app what's new are generated from these rows, so the format is strict:
-
-```
-| [109](patches/tdesktop/0109-feat-your-subject.patch) | what it does, in one or two short lowercase sentences | tele → chats, off |
-```
-
-- the link has to be the exact file name `export` wrote.
-- "what it does" is written for users: what they see and where, not how it's implemented.
-- "where to toggle" is `tele → <page>` (optionally `→ <row>`) followed by the default (`off`, `on`, `off, needs a restart`), or `always on`, or `with N` for a patch that extends patch N. the page names are the ones in the app: `interface`, `chats`, `messages`, `sending`, `notifications`, `menus`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates`, `debug`. see [release notes](architecture.md#release-notes) for how this becomes a category.
-- new rows go at the end of the table of the next release. if the newest section belongs to a release that is already out, start a new section above it: `### [tele N](https://github.com/nitreojs/tele/releases/tag/<UPSTREAM>-tele.N)` with the next release number.
-- update the count in `<summary>all N patches, newest release first</summary>`.
-- if the feature changes what a launch flag turns off, or the tele server protocol, update those README sections too.
-
-## proving the queue applies
-
-your tree applies the queue on top of your own history. ci applies it to a fresh clone of the upstream tag. check that the exported patches apply the way ci does:
+каждый патч описывается одной строкой в таблице `README.md` и `docs/releases.md` под заголовком релиза, в котором он появился. списки изменений релиза и окно «что нового» формируются из этих строк, поэтому формат строго фиксирован:
 
 ```
-git clone --depth 1 --branch <tag from UPSTREAM> --recurse-submodules --shallow-submodules https://github.com/telegramdesktop/tdesktop.git <scratch folder>
-python tele.py --tdesktop <scratch folder> apply
+| [109](../patches/tdesktop/0109-feat-your-subject.patch) | что делает, в одном-двух коротких предложениях в нижнем регистре | tele → чаты, выкл. |
 ```
 
-it has to end with `tdesktop is on <tag> with N patch(es) applied` and no conflict. throw the scratch folder away afterwards. a patch that only applies in your tree usually means a commit wasn't exported, or the queue was edited by hand.
+- ссылка должна точно соответствовать имени файла, сформированному утилитой `export`.
+- колонка «что делает» пишется для пользователей: что именно они увидят и где, а не технические детали реализации.
+- колонка «где переключается» задает путь: `tele → <страница>` (опционально `→ <строка>`), после чего следует состояние по умолчанию (`выкл.`, `вкл.`, `выкл., требуется перезапуск`), либо `всегда вкл.`, либо `вместе с N` для патча, расширяющего патч N. названия страниц соответствуют вкладкам приложения: `интерфейс`, `чаты`, `сообщения`, `отправка`, `уведомления`, `меню`, `приватность`, `профили и id`, `боты`, `сервер`, `резервные копии`, `обновления`, `отладка`. см. [описание релизов](architecture.md#описание-релизов-release-notes).
+- новые строки добавляются в конец таблицы следующего релиза. если текущий релиз уже опубликован, создайте новую секцию над ним: `### [tele N](https://github.com/nitreojs/tele/releases/tag/<UPSTREAM>-tele.N)` со следующим номером релиза.
+- обновите общее количество патчей в счетчике.
 
-## syncing with a new upstream release
+<a id="proving-the-queue-applies"></a>
+## проверка наложения очереди
 
-sync.yml does this in ci and opens a `patch-conflict` issue when the queue doesn't apply to a new release. resolving it is local work:
-
-1. `git pull` in the tele repository.
-2. `python tele.py checkout <new tag>`.
-3. on a conflict, `tele.py` stops and prints the failing patch, the conflicted files and the repository to fix. in that repository: fix the files, `git add` them, `git am --continue`. if upstream already contains the change, `git am --skip` drops the patch.
-4. `python tele.py continue` applies the rest. repeat 3 and 4 until everything is applied.
-5. run upstream's prepare script again (the new tag may pin other libraries), build, and check the patches whose conflicts you resolved.
-6. `python tele.py export`. this also writes the new tag into `UPSTREAM`.
-7. commit `UPSTREAM` and `patches/` as `chore: rebase patches onto <tag>`.
-
-the resolution ends up in the exported patches, so it never has to be repeated. a sync is its own change: never bump `UPSTREAM` in a feature pull request.
-
-conflicts against upstream's `dev` branch (the `canary-conflict` issue) are resolved the same way, on a checkout of `dev`:
+ваше дерево накладывает очередь поверх локальной истории. CI применяет её к чистому клону апстрим-тега. убедитесь, что экспортированные патчи накладываются так же чисто, как в CI:
 
 ```
-git -C ../tdesktop fetch origin dev
-git -C ../tdesktop checkout --detach origin/dev
-python tele.py apply
+git clone --depth 1 --branch <тег из UPSTREAM> --recurse-submodules --shallow-submodules https://github.com/telegramdesktop/tdesktop.git <временная_папка>
+python tele.py --tdesktop <временная_папка> apply
 ```
 
-then fix, `git am --continue` and `python tele.py continue` as above. this only shows the conflict early: never export from a `dev` checkout, the patches would be based on `dev`. carry the fix over to your checkout of `UPSTREAM` when it applies there too, otherwise keep it for the release that brings the change.
+команда должна завершиться сообщением `tdesktop is on <тег> with N patch(es) applied` без конфликтов. после проверки временную папку можно удалить.
+
+## синхронизация с новым релизом апстрима
+
+workflow `sync.yml` отслеживает релизы в CI и создает issue `patch-conflict`, если очередь не накладывается на новый релиз. разрешение конфликтов выполняется локально:
+
+1. `git pull` в репозитории tele.
+2. `python tele.py checkout <новый тег>`.
+3. при возникновении конфликта `tele.py` останавливается и выводит имя проблемного патча, конфликтующие файлы и имя репозитория. в этом репозитории: исправьте файлы, добавьте их через `git add` и выполните `git am --continue`. если апстрим уже включил данное изменение, команда `git am --skip` исключит патч.
+4. `python tele.py continue` продолжает наложение очереди. повторяйте шаги 3 и 4 до полного применения.
+5. запустите скрипт подготовки апстрима заново, выполните тестовую сборку и проверьте затронутые функции.
+6. выполните `python tele.py export` (команда также запишет новый тег в `UPSTREAM`).
+7. зафиксируйте `UPSTREAM` и `patches/` коммитом `chore: rebase patches onto <тег>`.
+
+результат разрешения фиксируется в экспортированных патчах и больше никогда не потребует повторения. синхронизация оформляется отдельным коммитом: никогда не обновляйте `UPSTREAM` в pull request с новой функциональностью.

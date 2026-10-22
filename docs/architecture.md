@@ -1,45 +1,45 @@
-# architecture
+# архитектура
 
-how tele is put together: the patch queue, the tooling around it, how the fork code is organised inside the patched tree, and what ci does with it. keep this file in sync when any of it changes.
+как устроен tele: очередь патчей, сопутствующий инструментарий, организация кода форка внутри пропатченного дерева и работа CI. поддерживайте этот файл в актуальном состоянии при любых изменениях структуры.
 
-## the patch queue
+## очередь патчей
 
-tele is not a git fork of [tdesktop](https://github.com/telegramdesktop/tdesktop). this repository holds a pinned upstream tag and a queue of patches. to get the tele sources, you clone upstream at that tag and apply the queue on top.
+tele не является git-форком [tdesktop](https://github.com/telegramdesktop/tdesktop). этот репозиторий содержит зафиксированный тег апстрима и очередь патчей. чтобы получить исходный код tele, вы клонируете апстрим на этом теге и накладываете очередь поверх него.
 
-why a queue and not a fork:
+почему очередь, а не форк:
 
-- every change is a separate, reviewable patch with a one-line subject. the queue is the changelog.
-- moving to a new upstream release means replaying the queue on the new tag. a conflict points at exactly one patch, and the fix lands in that patch only.
-- the diff against upstream stays visible and small. nothing drifts silently.
-- ci builds from pristine upstream plus the queue, so what you review is what ships.
+- каждое изменение — это отдельный патч для ревью с однострочным заголовком. очередь сама по себе является списком изменений (changelog).
+- переход на новый релиз апстрима означает накатывание очереди поверх нового тега. конфликт указывает ровно на один патч, и исправление вносится исключительно в этот патч.
+- diff по сравнению с апстримом остаётся наглядным и компактным. ничего не расходится скрытно.
+- CI собирает приложение из чистого апстрима плюс очереди, поэтому то, что вы проверяете в ревью — это ровно то, что поставляется пользователям.
 
-rules that follow from this:
+правила, вытекающие из этого:
 
-- one feature per patch. later fixes and improvements to a feature are folded into its patch before a release where possible (see [folding](#folding-and-baselines)).
-- fork code lives in new files. upstream files only get small hunks that call into them. small hunks survive upstream changes, big ones conflict every release.
+- одна функция на патч. последующие исправления и доработки функции по возможности объединяются (fold) в её исходный патч перед релизом (см. [объединение и базовые линии](#folding-and-baselines)).
+- код форка живёт в новых файлах. файлы апстрима получают только минимальные хуки, вызывающие код форка. маленькие хуки легко переносят изменения апстрима, тогда как крупные блоки конфликтуют при каждом релизе.
 
-## repository layout
+## структура репозитория
 
 ```
-UPSTREAM                      the tdesktop release tag the queue targets, e.g. v7.2.9
-patches/tdesktop/*.patch      patches for the tdesktop repository itself
-patches/<submodule>/*.patch   patches for a submodule, e.g. patches/Telegram/lib_ui/
-tele.py                       applies the queue to a tdesktop checkout and exports it back
-README.md                     user docs and the patch table, the source of release notes
-ci/notes.py                   github release notes and the in-app changelog json
-ci/announce.py                release announcement for the telegram channel
-ci/baselines.json             folded patch hashes of a previous release
-ci/issue.sh                   opens, comments on and closes github issues from ci
-ci/msvc.cmd                   enters the msvc environment on windows runners
-ci/macos-setup.sh             macos runner setup
-ci/macos-libs.sh              pulls and pushes the prepared macos libraries in ghcr
-ci/update-public-key.pem      public key of the update feed signature
+UPSTREAM                      тег релиза tdesktop, на который нацелена очередь, например v7.2.9
+patches/tdesktop/*.patch      патчи непосредственно для репозитория tdesktop
+patches/<submodule>/*.patch   патчи для подмодулей, например patches/Telegram/lib_ui/
+tele.py                       накладывает очередь на tdesktop и экспортирует её обратно
+README.md                     документация пользователя и таблица патчей, основа для описания релизов
+ci/notes.py                   формирует release notes для GitHub и changelog.json для приложения
+ci/announce.py                формирует анонс релиза для Telegram-канала
+ci/baselines.json             хеши объединенных патчей предыдущего релиза
+ci/issue.sh                   создает, комментирует и закрывает issues в GitHub из CI
+ci/msvc.cmd                   вход в окружение MSVC на Windows-раннерах
+ci/macos-setup.sh             настройка окружения раннера macOS
+ci/macos-libs.sh              загружает и пушит подготовленные библиотеки macOS в GHCR
+ci/update-public-key.pem      публичный ключ подписи канала обновлений
 .github/workflows/            build.yml, sync.yml, canary.yml, promote.yml
 ```
 
-`.gitattributes` stores `*.patch` byte for byte (`-text`), so git never rewrites line endings inside a patch.
+`.gitattributes` хранит `*.patch` побайтово (`-text`), поэтому git никогда не переписывает окончания строк внутри патча.
 
-there are no submodule patches yet, only `patches/tdesktop/`. `tele.py` already handles submodule groups.
+патчи подмодулей применяются через `patches/Telegram/lib_ui/` и т.д. `tele.py` автоматически обрабатывает группы подмодулей.
 
 ## tele.py
 
@@ -47,220 +47,221 @@ there are no submodule patches yet, only `patches/tdesktop/`. `tele.py` already 
 python tele.py [--tdesktop PATH] {checkout,continue,export,apply}
 ```
 
-`--tdesktop` is a global option and goes before the command. it defaults to `../tdesktop`, next to this repository, and has to be an existing git checkout of tdesktop.
+`--tdesktop` — глобальный параметр, указывается перед командой. по умолчанию равен `../tdesktop` рядом с этим репозиторием и должен указывать на существующий git-клон tdesktop.
 
-| command | what it does |
+| команда | что делает |
 |---|---|
-| `checkout [TAG] [--force]` | fetches `TAG` (default: the tag in `UPSTREAM`) from upstream, resets tdesktop to it on a branch called `tele`, syncs and updates every submodule and puts each one on its own `tele` branch, then applies the queue as commits with `git am --3way --keep-cr --keep-non-patch`. it refuses to run when any repository has uncommitted changes, an unfinished `git am` or `git rebase`, or commits that were not exported yet. `--force` discards all of that. |
-| `continue` | resumes applying after you resolved a conflict and finished `git am --continue` (or `--skip`) in the reported repository. |
-| `export` | turns the commits on top of the checked-out tag back into patches: `git format-patch --zero-commit --no-signature --no-numbered --full-index` for the root and every submodule with commits, into a fresh `patches/` directory. writes the checked-out tag into `UPSTREAM`. refuses with uncommitted changes, an unfinished `git am`, a group still being applied, or a commit that moves a submodule pointer. |
-| `apply` | applies the queue to a fresh clone that is already on the right tag. this is what ci runs. the tag is read from `git describe --tags --exact-match HEAD`, or `UPSTREAM` when `HEAD` has no tag. |
+| `checkout [TAG] [--force]` | загружает `TAG` (по умолчанию: тег из `UPSTREAM`) из апстрима, сбрасывает tdesktop к нему на ветку `tele`, синхронизирует и обновляет каждый подмодуль, переводя каждый на собственную ветку `tele`, затем применяет очередь как коммиты через `git am --3way --keep-cr --keep-non-patch`. команда откажется запускаться, если в каком-либо репозитории есть незафиксированные изменения, незавершенный `git am` или `git rebase`, либо неэкспортированные коммиты. `--force` отбрасывает всё это. |
+| `continue` | возобновляет применение после разрешения конфликта и завершения `git am --continue` (или `--skip`) в проблемном репозитории. |
+| `export` | превращает коммиты поверх выбранного тега обратно в патчи: `git format-patch --zero-commit --no-signature --no-numbered --full-index` для корня и каждого подмодуля с коммитами в чистый каталог `patches/`. записывает выбранный тег в `UPSTREAM`. отказывается работать при наличии незакоммиченных правок, незавершенного `git am`, незавершенного процесса применения или коммита, меняющего указатель подмодуля. |
+| `apply` | применяет очередь к чистому клону, уже находящемуся на правильном теге. это действие выполняет CI. тег считывается из `git describe --tags --exact-match HEAD`, либо из `UPSTREAM`, если у `HEAD` нет тега. |
 
-details that matter when you work with it:
+важные детали при работе:
 
-- `checkout` sets `submodule.<name>.ignore=all` in every repository, so `git status` and `git commit -a` in a parent never pick up a moved submodule pointer. commit submodule changes inside the submodule.
-- re-exporting unchanged commits produces byte-identical patches: no commit hashes, no signature, no `n/m` numbering. `export` regenerates the whole `patches/` directory, so a commit inserted in the middle of the queue renumbers every patch after it.
-- patch file names come from `git format-patch`: the number plus the subject, truncated. changing a subject renames the file.
-- before applying, `apply` and `checkout` make sure a 3-way merge can find each patch's base blobs: when `HEAD` isn't the `UPSTREAM` tag, the queue is first replayed on `UPSTREAM` in a temporary worktree.
-- the app rename touches the same lines of `Telegram/SourceFiles/core/version.h` and `Telegram/Resources/winrc/Telegram.rc` that every release bumps. `tele.py` resolves that conflict on its own: upstream's version values, tele's name values.
-- when upstream and a patch both add `#include` lines at the same spot, `tele.py` keeps both: the union of the two blocks, sorted when both were sorted. any other conflict stops the apply for a human. a file that conflicts without conflict markers (one side deleted it) is never resolved automatically.
-- on a conflict it stops and prints the failing patch, the conflicted files, the `git am` output and what to run next.
+- `checkout` выставляет `submodule.<name>.ignore=all` в каждом репозитории, поэтому `git status` и `git commit -a` в родительском репозитории никогда не зацепят сдвинутый указатель подмодуля. фиксируйте изменения подмодулей внутри самого подмодуля.
+- повторный экспорт неизмененных коммитов генерирует побайтово идентичные патчи: без хешей коммитов, без подписей, без нумерации `n/m`. `export` полностью пересоздает каталог `patches/`, поэтому вставка коммита в середину очереди перенумеровывает все патчи после него.
+- имена файлов патчей генерируются `git format-patch`: номер плюс сокращенная тема. изменение темы переименовывает файл.
+- перед наложением `apply` и `checkout` проверяют, что 3-стороннее слияние может найти базовые блобы каждого патча: если `HEAD` не является тегом `UPSTREAM`, очередь сначала воспроизводится на `UPSTREAM` во временном worktree.
+- переименование приложения затрагивает те же строки `Telegram/SourceFiles/core/version.h` и `Telegram/Resources/winrc/Telegram.rc`, которые обновляются в каждом релизе. `tele.py` разрешает этот конфликт самостоятельно: значения версии берутся из апстрима, значения имени — из tele.
+- когда апстрим и патч одновременно добавляют строки `#include` в одно и то же место, `tele.py` объединяет обе группы: формируется объединение двух блоков с сортировкой, если исходные блоки были отсортированы. любой другой конфликт останавливает наложение для вмешательства человека. файл с конфликтом без маркеров конфликта (одна сторона удалила его) никогда не разрешается автоматически.
+- при конфликте процесс останавливается и выводит проблемный патч, конфликтующие файлы, вывод `git am` и команду для продолжения.
 
-state lives in `<tdesktop>/.git/tele-state.json`:
+состояние хранится в `<tdesktop>/.git/tele-state.json`:
 
-| key | meaning |
+| ключ | значение |
 |---|---|
-| `tag` | the tag the queue was applied to |
-| `bases` | `HEAD` of the root and every submodule right after the checkout, before any patch |
-| `pending` | patch groups that still have to be applied |
-| `heads` | `HEAD` of every repository after the last apply or export, used to detect unexported work |
+| `tag` | тег, к которому была применена очередь |
+| `bases` | `HEAD` корня и каждого подмодуля сразу после checkout, до применения патчей |
+| `pending` | группы патчей, которые ещё предстоит применить |
+| `heads` | `HEAD` каждого репозитория после последнего apply или export, используется для отслеживания неэкспортированной работы |
 
-## patch groups
+## группы патчей
 
-a group is a directory under `patches/`. `patches/tdesktop/` is the root repository. any other path is a submodule path inside tdesktop, like `patches/Telegram/lib_ui/`. each group is applied with `git am` inside its own repository, in file name order. a group whose path isn't a submodule of the checked-out tag is an error. a patch directly in `patches/` is an error too.
+группа — это каталог внутри `patches/`. `patches/tdesktop/` — корневой репозиторий. любой другой путь — это путь к подмодулю внутри tdesktop, например `patches/Telegram/lib_ui/`. каждая группа применяется через `git am` внутри своего репозитория по порядку имен файлов. группа, чей путь не является подмодулем выбранного тега, считается ошибкой. нахождение патча прямо в корне `patches/` также является ошибкой.
 
-## fork code in the tdesktop tree
+## код форка в дереве tdesktop
 
-everything below is inside the patched tree (tdesktop after `tele.py checkout`), under `Telegram/SourceFiles/`.
+всё, описанное ниже, находится внутри пропатченного дерева (tdesktop после `tele.py checkout`), в каталоге `Telegram/SourceFiles/`.
 
-### where code lives
+### размещение кода
 
-- `tele/tele_*.cpp` and `tele/tele_*.h`: all fork code, in `namespace Tele`. one module per feature or shared piece, e.g. `tele_ghost.*`, `tele_deleted.*`, `tele_title.*`.
-- `settings/settings_tele.cpp` and `.h`: the tele settings section and its pages.
-- `Telegram/CMakeLists.txt`: one `nice_target_sources(Telegram ${src_loc} ...)` block lists `settings/settings_tele.*` and every `tele/*` file. a new file has to be added there.
-- upstream files get small hunks: an include plus a call into `Tele::`.
+- `tele/tele_*.cpp` и `tele/tele_*.h`: весь код форка, в пространстве имён `namespace Tele`. один модуль на функцию или общий компонент, например `tele_ghost.*`, `tele_deleted.*`, `tele_title.*`.
+- `settings/settings_tele.cpp` и `.h`: раздел настроек tele и его подразделы.
+- `Telegram/CMakeLists.txt`: блок `nice_target_sources(Telegram ${src_loc} ...)` перечисляет `settings/settings_tele.*` и каждый файл `tele/*`. каждый новый файл должен быть добавлен туда.
+- файлы апстрима содержат только минимальные хуки: include плюс вызов в `Tele::`.
 
-### build number
+### номер сборки
 
-`Telegram/CMakeLists.txt` declares `set(TELE_BUILD 0 CACHE STRING "tele release number, 0 for local builds")` and passes it as a compile definition to `tele/tele_build.cpp` only, so changing it rebuilds one file. `Tele::BuildNumber()` returns it.
+`Telegram/CMakeLists.txt` объявляет `set(TELE_BUILD 0 CACHE STRING "tele release number, 0 for local builds")` и передает его как макроопределение компилятора только в `tele/tele_build.cpp`, поэтому его смена пересобирает ровно один файл. Функция `Tele::BuildNumber()` возвращает это значение.
 
-- ci builds with `-D TELE_BUILD=<N>`, the release number. the title bar shows `tele #N`, the main menu `build #N`.
-- `0` is a local build: the title bar shows `tele dev`, the main menu `dev build`, the self-updater stays off ("local builds don't update themselves") and what's new is never fetched.
+- CI собирает с параметром `-D TELE_BUILD=<N>`, номером релиза. В заголовке окна выводится `tele #N`, в главном меню — `сборка #N`.
+- `0` — локальная сборка: в заголовке окна пишется `tele dev`, в главном меню — `dev-сборка`, встроенный автоапдейтер выключен («локальные сборки не обновляются»), а окно «что нового» не запрашивается.
 
-### options
+### настройки (options)
 
-every tele setting is an upstream `base::options` option. they are stored in `tdata/experimental_options.json` together with upstream's experimental options.
+каждая настройка tele — это опция `base::options` апстрима. они сохраняются в `tdata/experimental_options.json` вместе с экспериментальными настройками Telegram Desktop.
 
-- `tele/tele_options.h` declares each id as `extern const char kOption...[]` plus typed getters (`bool HideStories()`), setters for string options and `rpl::producer` getters where the ui has to react live.
-- `tele/tele_options.cpp` defines the ids (`"tele-hide-stories"`) and the options in an anonymous namespace: `base::options::toggle` for switches, `base::options::option<QString>` or `option<int>` for everything else, with `.id`, `.name`, `.description`, and optionally `.defaultValue` and `.restartRequired`.
-- the rest of the code only calls the getters.
+- `tele/tele_options.h` объявляет каждый идентификатор как `extern const char kOption...[]`, а также типизированные геттеры (`bool HideStories()`), сеттеры для строковых параметров и геттеры `rpl::producer`, если интерфейс должен реагировать на лету.
+- `tele/tele_options.cpp` определяет идентификаторы (`"tele-hide-stories"`) и опции в анонимном пространстве имен: `base::options::toggle` для переключателей, `base::options::option<QString>` или `option<int>` для остальных типов, с указанием `.id`, `.name`, `.description` и опционально `.defaultValue` и `.restartRequired`.
+- остальной код вызывает только геттеры.
 
-### settings section
+### раздел настроек
 
-`settings/settings_tele.cpp` builds settings → tele. the root page has a search field, one row per category page, and the server, backup and updates groups. after an update that adds settings, it also links to a page with just the new ones. the category pages are built by `Fill*` functions:
+`settings/settings_tele.cpp` строит раздел «настройки → tele». Главная страница содержит строку поиска, строки перехода в категории, а также разделы сервера, резервных копий и обновлений. После обновления, добавившего настройки, там также появляется ссылка на страницу только с новыми опциями. Категории строятся функциями `Fill*`:
 
-| page | path | builder |
+| страница | путь | построитель |
 |---|---|---|
-| interface | `tele/interface` | `FillInterface` |
-| chats | `tele/chats` | `FillChats` |
-| messages | `tele/messages` | `FillMessages` |
-| sending | `tele/sending` | `FillSending` |
-| notifications | `tele/notifications` | `FillNotifications` |
-| menus | `tele/menus` | `FillMenus` |
-| privacy | `tele/privacy` | `FillPrivacy` |
-| profiles and ids | `tele/profiles` | `FillProfiles` |
-| bots | `tele/bots` | `FillBots` |
-| debug | `tele/debug` | `FillDebug` |
-| new in tele | `tele/new` | `FillNew` |
+| интерфейс | `tele/interface` | `FillInterface` |
+| чаты | `tele/chats` | `FillChats` |
+| сообщения | `tele/messages` | `FillMessages` |
+| отправка | `tele/sending` | `FillSending` |
+| уведомления | `tele/notifications` | `FillNotifications` |
+| меню | `tele/menus` | `FillMenus` |
+| приватность | `tele/privacy` | `FillPrivacy` |
+| профили и id | `tele/profiles` | `FillProfiles` |
+| боты | `tele/bots` | `FillBots` |
+| отладка | `tele/debug` | `FillDebug` |
+| что нового | `tele/new` | `FillNew` |
 
-- each page is split into groups with `AddGroupTitle` and `AddGroupDivider`.
-- `AddOptionToggle(builder, id, keywords, parent, children)` adds a switch for a toggle option: its name and description come from the option, and the description plus `keywords` feed the search. `parent` names the option (or `Off(id)` for an option that must be off) the row depends on: the row stays hidden until it's met. passing `children` makes the row a collapsible group: it shows how many child switches are on, its text expands or collapses the children, and its switch is a master switch that disables them without touching their values. other row types (choices, boxes, lists) have their own `Add*` helpers in the same file.
-- a link or search hit for a row on another page opens the page that holds it now, and a hit inside a collapsed group expands it first.
-- `tele/tele_new_settings.*` keeps the ids of every setting and page this build has in the internal `tele-known-settings` option. a build that brings ids it hasn't seen lists them on the new page until it's opened.
-- every row registers a search entry, so both the tele search and the main settings search find it.
-- `SetupLink` gives a row a right-click "copy link" that opens a `tg://settings/...` deep link highlighting it.
+- каждая страница разделена на группы с помощью `AddGroupTitle` и `AddGroupDivider`.
+- `AddOptionToggle(builder, id, keywords, parent, children)` добавляет тумблер: его название и описание берутся из опции, а описание плюс `keywords` передаются в поиск. `parent` указывает опцию (или `Off(id)` для опции, которая должна быть выключена), от которой зависит строка: строка скрыта, пока условие не выполнено. передача `children` превращает строку во вложенную группу: отображается число активных дочерних переключателей, клик разворачивает или сворачивает их, а тумблер работает как главный выключатель без сброса их значений. для других типов строк (выбор, диалоговые окна, списки) есть свои функции `Add*` в том же файле.
+- ссылка или результат поиска для строки на другой странице открывает соответствующую страницу, а при совпадении внутри свернутой группы сначала разворачивает её.
+- `tele/tele_new_settings.*` сохраняет идентификаторы всех опций и страниц этой сборки во внутренней настройке `tele-known-settings`. Сборка, содержащая новые опции, выводит их на странице «что нового», пока она не будет открыта.
+- каждая строка регистрирует запись в поиске, поэтому её находит как собственный поиск tele, так и глобальный поиск по настройкам.
+- `SetupLink` добавляет в строку контекстный пункт «копировать ссылку», открывающий deep-link `tg://settings/...` с подсветкой строки.
 
-### menus
+### меню
 
-tele rearranges seven menus: the message menu, the chat ⋯ menu, the chat list row, the folder tab, the profile ⋯ menu, the send menu and the field's right-click menu.
+tele перерабатывает семь меню: меню сообщения, меню ⋯ чата, строку в списке чатов, вкладку папки, меню ⋯ профиля, меню отправки и контекстное меню поля ввода.
 
-- `tele/tele_menu_registry.*` lists every item each menu can show: a key, label, icon, the texts that identify upstream items, the contexts it appears in, and the option that gates tele items. each menu also has four layouts as text: tele's default, upstream order, minimal and power user.
-- `tele/tele_menu_layout.*` holds the model (items, separators, submenus, hidden flags), its text form and the `tele-menu-layouts` option, which stores only the menus that differ from the default. keys a saved layout doesn't know go to the end of their neighbour's group.
-- `tele/tele_menu_apply.*` runs once after upstream fills a menu. it identifies items (tele items are tagged when added, upstream ones matched by text), then rebuilds the menu in layout order around the same `QAction`s. rows with custom widgets and upstream submenus stay at the top level in their upstream order. alt+right-click on a menu opens its editor instead.
-- `tele/tele_menu_editor.*` is the editor box: the layout as a list on the left, a live preview with a context switcher on the right.
-- a tele item shows only while its feature's option is on.
+- `tele/tele_menu_registry.*` перечисляет все элементы, которые может содержать меню: ключ, текст, иконку, строки для идентификации апстрим-пунктов, контексты появления и опцию-переключатель. каждое меню также имеет четыре текстовых макета: по умолчанию tele, порядок апстрима, минималистичный и расширенный.
+- `tele/tele_menu_layout.*` содержит модель (пункты, разделители, подменю, скрытые флаги), текстовый формат и настройку `tele-menu-layouts`, хранящую только отличающиеся от стандарта меню. ключи, отсутствующие в сохраненном макете, отправляются в конец группы соседних пунктов.
+- `tele/tele_menu_apply.*` вызывается один раз после того, как апстрим заполнил меню. код определяет элементы (пункты tele помечаются при создании, апстрим-пункты сопоставляются по тексту) и перестраивает меню в порядке макета с сохранением исходных `QAction`. строки со специальными виджетами и подменю апстрима остаются на верхнем уровне в оригинальном порядке. Alt+правый клик по меню открывает его редактор.
+- `tele/tele_menu_editor.*` — окно редактора: макет в виде списка слева, интерактивный предпросмотр с переключателем контекста справа.
+- пункт tele отображается только при включенной опции соответствующей функции.
 
-### lowercase
+### нижний регистр (lowercase)
 
-`tele/tele_lowercase.*` has `Tele::Lower(QString)`. when the `tele-lowercase` option is on it lowercases the text, keeping lang tags and links as they are. every string tele adds to the ui goes through it. tele's own strings are hardcoded english, not `lang.strings` keys.
+`tele/tele_lowercase.*` предоставляет `Tele::Lower(QString)`. При включенной опции `tele-lowercase` текст переводится в нижний регистр с сохранением языковых тегов и ссылок. Все строки, добавляемые tele в интерфейс, проходят через эту функцию. Собственные строки tele хранятся как литералы, а не ключи `lang.strings`.
 
-### launch flags
+### флаги запуска
 
-`tele/tele_launch_flags.*` parses `-noteleserver`, `-noteleupdate` and `-teleoffline` (both of the others plus third-party services) and exposes `Tele::ServerOffForLaunch()`, `Tele::UpdatesOffForLaunch()` and `Tele::OfflineForLaunch()`. every network request tele adds checks the matching flag at its lowest level: the badges fetch and crash reports check the server flag, the updater and the changelog fetch check the update flag, third-party requests like calcmula check the offline flag. the platform launchers pass the flags on when tele restarts itself.
+`tele/tele_launch_flags.*` разбирает `-noteleserver`, `-noteleupdate` и `-teleoffline` (оба предыдущих плюс внешние сервисы) и предоставляет `Tele::ServerOffForLaunch()`, `Tele::UpdatesOffForLaunch()` и `Tele::OfflineForLaunch()`. Каждый сетевой запрос tele проверяет соответствующий флаг на самом низком уровне: запросы плашек и отчетов о сбоях проверяют флаг сервера, автоапдейтер и загрузка changelog проверяют флаг обновлений, сторонние запросы (например, calcmula) проверяют флаг offline. лаунчеры платформы передают флаги при автоматическом перезапуске.
 
-### tele server client
+### клиент сервера tele
 
-`tele/tele_badges.*` downloads the public badge list from the server in the `tele-server-url` option and applies checkmarks, custom verification, scam, fake and support marks and extra usernames. `tele/tele_crash.*` routes crash reports to the same server. the protocol is documented in the README section [tele server](server.md). the client only downloads a list and never tells the server which accounts it looks at.
+`tele/tele_badges.*` загружает публичный список плашек с сервера из опции `tele-server-url` и применяет галочки, кастомную верификацию, метки scam, fake и поддержки, а также дополнительные юзернеймы. `tele/tele_crash.*` отправляет отчеты о падениях на тот же сервер. Протокол описан в разделе [сервер tele](server.md). Клиент загружает только публичный список и никогда не передает серверу просматриваемые аккаунты.
 
-the badge json can carry a `notices` array. `tele/tele_badges.cpp` (`ParseFeed`) parses it, and `tele/tele_server_notices.*` filters notices by build, platform, user key and time, fetches photos and shows toasts. they land in the notification centre, `tele/tele_notices*.*`: a per-account encrypted history (30 days, 300 entries) behind main menu → notifications, which also logs tele toasts, rate limits, updates, sent crash and freeze reports and online alerts.
+JSON плашек может содержать массив `notices`. `tele/tele_badges.cpp` (`ParseFeed`) разбирает его, а `tele/tele_server_notices.*` фильтрует уведомления по сборке, платформе, ключу пользователя и времени, загружает изображения и показывает тосты. Они сохраняются в центре уведомлений `tele/tele_notices*.*`: зашифрованная история для каждого аккаунта (30 дней, 300 записей) в разделе «главное меню → уведомления», куда также заносятся тосты tele, лимиты запросов, обновления, отправленные отчеты о сбоях и зависаниях и алерты онлайна.
 
-rate limits come from one hook in `mtproto/mtp_instance.cpp` (`rpcErrorOccured`) that feeds a flood-wait stream in `tele/tele_rate_limits.*`: a toast with a countdown from 5 s, a chat list bar from 60 s, and a notice when it ends.
+Ограничения частоты запросов (rate limits) поступают через хук в `mtproto/mtp_instance.cpp` (`rpcErrorOccured`), питающий поток flood-wait в `tele/tele_rate_limits.*`: тост с обратным отсчетом от 5 секунд, плашка над списком чатов от 60 секунд и уведомление при окончании ожидания.
 
-`tele/tele_freeze_watchdog.*` runs a watchdog thread that writes a minidump when the main thread is stuck for 15 s (windows: `MiniDumpWriteDump`, linux: breakpad `WriteMinidump`, not on macos) and leaves a `tdata/freeze` marker. next launch offers it like a crash report, with a `Tele-Note: freeze N s` line.
+`tele/tele_freeze_watchdog.*` запускает поток сторожевого таймера, создающий минидамп при блокировке главного потока на 15 секунд (Windows: `MiniDumpWriteDump`, Linux: Breakpad `WriteMinidump`, не используется на macOS) и оставляющий маркер `tdata/freeze`. При следующем запуске tele предлагает отправить его как отчет о сбое со строкой `Tele-Note: freeze N s`.
 
-### self-updater and the signed feed
+### встроенный автоапдейтер и подписанный канал
 
-`tele/tele_updater.*` checks `https://github.com/nitreojs/tele/releases/latest/download/tele-update-<platform>.json`, where the platform is `win64`, `linux64` or `macos`. the file is `{"feed": base64(json), "signature": base64(ed25519 signature of those bytes)}`. the inner json holds `tag`, `base` (upstream `AppVersion`), `counter` (the release number), `url`, `zip_sha256` and `exe_sha256`.
+`tele/tele_updater.*` опрашивает адрес `https://github.com/nitreojs/tele/releases/latest/download/tele-update-<platform>.json`, где platform — `win64`, `linux64` или `macos`. Файл имеет структуру `{"feed": base64(json), "signature": base64(ed25519 signature of those bytes)}`. Вложенный JSON содержит `tag`, `base` (апстрим `AppVersion`), `counter` (номер релиза), `url`, `zip_sha256` и `exe_sha256`.
 
-- the public key is compiled into `tele_updater.cpp` and has to match `ci/update-public-key.pem`.
-- the download url has to point at this repository's releases.
-- it's off for local builds, in sandboxes and while `-noteleupdate` is set. the `tele-auto-update` option turns the periodic check off.
-- upstream's own updater is disabled at configure time with `DESKTOP_APP_DISABLE_AUTOUPDATE=ON`, so an official build can never replace tele.
+- публичный ключ скомпилирован в `tele_updater.cpp` и должен совпадать с `ci/update-public-key.pem`.
+- URL загрузки должен указывать на релизы этого репозитория.
+- автообновление отключено для локальных сборок, в изолированных песочницах и при установленном флаге `-noteleupdate`. Опция `tele-auto-update` отключает периодическую проверку.
+- собственный апдейтер апстрима отключен на этапе конфигурации флагом `DESKTOP_APP_DISABLE_AUTOUPDATE=ON`, поэтому официальная сборка никогда не заменит tele.
 
-### what's new
+### что нового (what's new)
 
-the release notes and the in-app "what's new" come from the same README rows:
+списки изменений релиза и окно «что нового» в приложении строятся из тех же строк README:
 
-1. a README row describes a patch: `| [N](patches/tdesktop/NNNN-....patch) | what it does | where to toggle |`.
-2. at publish time `ci/notes.py --json` writes `tele-changelog.json` with the new and changed patches, each with its text, where, url and category, and uploads it as a release asset.
-3. after an update, `tele/tele_changelog.cpp` fetches `releases/download/<tag>/tele-changelog.json` for the running build and posts it once per account in a local tele chat (`tele_changelog_chat.*`, `tele_changelog_section.*`), grouped by category. fresh installs and accounts that already saw this build skip it. the `tele-show-changelog` option turns it off.
+1. строка таблицы описывает патч: `| [N](patches/tdesktop/NNNN-....patch) | что делает | где переключается |`.
+2. на этапе публикации `ci/notes.py --json` записывает `tele-changelog.json` с новыми и измененными патчами (текст, категория, url) и загружает его в релиз.
+3. после обновления `tele/tele_changelog.cpp` запрашивает `releases/download/<tag>/tele-changelog.json` для запущенной сборки и один раз отправляет его в локальный служебный чат tele (`tele_changelog_chat.*`, `tele_changelog_section.*`), сгруппированный по категориям. чистые установки и аккаунты, уже видевшие эту сборку, пропускают показ. опция `tele-show-changelog` отключает показ.
 
-### settings export and import
+### экспорт и импорт настроек
 
-`tele/tele_settings_io.cpp` exports tele settings to a file or text and imports them with a preview (`tele_settings_io_box.*`). `base::options` can't list options, so the file keeps a hand-written `Specs()` table. each entry says how an option is exported:
+`tele/tele_settings_io.cpp` экспортирует настройки tele в файл или текст и импортирует их с окном предпросмотра (`tele_settings_io_box.*`). `base::options` не умеет перечислять опции, поэтому файл содержит явную таблицу `Specs()`. Каждая запись определяет способ экспорта:
 
-| helper | use |
+| хелпер | применение |
 |---|---|
-| `Toggle(id)` | on/off options |
-| `Choice(id, {...})` | string options with a fixed set of values |
-| `Text(id, Kind::...)` | free-form strings that need their own validation |
-| `People(id, Kind::..., normalize)` | per-account lists: aliases, ignored users, names, backgrounds (optional on import) |
-| `Device(id, Kind::...)` | settings tied to this device, like app and tray icons (optional on import) |
-| `Internal(id)` | bookkeeping that is never exported |
+| `Toggle(id)` | параметры типа вкл/выкл |
+| `Choice(id, {...})` | строковые параметры с фиксированным набором значений |
+| `Text(id, Kind::...)` | произвольные строки с собственной валидацией |
+| `People(id, Kind::..., normalize)` | списки для каждого аккаунта: алиасы, игнорируемые пользователи, имена, фоны (опционально при импорте) |
+| `Device(id, Kind::...)` | настройки, привязанные к устройству, например иконки приложения и трея (опционально при импорте) |
+| `Internal(id)` | служебные настройки, которые никогда не экспортируются |
 
-an option missing from the table isn't exported. export logs `Tele Settings: '<id>' is not classified for export.` for every changed `tele-` option it doesn't know.
+опция, отсутствующая в таблице, не экспортируется. при экспорте в лог пишется `Tele Settings: '<id>' is not classified for export.` для каждой неизвестной опции `tele-`.
 
-## ci
+## непрерывная интеграция (CI)
 
-### build.yml (Build)
+### build.yml (Сборка)
 
-runs on a push to `main` that touches `UPSTREAM`, `patches/**`, `tele.py`, `ci/**` or `build.yml`, and on manual dispatch with these inputs:
+запускается при пуше в `main`, затрагивающем `UPSTREAM`, `patches/**`, `tele.py`, `ci/**` или `build.yml`, а также вручную со следующими параметрами:
 
-| input | meaning |
+| параметр | назначение |
 |---|---|
-| `platforms` | platforms to build, default `windows linux macos` |
-| `publish` | publish a release (only from `main`, only when every platform built) |
-| `from_run` | publish the builds of this finished run instead of building again |
-| `number` | release number to build as, empty for the next free one |
+| `platforms` | платформы для сборки, по умолчанию `windows linux macos` |
+| `publish` | публикация релиза (только из `main`, только когда собраны все платформы) |
+| `from_run` | опубликовать сборки завершенного прогона вместо повторной сборки |
+| `number` | номер релиза для сборки; если пусто — следующий свободный |
 
-jobs:
+задачи:
 
-- `number`: checks that the required repository secrets exist, picks the release number `N` (one above every existing `<UPSTREAM>-tele.*` release or tag), reads upstream's `AppVersion` from `Telegram/build/version` of the tag, and keeps them as an artifact so a later publish can reuse them.
-- `windows`: clones tdesktop at `UPSTREAM`, runs `tele.py apply`, prepares the libraries with upstream's `win.bat` (cached in the actions cache), configures with ninja multi-config, release only, and builds `tele.exe`. zipped as `tele-<tag>-win64.zip`.
-- `linux-env` then `linux`: builds upstream's docker build environment into `ghcr.io/<owner>/tele-linux-env`, keyed by the hash of upstream's recipe, then builds `tele` inside it with ccache. zipped as `tele-<tag>-linux64.zip`.
-- `macos-libs` then `macos`: prepares the universal libraries with upstream's `mac.sh`, stored in ghcr by `ci/macos-libs.sh`, then builds `tele.app`, signs it ad hoc and packs `tele-<tag>-macos.zip` (for the updater) and `tele-<tag>-macos.dmg`.
-- every platform job configures with `DESKTOP_APP_DISABLE_AUTOUPDATE=ON`, `DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF` and `TELE_BUILD=<N>`, attests its files with `actions/attest` and uploads them as artifacts kept for one day.
-- `publish`: signs one update feed per platform, verifies each signature against `ci/update-public-key.pem`, writes the notes with `ci/notes.py`, creates the release (`--latest`, titled `tele N · <upstream>`) with the zips, the dmg, a `-symbols.zip` for linux and macos, the three `tele-update-*.json` feeds and `tele-changelog.json`, then posts the announcement with `ci/announce.py` when the announcement secrets are set.
-- every job ends with `ci/notify.sh`, which sends the maintainer a private telegram message when the run starts, when each platform finishes or fails, and when the release is published or fails to. it does nothing without the `TELE_BOT_TOKEN` and `TELE_NOTIFY_CHAT` secrets.
-- with `from_run`, the build jobs are skipped. `publish` checks that the run succeeded and built the same `UPSTREAM`, `patches` and `tele.py` as the current commit, and publishes its artifacts.
-- a failed or cancelled job on `main` opens a `build-failure` issue. a publish closes it.
+- `number`: проверяет наличие секретов репозитория, выбирает номер релиза `N` (на единицу больше существующих релизов или тегов `<UPSTREAM>-tele.*`), считывает апстрим-версию `AppVersion` из `Telegram/build/version` тега и сохраняет артефакт для повторного использования.
+- `windows`: клонирует tdesktop на теге `UPSTREAM`, выполняет `tele.py apply`, подготавливает библиотеки скриптом `win.bat` (с кешированием в GitHub Actions), конфигурирует через Ninja Multi-Config (только Release) и собирает `tele.exe`. Упаковывает в `tele-<tag>-win64.zip`.
+- `linux-env` затем `linux`: собирает окружение Docker апстрима в `ghcr.io/<owner>/tele-linux-env` по хешу рецепта апстрима, затем компилирует `tele` с использованием ccache. Упаковывает в `tele-<tag>-linux64.zip`.
+- `macos-libs` затем `macos`: подготавливает универсальные библиотеки через `mac.sh`, сохраняемые в GHCR через `ci/macos-libs.sh`, затем собирает `tele.app`, подписывает ad-hoc и упаковывает `tele-<tag>-macos.zip` (для апдейтера) и `tele-<tag>-macos.dmg`.
+- каждая платформа конфигурируется с `DESKTOP_APP_DISABLE_AUTOUPDATE=ON`, `DESKTOP_APP_DISABLE_CRASH_REPORTS=OFF` и `TELE_BUILD=<N>`, заверяет артефакты через `actions/attest` и сохраняет их на один день.
+- `publish`: подписывает каналы обновлений для каждой платформы, проверяет подписи ключом `ci/update-public-key.pem`, формирует описание релиза с помощью `ci/notes.py`, создает релиз (`--latest`, заголовок `tele N · <upstream>`) с архивами zip, dmg, файлом `-symbols.zip` для Linux/macOS, тремя JSON-каналами `tele-update-*.json` и `tele-changelog.json`, затем публикует анонс через `ci/announce.py` при настроенных секретах канала.
+- каждый прогон завершается вызовом `ci/notify.sh`, отправляющим мейнтейнеру личное сообщение в Telegram при старте, завершении или ошибке сборки платформ и публикации.
+- при указании `from_run` задачи компиляции пропускаются. `publish` проверяет успешность прогона, совпадение `UPSTREAM`, `patches` и `tele.py` с текущим коммитом и публикует артефакты.
+- сбой или отмена задачи в ветке `main` создает issue `build-failure`. успешная публикация закрывает его.
 
-### sync.yml (Sync)
+### sync.yml (Синхронизация)
 
-every 3 hours: compares `UPSTREAM` with the latest stable tdesktop release. betas are skipped. when there is a newer one it clones it and runs `tele.py apply`.
+каждые 3 часа: сравнивает `UPSTREAM` с последним стабильным релизом tdesktop. беты пропускаются. при обнаружении новой версии клонирует её и выполняет `tele.py apply`.
 
-- clean: commits `chore: bump upstream to <tag>`, pushes, starts a build with `publish=false` and opens a `new-upstream` issue with the command that publishes that run.
-- conflict: opens a `patch-conflict` issue with the apply log and the steps to resolve it locally. conflicts are never resolved in ci.
+- без конфликтов: создает коммит `chore: bump upstream to <tag>`, отправляет в репозиторий, запускает сборку с `publish=false` и открывает issue `new-upstream` с готовой командой для публикации.
+- при конфликте: открывает issue `patch-conflict` с логом наложения и пошаговой инструкцией для локального разрешения. конфликты никогда не разрешаются в CI автоматически.
 
-### canary.yml (Canary)
+### canary.yml (Канареечные сборки)
 
-daily: applies the queue to upstream's `dev` branch. a failure opens a `canary-conflict` issue, so a conflict can be fixed before the next release makes sync fail.
+ежедневно: применяет очередь патчей к ветке `dev` апстрима. при сбое открывает issue `canary-conflict`, позволяя устранить конфликт до официального релиза апстрима.
 
-### promote.yml (Promote)
+### promote.yml (Публикация)
 
-runs after every finished Build run. when the run succeeded and its id equals the repository variable `PROMOTE_RUN`, it dispatches build.yml on `main` with `from_run=<id>` and `publish=true`. this lets a maintainer mark a running build for release and walk away.
+запускается после каждого успешного прогона Build. если прогон завершен успешно и его ID совпадает с переменной репозитория `PROMOTE_RUN`, запускается `build.yml` на ветке `main` с флагами `from_run=<id>` и `publish=true`. это позволяет мейнтейнеру поставить сборку в очередь на релиз и не ждать её завершения.
 
-## release notes
+## описание релизов (release notes)
 
-`ci/notes.py` and `ci/announce.py` compare the patches of the release with those of the previous release. patches are matched by subject and compared by a hash of their changed lines only, so moved context after an upstream bump doesn't count as a change. the result is three lists: new, changed and dropped.
+`ci/notes.py` и `ci/announce.py` сопоставляют патчи текущего релиза с патчами предыдущего. Патчи связываются по теме и сравниваются по хешу только измененных строк, поэтому смещение контекста после обновления апстрима не считается изменением. Формируются три списка: новые, измененные и удаленные.
 
-the text of each item comes from README. a row has to match this exactly, on one line:
+Текст каждого пункта берется из таблицы в документации:
 
 ```
-| [N](patches/tdesktop/NNNN-subject.patch) | what it does | where to toggle |
+| [N](patches/tdesktop/NNNN-subject.patch) | что делает | где переключается |
 ```
 
-- `N` is the patch number, the link is the patch file.
-- "what it does" is one or two short lowercase sentences from the user's point of view.
-- "where to toggle" says where to find it. its first part decides the changelog category:
+- `N` — номер патча, ссылка указывает на файл патча.
+- «что делает» — одно-два кратких предложения в нижнем регистре с точки зрения пользователя.
+- «где переключается» — расположение функции, определяющее категорию в changelog:
 
-| where | category |
+| где | категория |
 |---|---|
-| `tele → <page>` or `tele → <page> → <row>`, optionally followed by `, off`, `, on`, `, off, needs a restart` | the page: `interface`, `chats`, `messages`, `sending`, `notifications`, `menus`, `privacy`, `profiles and ids`, `bots`, `server`, `backup`, `updates` or `debug` |
-| `always on` | `everywhere` |
-| `with N` | the category of patch N, for fixes and extensions of another patch. in the app's changelog the location becomes patch N's `tele → …` path without its default, and `see N` / `(see N)` references are dropped, since patch numbers mean nothing there |
-| anything else | `other` |
+| `tele → <страница>` или `tele → <страница> → <строка>`, опционально с `, выкл.`, `, вкл.`, `, выкл., требуется перезапуск` | страница: `интерфейс`, `чаты`, `сообщения`, `отправка`, `уведомления`, `меню`, `приватность`, `профили и id`, `боты`, `сервер`, `резервные копии`, `обновления` или `отладка` |
+| `всегда вкл.` | `везде` |
+| `вместе с N` | категория патча N для исправлений и дополнений к другому патчу. В changelog приложения путь превращается в `tele → …` патча N без дефолтного значения, а ссылки `см. N` удаляются |
+| любое другое значение | `прочее` |
 
-rows are grouped in README by the release that introduced them, newest first, under a `### [tele N](.../releases/tag/<tag>)` heading. a patch without a row still shows up in the notes, by its subject.
+строки сгруппированы по релизам, от новых к старым, под заголовками `### [tele N](.../releases/tag/<tag>)`. патч без явной строки в таблице всё равно включается в примечания по своей теме.
 
-## build numbering
+## нумерация сборок
 
-- a release is tagged `<UPSTREAM>-tele.<N>`, e.g. `v7.3.1-tele.22`.
-- `N` counts the releases on one upstream tag, starting from 1. it's the `TELE_BUILD` of that release.
-- the updater compares `(base, counter)`: upstream's `AppVersion` first, then `N`. so a release on a newer upstream tag is always newer, even when its `N` starts again at 1.
+- релиз получает тег `<UPSTREAM>-tele.<N>`, например `v7.3.1-tele.22`.
+- `N` считает релизы на базе одного тега апстрима, начиная с 1. это число соответствует `TELE_BUILD` релиза.
+- апдейтер сравнивает пару `(base, counter)`: сначала апстрим-версию `AppVersion`, затем `N`. поэтому релиз на базе более нового тега апстрима всегда старше, даже если его `N` снова начинается с 1.
 
-## folding and baselines
+<a id="folding-and-baselines"></a>
+## объединение и базовые линии (folding and baselines)
 
-between releases a feature can collect follow-up commits. before a release the maintainer folds them into the feature's patch where the result is the same tree, so the queue keeps one patch per feature. folding renumbers patches and changes their hashes, which would make the next release notes list old patches as dropped and new.
+между релизами функция может накапливать сопутствующие коммиты исправлений. перед релизом мейнтейнер объединяет (fold) их в исходный патч функции, если результирующее дерево остается идентичным, сохраняя правило «один патч на функцию». объединение перенумеровывает патчи и меняет их хеши, из-за чего примечания к следующему релизу могли бы ошибочно пометить старые патчи как удаленные и добавленные заново.
 
-`ci/baselines.json` fixes that. it maps a previous release tag to `{subject: sha256 of changed lines}` of that release, folded the same way. `announce.previous_patches` (used by both scripts) prefers the baseline over the tag's own patches. a baseline is only needed for the release right after a fold.
+`ci/baselines.json` решает эту проблему: он сопоставляет тег предыдущего релиза со словарем `{subject: sha256 измененных строк}` патчей того же релиза, объединенных тем же образом. `announce.previous_patches` использует baseline вместо оригинальных патчей тега. базовая линия требуется только для первого релиза сразу после объединения.

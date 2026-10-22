@@ -1,14 +1,14 @@
-# conventions
+# соглашения
 
-how fork code, commits and patches should look. the goal is a queue that reads well, reviews quickly and survives every upstream release with as few conflicts as possible.
+как оформлять код форка, коммиты и патчи. цель — поддерживать очередь, которая легко читается, быстро проходит ревью и переносит каждое обновление апстрима с минимальным количеством конфликтов.
 
-## code
+## код
 
-### where code goes
+### где размещается код
 
-- new code goes into new files under `Telegram/SourceFiles/tele/`, named `tele_<feature>.cpp` and `tele_<feature>.h`, in `namespace Tele`. add every new file to the tele `nice_target_sources` block in `Telegram/CMakeLists.txt`.
-- settings rows go into `settings/settings_tele.cpp`.
-- upstream files only get hunks that hook into `Tele::`: an include, a call, an early return, a changed argument. a typical hunk:
+- новый код размещается в новых файлах в `Telegram/SourceFiles/tele/`, названных `tele_<функция>.cpp` и `tele_<функция>.h`, в пространстве имён `namespace Tele`. каждый новый файл добавляется в блок `nice_target_sources` для tele в `Telegram/CMakeLists.txt`.
+- строки настроек добавляются в `settings/settings_tele.cpp`.
+- файлы апстрима получают только хуки, вызывающие `Tele::`: include, вызов функции, ранний возврат, измененный аргумент. типичный хук:
 
   ```cpp
   #include "tele/tele_send_files.h"
@@ -17,35 +17,35 @@ how fork code, commits and patches should look. the goal is a queue that reads w
   +		auto result = Tele::DefaultSendFilesWay();
   ```
 
-- put new `#include "tele/..."` lines next to the tele includes already in the file, if there are any.
-- prefer hooks over copies. call the upstream function and adjust its input or result from `Tele::`, or use an existing virtual hook, instead of copying an upstream function into fork code. a copy silently misses every upstream fix.
-- avoid widely included upstream headers (`data/data_peer.h`, `history/history_item.h`, anything in the precompiled header). a new member or include there rebuilds most of the tree for everyone and conflicts more often. keep state in fork code, keyed by the upstream object if needed.
-- changes to a submodule (`Telegram/lib_ui`, `Telegram/lib_base` and so on) are committed inside the submodule and exported into `patches/<submodule path>/`. only do that when the tdesktop side can't do it.
+- новые строки `#include "tele/..."` размещаются рядом с другими включениями tele в файле, если они уже есть.
+- отдавайте предпочтение хукам вместо копирования. вызывайте апстрим-функцию и корректируйте входные данные или результат из `Tele::`, либо используйте существующие виртуальные методы, вместо копирования функции апстрима в код форка. скопированная функция перестаёт получать исправления из апстрима.
+- избегайте часто подключаемых заголовочных файлов апстрима (`data/data_peer.h`, `history/history_item.h`, предкомпилированные заголовки). добавление поля или include в них приводит к полной пересборке проекта у всех разработчиков и частым конфликтам. храните состояние в коде форка, индексируя его по объекту апстрима при необходимости.
+- изменения в подмодулях (`Telegram/lib_ui`, `Telegram/lib_base` и т.д.) коммитятся внутри подмодуля и экспортируются в `patches/<путь подмодуля>/`. делайте это только тогда, когда задачу невозможно решить на стороне tdesktop.
 
-### style
+### стиль
 
-follow upstream's style, since fork code sits next to it:
+придерживайтесь стиля апстрима, так как код форка находится в том же проекте:
 
-- tabs for indentation, the formatting of the surrounding upstream code.
-- `[[nodiscard]]` on functions that return a value, `const auto` by default, `u"..."_q` for `QString` literals, `not_null<>` for pointers that can't be null.
-- `rpl` for reactive values, `crl::async` / `crl::on_main` for threading, as upstream does.
-- types and functions in `PascalCase`, locals in `camelCase`, members with a leading `_`.
-- `#pragma once` in headers, namespaces closed with `} // namespace Tele`.
-- **no comments.** names and small functions carry the meaning. the one exception is a short note on a real trap that the code can't express.
+- табуляция для отступов, форматирование окружающего кода апстрима.
+- `[[nodiscard]]` для функций, возвращающих значение, `const auto` по умолчанию, `u"..."_q` для литералов `QString`, `not_null<>` для указателей, которые не могут быть нулевыми.
+- `rpl` для реактивных значений, `crl::async` / `crl::on_main` для потоков, как принято в Telegram Desktop.
+- типы и функции в `PascalCase`, локальные переменные в `camelCase`, поля классов с префиксом `_`.
+- `#pragma once` в заголовках, пространства имен закрываются комментарием `} // namespace Tele`.
+- **без лишних комментариев.** говорящие имена и короткие функции передают смысл кода. единственное исключение — краткое пояснение нетривиальных неочевидных ловушек.
 
-### options
+### настройки (options)
 
-every tele setting is a `base::options` option. adding a switch touches four places:
+каждая настройка tele — это опция `base::options`. добавление переключателя затрагивает четыре места:
 
-1. `tele/tele_options.h`: declare the id and the getter.
+1. `tele/tele_options.h`: объявление идентификатора и геттера:
 
    ```cpp
    extern const char kOptionHdPhotos[];
    [[nodiscard]] bool HdPhotos();
    ```
 
-   add an `rpl::producer` getter as well when the ui has to react while the option changes.
-2. `tele/tele_options.cpp`: define the id and the option, in the anonymous namespace, and the getter.
+   добавьте также геттер `rpl::producer`, если интерфейс должен динамически реагировать на смену опции.
+2. `tele/tele_options.cpp`: определение идентификатора, опции в анонимном пространстве имен и геттера:
 
    ```cpp
    const char kOptionHdPhotos[] = "tele-hd-photos";
@@ -63,54 +63,54 @@ every tele setting is a `base::options` option. adding a switch touches four pla
    }
    ```
 
-   - ids are `tele-` plus kebab case, constants are `kOption` plus pascal case.
-   - toggles default to off. only set `.defaultValue = true` when the maintainer asked for it.
-   - `.restartRequired = true` when the change only takes effect after a restart. the settings row then offers one.
-   - strings use `base::options::option<QString>`, with a `Set...` function and a `...Value()` producer next to the getter.
-3. `settings/settings_tele.cpp`: show it on the right page, in a fitting group.
+   - идентификаторы строятся как `tele-` плюс kebab-case, константы — `kOption` плюс PascalCase.
+   - переключатели по умолчанию выключены. задавайте `.defaultValue = true` только по прямому согласованию.
+   - `.restartRequired = true`, если изменение вступает в силу только после перезапуска. строка настроек предложит перезагрузить приложение.
+   - строковые параметры используют `base::options::option<QString>` с функцией `Set...` и продюсером `...Value()`.
+3. `settings/settings_tele.cpp`: отображение на подходящей странице в соответствующей группе:
 
    ```cpp
    AddOptionToggle(builder, ::Tele::kOptionHdPhotos);
    ```
 
-   an optional third argument adds search keywords, e.g. `AddOptionToggle(builder, id, { u"quality"_q })`. a row that only matters while another option is on takes that option as the fourth argument, e.g. `AddOptionToggle(builder, id, {}, ::Tele::kOptionQueueBehindMedia)`, and stays hidden until it's on.
+   опциональный третий аргумент добавляет ключевые слова для поиска, например `AddOptionToggle(builder, id, { u"качество"_q })`. строка, актуальная только при включении другой опции, принимает её четвёртым аргументом: `AddOptionToggle(builder, id, {}, ::Tele::kOptionQueueBehindMedia)` и остается скрытой до включения родителя.
 
-   the pages are built by `FillInterface`, `FillChats`, `FillPrivacy`, `FillProfiles`, `FillBots` and `FillDebug`, the root page by `FillRoot`. each page is split into groups with `AddGroupTitle` and `AddGroupDivider`. put a new row into the group it belongs to, or start a new group. never append a loose row to the end of a page. the description and the optional keywords feed both searches, so add keywords for words people would search for that aren't in the name or description.
-4. `tele/tele_settings_io.cpp`: add it to the `Specs()` table, so settings export and import know it. `Toggle(id)` for switches, `Choice`, `Text`, `People`, `Device` or `Internal` for the rest (see [architecture](architecture.md#settings-export-and-import)).
+   страницы строятся функциями `FillInterface`, `FillChats`, `FillPrivacy`, `FillProfiles`, `FillBots`, `FillDebug`, корневая страница — `FillRoot`. страницы разделяются на группы через `AddGroupTitle` и `AddGroupDivider`. размещайте новую строку в логически подходящей группе или создайте новую. никогда не добавляйте отдельные строки в самый конец страницы без группы.
+4. `tele/tele_settings_io.cpp`: добавление в таблицу `Specs()` для экспорта и импорта: `Toggle(id)` для переключателей, `Choice`, `Text`, `People`, `Device` или `Internal` для других типов (см. [архитектура](architecture.md#экспорт-и-импорт-настроек)).
 
-upstream call sites then only call the getter, e.g. `if (Tele::HdPhotos()) ...`.
+код апстрима вызывает только геттер: `if (Tele::HdPhotos()) ...`.
 
-off by default has to mean exactly upstream's behaviour. with the option off, the hunk must not change anything a user can see or anything that goes over the network.
+выключенное состояние по умолчанию должно в точности соответствовать поведению апстрима без видимых изменений интерфейса и сетевой активности.
 
-### ui strings
+### строки интерфейса
 
-- tele's strings are hardcoded english. don't add keys to `lang.strings`.
-- write them in sentence case and pass every one through `Tele::Lower` (`tele/tele_lowercase.h`) where it's shown, so the lowercase option covers it. option names and descriptions shown through `AddOptionToggle` are already handled.
-- a description only when the name can't fully explain the item, for options, rows and the texts under settings groups alike. if the name says it all, leave it out. when it's needed: one short sentence with the missing fact (a side effect, a condition, what gets sent where). no filler ("this lets you…", "when enabled…"), no restating the name, no lists of examples.
-- call the app tele, and the service telegram.
+- строки tele объявляются в коде на английском и локализуются в каталоге `i18n/ru/`. не добавляйте ключи в `lang.strings` Telegram.
+- передавайте строки через `Tele::Lower` (`tele/tele_lowercase.h`), если они отображаются в нижнем регистре. имена и описания из `AddOptionToggle` обрабатываются автоматически.
+- описание добавляется только тогда, когда заголовок не объясняет суть до конца. если имя говорит само за себя, описание опускается.
+- приложение называется tele, а сервис — telegram.
 
-## commits
+## коммиты
 
-- one line, conventional prefix, lowercase, imperative, no trailing period: `feat: send photos in hd by default`, `fix: ignore reply counters on scheduled messages`.
-- no body, no trailers, no co-author lines, no tool or ai attribution.
-- in the tdesktop tree the subject becomes the patch subject and its file name, and ci matches patches across releases by subject. describe what the user gets, and don't rename a released patch without a reason: a new subject shows up as one dropped and one new patch in the release notes.
-- in the tele repository the same format applies, with the usual prefixes: `feat:`, `fix:`, `docs:`, `ci:`, `chore:`.
+- одна строка, стандартный префикс, нижний регистр, повелительное наклонение, без точки в конце: `feat: send photos in hd by default`, `fix: ignore reply counters on scheduled messages`.
+- без тела коммита, без трейлеров, без указания сторонних инструментов или AI.
+- в дереве tdesktop тема становится темой патча и его именем файла; CI сопоставляет патчи между релизами по теме.
+- в репозитории tele применяется тот же формат: `feat:`, `fix:`, `docs:`, `ci:`, `chore:`.
 
-## patch hygiene
+## гигиена патчей
 
-- one feature per patch. fixes to an unreleased feature go into its commit (`git commit --fixup`, `git rebase -i --autosquash`).
-- small hunks survive upstream syncs. every extra context line is a chance to conflict.
-- don't reformat, reorder or rename upstream code, and don't fix upstream whitespace in passing.
-- keep the line endings of the file you edit. a windows checkout with `core.autocrlf=true` has crlf in the tdesktop tree: new files there get crlf too, and a file must never mix both.
-- never edit a `.patch` file by hand. change the commits in the tdesktop tree and run `python tele.py export`.
-- never bump `UPSTREAM` in a feature change. moving to a new upstream tag is its own change.
-- never copy upstream's `.github/` or any other part of the upstream tree into this repository. its workflows would start running here.
+- один патч на функцию. исправления невыпущенной функции добавляются в её коммит (`git commit --fixup`, `git rebase -i --autosquash`).
+- компактные хуки легко переносят синхронизацию с апстримом. каждая лишняя строка контекста — потенциальный конфликт.
+- не форматируйте, не меняйте порядок и не исправляйте пробелы в коде апстрима между делом.
+- сохраняйте окончания строк редактируемого файла. в Windows-клоне с `core.autocrlf=true` используется CRLF: новые файлы в дереве tdesktop также должны иметь CRLF.
+- никогда не редактируйте файлы `.patch` вручную. меняйте коммиты в дереве tdesktop и выполняйте `python tele.py export`.
+- никогда не обновляйте `UPSTREAM` в коммите с новой функцией. переход на новый тег апстрима — это всегда отдельный коммит.
+- никогда не копируйте `.github/` апстрима в этот репозиторий.
 
-## privacy rules for features
+## правила приватности
 
-tele is a client for people who care what leaves their machine.
+tele создан для пользователей, ценящих контроль за исходящим трафиком.
 
-- no new third-party network requests without a setting that controls them. the setting defaults to off.
-- every network request tele adds checks the launch flags at its lowest level: `Tele::OfflineForLaunch()` for third-party services, `Tele::ServerOffForLaunch()` for the tele server, `Tele::UpdatesOffForLaunch()` for github updates and what's new. update the [launch flags](launch-flags.md) section of README when a flag starts covering something new.
-- never send account data to the tele server: no ids, usernames, contacts or messages. the client downloads a public list and does the matching locally. the only exception is a crash report, which leaves only after the user clicks send, shows its text first and lets the user untick their username.
-- the tele server protocol is public in README ([tele server](server.md)). a change to it is a documented, backwards compatible change there, not a hidden one in the code.
+- никаких новых внешних сетевых запросов без отдельной настройки. настройка всегда выключена по умолчанию.
+- каждый сетевой запрос проверяет флаги запуска на самом низком уровне: `Tele::OfflineForLaunch()` для внешних сервисов, `Tele::ServerOffForLaunch()` для сервера tele, `Tele::UpdatesOffForLaunch()` для обновлений GitHub и «что нового». обновляйте раздел [флаги запуска](launch-flags.md), когда флаг начинает покрывать новые запросы.
+- никогда не передавайте персональные данные на сервер tele: никаких ID, юзернеймов, контактов или сообщений. клиент скачивает публичный список и сопоставляет его локально. единственное исключение — отчет о сбое, отправляемый только по явному клику пользователя с возможностью исключить имя пользователя.
+- протокол сервера tele полностью открыт и задокументирован в [сервер tele](server.md).
