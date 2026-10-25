@@ -1802,6 +1802,19 @@
     },
     "tele/tele_restrict.cpp": {
       "restrict": "Tagged menu action identifier"
+    },
+    "data/data_peer.cpp": {
+      ":/gui/art/tele_telegram_logo.png": "Reviewed Qt resource asset identifier for the official Telegram service logo; must retain original path"
+    },
+    "history/history_item_helpers.cpp": {
+      "https://gettele.app": "Reviewed official project URL in unsupported message text entity; must retain original link"
+    },
+    "tele/tele_observed_activity.cpp": {
+      "/tele_activity": "Reviewed encrypted storage filename suffix; must retain original technical identifier"
+    },
+    "tele/tele_update_buttons.cpp": {
+      "https://gettele.app": "Reviewed official project download URL fallback; must retain original link",
+      "tele-check-updates": "Reviewed internal setting control ID for highlight target; must retain original token"
     }
   }
 }

@@ -11,6 +11,9 @@ import sys
 import urllib.error
 import urllib.request
 
+CHANGELOG = 'https://raw.githubusercontent.com/telegramdesktop/tdesktop/{tag}/changelog.txt'
+VERSION = re.compile(r'^(\d+(?:\.\d+)*)(?:\s+beta)?\s+\(')
+
 
 def git(repo, *args):
     return subprocess.run(
@@ -64,32 +67,86 @@ def upstream(repo, rev):
     return git(repo, 'show', f'{rev}:UPSTREAM').strip()
 
 
+def version_key(text):
+    return tuple(int(part) for part in text.lstrip('v').split('.'))
+
+
+def upstream_changes(was, now):
+    # telegram desktop's own changelog lines after `was` up to `now`, betas included because tele only follows stables
+    if not was or not now or was == now:
+        return []
+    try:
+        with urllib.request.urlopen(CHANGELOG.format(tag=now), timeout=30) as response:
+            text = response.read().decode('utf-8')
+        low, high = version_key(was), version_key(now)
+    except (OSError, ValueError):
+        return []
+    sections = []
+    for line in text.splitlines():
+        heading = VERSION.match(line)
+        if heading:
+            take = low < version_key(heading.group(1)) <= high
+            sections.append([] if take else None)
+            continue
+        line = line.strip()
+        if sections and sections[-1] is not None and line.startswith('- ') and 'build option' not in line:
+            sections[-1].append(line[2:].strip())
+    return [item for section in reversed(sections) if section for item in section]
+
+
+def upstream_move(repo, previous, now):
+    was = upstream(repo, previous) if previous else ''
+    return (was, upstream_changes(was, now)) if was and was != now else ('', [])
+
+
 def escape(text):
     text = re.sub(r'([\\`*_\[\]()~=|$!#+\-])', r'\\\1', text)
     return text.replace('<', '&#60;')
 
 
 def message(args):
+    from notes import CATEGORIES, category, paths_by_subject, release_rows
+
     now = patches(args.repo, 'HEAD')
     before = previous_patches(args.repo, 'HEAD', args.previous) if args.previous else {}
     added = [name for name in now if name not in before]
     changed = [name for name in now if name in before and before[name] != now[name]]
     dropped = [name for name in before if name not in now]
+    paths = paths_by_subject(args.repo, 'HEAD')
+    rows = release_rows(args.repo, 'HEAD')
+    wheres = {number: where for number, _, where in rows.values()}
+    grouped = {}
+    for name in added + changed:
+        path = paths.get(name, '')
+        group = category(rows[path][2], wheres) if path in rows else 'other'
+        mark = ' (changed)' if name in changed else ''
+        grouped.setdefault(group, []).append(f'- {escape(name)}{mark}')
 
     tdesktop = 'https://github.com/telegramdesktop/tdesktop/releases/tag/'
+    number = args.tag.rsplit('-tele.', 1)[-1]
     lines = [
-        f'## tele {escape(args.tag)}',
+        f'## tele for desktop {escape(number)} · {escape(args.upstream.lstrip("v"))}',
         '',
         f'telegram desktop [{escape(args.upstream)}]({tdesktop}{args.upstream}) with {len(now)} patches.',
     ]
-    if args.previous:
-        was = upstream(args.repo, args.previous)
-        if was != args.upstream:
-            lines += ['', f'moved from tdesktop {escape(was)} to {escape(args.upstream)}.']
-    for title, names in (('new', added), ('changed', changed), ('dropped', dropped)):
-        if names:
-            lines += ['', f'**{title}**', '']
-            lines += [f'- {escape(name)}' for name in names]
+    was, moved = upstream_move(args.repo, args.previous, args.upstream)
+    if moved:
+        lines += [
+            '',
+            f'**telegram desktop {escape(args.upstream.lstrip("v"))}**',
+            '',
+            f'new in telegram desktop since {escape(was.lstrip("v"))}:',
+            '',
+            *[f'- {escape(item)}' for item in moved],
+        ]
+    elif was:
+        lines += ['', f'moved from tdesktop {escape(was)} to {escape(args.upstream)}.']
+    for title in CATEGORIES:
+        if title in grouped:
+            lines += ['', f'**{title}**', '', *grouped[title]]
+    if dropped:
+        lines += ['', '**dropped**', '']
+        lines += [f'- {escape(name)}' for name in dropped]
     if args.previous and not (added or changed or dropped):
         lines += ['', 'same patches as before.']
     lines += [
@@ -98,8 +155,10 @@ def message(args):
         '',
         '<tg-button-row>'
         f'<tg-button type="url" url="{args.url}/releases/tag/{args.tag}">download</tg-button>'
-        f'<tg-button type="url" url="{args.url}#patches">all patches</tg-button>'
+        f'<tg-button type="url" url="{args.url}/blob/main/docs/features.md">all patches</tg-button>'
         '</tg-button-row>',
+        '',
+        '<footer>#desktop</footer>',
     ]
     return '\n'.join(lines)
 

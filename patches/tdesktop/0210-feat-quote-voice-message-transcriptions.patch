@@ -1,0 +1,257 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 4 Oct 2026 11:03:32 +0300
+Subject: [PATCH] feat: quote voice message transcriptions
+
+---
+ Telegram/SourceFiles/tele/tele_rich_quote.cpp | 93 +++++++++++++++----
+ Telegram/SourceFiles/tele/tele_rich_quote.h   | 15 ++-
+ 2 files changed, 85 insertions(+), 23 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_rich_quote.cpp b/Telegram/SourceFiles/tele/tele_rich_quote.cpp
+index 5e630f656345c85ac3fd3239b6c9a2b6c2deed4a..bdac507303ddc873b146ed21995a14f25f285736 100644
+--- a/Telegram/SourceFiles/tele/tele_rich_quote.cpp
++++ b/Telegram/SourceFiles/tele/tele_rich_quote.cpp
+@@ -1,5 +1,7 @@
+ #include "tele/tele_rich_quote.h"
+ 
++#include "api/api_transcribes.h"
++#include "apiwrap.h"
+ #include "base/qt/qt_key_modifiers.h"
+ #include "data/data_peer.h"
+ #include "data/data_premium_limits.h"
+@@ -7,18 +9,23 @@
+ #include "data/stickers/data_custom_emoji.h"
+ #include "history/history.h"
+ #include "history/history_item.h"
++#include "history/history_item_components.h"
+ #include "history/view/history_view_context_menu.h"
+ #include "history/view/history_view_element.h"
+ #include "history/view/history_view_list_widget.h"
++#include "history/view/history_view_transcribe_button.h"
++#include "history/view/media/history_view_document.h"
+ #include "iv/editor/iv_editor_clipboard.h"
+ #include "iv/editor/iv_editor_page_blocks.h"
+ #include "iv/editor/iv_editor_session.h"
+ #include "iv/editor/iv_editor_window.h"
+ #include "main/main_session.h"
++#include "media/player/media_player_float.h"
+ #include "tele/tele_lowercase.h"
+ #include "tele/tele_notices.h"
+ #include "tele/tele_options.h"
+ #include "ui/delayed_activation.h"
++#include "ui/effects/voice_once_particles.h"
+ #include "ui/text/text_entity.h"
+ #include "ui/toast/toast.h"
+ #include "ui/widgets/fields/input_field.h"
+@@ -34,7 +41,7 @@ using Block = Iv::RichPage::Block;
+ 
+ struct Pending {
+ 	FullMsgId itemId;
+-	Iv::RichPageBlocksSlice slice;
++	QuoteRequest request;
+ };
+ 
+ [[nodiscard]] std::optional<Pending> &PendingQuote() {
+@@ -190,10 +197,9 @@ void StripEntities(not_null<History*> history, TextWithEntities &quoted) {
+ 
+ void InsertPlain(
+ 		not_null<History*> history,
+-		const Iv::RichPageBlocksSlice &slice,
++		TextWithEntities quoted,
+ 		not_null<Ui::InputField*> field) {
+ 	const auto session = &history->session();
+-	auto quoted = Flatten(slice);
+ 	StripEntities(history, quoted);
+ 	const auto own = field->getTextWithTags();
+ 	const auto limit = Data::PremiumLimits(session).messageLengthCurrent();
+@@ -290,19 +296,60 @@ void AppendToEditor(
+ 	}
+ }
+ 
++[[nodiscard]] TextWithEntities TranscriptionQuote(
++		not_null<HistoryView::Element*> view,
++		TextSelection selection) {
++	const auto document = dynamic_cast<HistoryView::Document*>(
++		view->media());
++	const auto voice = document
++		? document->Get<HistoryDocumentVoice>()
++		: nullptr;
++	if (!voice || selection == FullSelection) {
++		return {};
++	}
++	const auto item = view->data();
++	const auto mediaBefore = (item->invertMedia() && !item->emptyText())
++		? !document->aboveTextByDefault()
++		: document->aboveTextByDefault();
++	if (view->hasVisibleText() && !mediaBefore) {
++		return {};
++	}
++	const auto length = voice->transcribeText.length();
++	if (selection.empty() || selection.from >= length) {
++		return {};
++	}
++	const auto &entry = item->history()->session().api().transcribes().entry(
++		item);
++	if (!entry.shown
++		|| entry.failed
++		|| entry.toolong
++		|| entry.pending
++		|| entry.requestId) {
++		return {};
++	}
++	selection.to = uint16(std::min(int(selection.to), int(length)));
++	auto result = voice->transcribeText.toTextWithEntities(selection);
++	result.entities.clear();
++	return result;
++}
++
+ } // namespace
+ 
+-Iv::RichPageBlocksSlice RichQuoteBlocks(
++QuoteRequest RichQuoteBlocks(
+ 		const HistoryView::SelectedQuote &quote,
+ 		HistoryView::Element *view,
+ 		const HistoryView::MessageSelection &selection) {
+-	if (!RichQuote() || quote || !view || !selection.isRichPage()) {
++	if (quote || !view) {
+ 		return {};
++	} else if (selection.isRichPage()) {
++		return RichQuote()
++			? QuoteRequest{ .slice = view->selectedRichBlocks(selection) }
++			: QuoteRequest();
+ 	}
+-	return view->selectedRichBlocks(selection);
++	return { .text = TranscriptionQuote(view, selection.flatSelection()) };
+ }
+ 
+-Iv::RichPageBlocksSlice RichQuoteBlocks(
++QuoteRequest RichQuoteBlocks(
+ 		not_null<HistoryView::ListWidget*> list,
+ 		const HistoryView::ContextMenuRequest &request) {
+ 	const auto view = request.view;
+@@ -315,11 +362,11 @@ Iv::RichPageBlocksSlice RichQuoteBlocks(
+ 		list->getSelectedTextSelection(view->data()));
+ }
+ 
+-void RequestRichQuote(FullMsgId itemId, Iv::RichPageBlocksSlice slice) {
+-	if (slice.empty()) {
++void RequestRichQuote(FullMsgId itemId, QuoteRequest request) {
++	if (request.empty()) {
+ 		return;
+ 	}
+-	PendingQuote() = Pending{ itemId, std::move(slice) };
++	PendingQuote() = Pending{ itemId, std::move(request) };
+ 	crl::on_main([] {
+ 		PendingQuote() = std::nullopt;
+ 	});
+@@ -336,11 +383,16 @@ void ApplyRichQuote(
+ 		|| !replyTo.quote.empty()) {
+ 		return;
+ 	}
+-	auto slice = std::move(pending->slice);
++	auto request = std::move(pending->request);
+ 	pending = std::nullopt;
+ 	if (editing) {
+ 		return;
++	} else if (!request.text.empty()) {
++		QuoteReplies()[history] = replyTo.messageId;
++		InsertPlain(history, std::move(request.text), compose.field);
++		return;
+ 	}
++	auto &slice = request.slice;
+ 	const auto session = &history->session();
+ 	if (Iv::Editor::CanAuthorRichMessages(session)) {
+ 		auto blocks = slice.blocks;
+@@ -358,7 +410,7 @@ void ApplyRichQuote(
+ 		}
+ 	}
+ 	QuoteReplies()[history] = replyTo.messageId;
+-	InsertPlain(history, slice, compose.field);
++	InsertPlain(history, Flatten(slice), compose.field);
+ }
+ 
+ bool AppendQuote(
+@@ -369,10 +421,10 @@ bool AppendQuote(
+ 		return false;
+ 	}
+ 	auto &pending = PendingQuote();
+-	const auto rich = replyTo.quote.empty()
++	const auto local = replyTo.quote.empty()
+ 		&& pending
+ 		&& (pending->itemId == replyTo.messageId);
+-	if (!rich && replyTo.quote.empty()) {
++	if (!local && replyTo.quote.empty()) {
+ 		QuoteReplies().remove(history);
+ 		return false;
+ 	}
+@@ -388,9 +440,10 @@ bool AppendQuote(
+ 	if (!item) {
+ 		return false;
+ 	}
+-	const auto slice = rich
+-		? base::take(pending)->slice
+-		: Iv::RichPageBlocksSlice();
++	const auto request = local
++		? base::take(pending)->request
++		: QuoteRequest{ .text = replyTo.quote };
++	const auto rich = !request.slice.empty();
+ 	const auto credit = (replyTo.messageId != current.messageId)
+ 		? item->author()->name()
+ 		: QString();
+@@ -398,14 +451,14 @@ bool AppendQuote(
+ 		AppendToEditor(
+ 			compose,
+ 			(rich
+-				? slice.blocks
+-				: Iv::SplitTextIntoRichPage(replyTo.quote).blocks),
++				? request.slice.blocks
++				: Iv::SplitTextIntoRichPage(request.text).blocks),
+ 			credit);
+ 	} else {
+ 		AppendToField(
+ 			history,
+ 			compose.field,
+-			rich ? Flatten(slice) : replyTo.quote,
++			rich ? Flatten(request.slice) : request.text,
+ 			credit);
+ 	}
+ 	return true;
+diff --git a/Telegram/SourceFiles/tele/tele_rich_quote.h b/Telegram/SourceFiles/tele/tele_rich_quote.h
+index 05711b00cc3646a1b50a2882bd9b61ad24fa902c..1f264d9be4571c14e2da73f054add0a4cd2f93ce 100644
+--- a/Telegram/SourceFiles/tele/tele_rich_quote.h
++++ b/Telegram/SourceFiles/tele/tele_rich_quote.h
+@@ -20,6 +20,15 @@ class InputField;
+ 
+ namespace Tele {
+ 
++struct QuoteRequest {
++	Iv::RichPageBlocksSlice slice;
++	TextWithEntities text;
++
++	[[nodiscard]] bool empty() const {
++		return slice.empty() && text.empty();
++	}
++};
++
+ struct RichQuoteCompose {
+ 	Fn<void(std::shared_ptr<QMimeData>)> rich;
+ 	not_null<Ui::InputField*> field;
+@@ -33,14 +42,14 @@ struct MultiQuoteCompose {
+ 	not_null<Ui::InputField*> field;
+ };
+ 
+-[[nodiscard]] Iv::RichPageBlocksSlice RichQuoteBlocks(
++[[nodiscard]] QuoteRequest RichQuoteBlocks(
+ 	const HistoryView::SelectedQuote &quote,
+ 	HistoryView::Element *view,
+ 	const HistoryView::MessageSelection &selection);
+-[[nodiscard]] Iv::RichPageBlocksSlice RichQuoteBlocks(
++[[nodiscard]] QuoteRequest RichQuoteBlocks(
+ 	not_null<HistoryView::ListWidget*> list,
+ 	const HistoryView::ContextMenuRequest &request);
+-void RequestRichQuote(FullMsgId itemId, Iv::RichPageBlocksSlice slice);
++void RequestRichQuote(FullMsgId itemId, QuoteRequest request);
+ void ApplyRichQuote(
+ 	not_null<History*> history,
+ 	const FullReplyTo &replyTo,

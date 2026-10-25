@@ -1,0 +1,287 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 4 Oct 2026 11:39:32 +0300
+Subject: [PATCH] fix: say why a download couldn't be saved
+
+---
+ Telegram/SourceFiles/data/data_document.cpp   | 15 +---
+ .../SourceFiles/storage/file_download.cpp     |  3 +
+ .../tele/tele_download_folders.cpp            | 89 +++++++++++++++++++
+ .../SourceFiles/tele/tele_download_folders.h  |  5 ++
+ .../SourceFiles/tele/tele_download_paths.cpp  | 24 +++++
+ .../SourceFiles/tele/tele_download_paths.h    |  2 +
+ 6 files changed, 126 insertions(+), 12 deletions(-)
+
+diff --git a/Telegram/SourceFiles/data/data_document.cpp b/Telegram/SourceFiles/data/data_document.cpp
+index 18aa8aeb8d8aa905565737314f6ebbac5688952d..dae12e0061b839ac5fbf7c483a24829f84565cdb 100644
+--- a/Telegram/SourceFiles/data/data_document.cpp
++++ b/Telegram/SourceFiles/data/data_document.cpp
+@@ -1340,7 +1340,9 @@ void DocumentData::handleLoaderUpdates() {
+ 		_owner->documentLoadProgress(this);
+ 	}, [=](FileLoader::Error error) {
+ 		using FailureReason = FileLoader::FailureReason;
+-		if (error.started && _loader) {
++		if (error.failureReason == FailureReason::FileWriteFailure) {
++			Tele::DownloadWriteFailed(this, _loader.get(), error.started);
++		} else if (error.started && _loader) {
+ 			const auto origin = _loader->fileOrigin();
+ 			const auto failedFileName = _loader->fileName();
+ 			const auto retry = [=] {
+@@ -1351,17 +1353,6 @@ void DocumentData::handleLoaderUpdates() {
+ 				tr::lng_download_finish_failed(),
+ 				crl::guard(&session(), retry)
+ 			}));
+-		} else if (error.failureReason == FailureReason::FileWriteFailure) {
+-			if (!Core::App().settings().downloadPath().isEmpty()) {
+-				Core::App().settings().setDownloadPathBookmark(QByteArray());
+-				Core::App().settings().setDownloadPath(QString());
+-				Core::App().saveSettingsDelayed();
+-				InvokeQueued(qApp, [] {
+-					Ui::show(
+-						Ui::MakeInformBox(
+-							tr::lng_download_path_failed(tr::now)));
+-				});
+-			}
+ 		}
+ 		finishLoad();
+ 		status = FileDownloadFailed;
+diff --git a/Telegram/SourceFiles/storage/file_download.cpp b/Telegram/SourceFiles/storage/file_download.cpp
+index e02954924ca6cf1a54e19bc28af517437ae23c6f..a010fcc5aa4eb10fdb37836bc4a444301ed4d0a5 100644
+--- a/Telegram/SourceFiles/storage/file_download.cpp
++++ b/Telegram/SourceFiles/storage/file_download.cpp
+@@ -349,6 +349,9 @@ void FileLoader::cancel() {
+ }
+ 
+ void FileLoader::cancel(FailureReason fail) {
++	if (fail == FailureReason::FileWriteFailure) {
++		Tele::SetDownloadError(this, _file.errorString());
++	}
+ 	const auto started = (currentOffset() > 0);
+ 
+ 	cancelHook();
+diff --git a/Telegram/SourceFiles/tele/tele_download_folders.cpp b/Telegram/SourceFiles/tele/tele_download_folders.cpp
+index abf7fcf8680ea90eb41b43efcfdb12ff75126f54..94a4f8574778953cbff2f962ab063cecc3e66a7f 100644
+--- a/Telegram/SourceFiles/tele/tele_download_folders.cpp
++++ b/Telegram/SourceFiles/tele/tele_download_folders.cpp
+@@ -1,6 +1,8 @@
+ #include "tele/tele_download_folders.h"
+ 
++#include "base/invoke_queued.h"
+ #include "base/weak_ptr.h"
++#include "boxes/abstract_box.h"
+ #include "core/application.h"
+ #include "core/core_settings.h"
+ #include "core/file_utilities.h"
+@@ -12,10 +14,13 @@
+ #include "main/main_session.h"
+ #include "mainwindow.h"
+ #include "storage/details/storage_file_utilities.h"
++#include "storage/file_download.h"
+ #include "storage/storage_account.h"
++#include "tele/tele_download_paths.h"
+ #include "tele/tele_lowercase.h"
+ #include "tele/tele_menu_apply.h"
+ #include "tele/tele_options.h"
++#include "ui/boxes/confirm_box.h"
+ #include "ui/widgets/menu/menu_add_action_callback.h"
+ #include "ui/widgets/popup_menu.h"
+ #include "window/window_controller.h"
+@@ -37,6 +42,11 @@ constexpr auto kMaxEntries = quint32(65536);
+ constexpr auto kMaxPathLength = 4096;
+ constexpr auto kMaxNameLength = 64;
+ constexpr auto kShownPathLength = 48;
++#ifdef Q_OS_WIN
++constexpr auto kPathCase = Qt::CaseInsensitive;
++#else
++constexpr auto kPathCase = Qt::CaseSensitive;
++#endif
+ 
+ PeerId CurrentChat;
+ 
+@@ -48,6 +58,7 @@ public:
+ 	[[nodiscard]] static Store &Get(not_null<Main::Session*> session);
+ 
+ 	[[nodiscard]] QString folder(PeerId peer) const;
++	[[nodiscard]] PeerId peerByFolder(const QString &path) const;
+ 	void setFolder(PeerId peer, const QString &path);
+ 
+ private:
+@@ -96,6 +107,16 @@ QString Store::folder(PeerId peer) const {
+ 	return (i != end(_folders)) ? i->second : QString();
+ }
+ 
++PeerId Store::peerByFolder(const QString &path) const {
++	const auto clean = QDir::cleanPath(path);
++	for (const auto &[peer, folder] : _folders) {
++		if (!QDir::cleanPath(folder).compare(clean, kPathCase)) {
++			return peer;
++		}
++	}
++	return PeerId();
++}
++
+ void Store::setFolder(PeerId peer, const QString &path) {
+ 	if (path.isEmpty()) {
+ 		if (!_folders.remove(peer)) {
+@@ -285,6 +306,13 @@ void ChooseFolder(
+ 	return native.left(head) + QChar(0x2026) + native.right(tail);
+ }
+ 
++[[nodiscard]] bool InsideFolder(const QString &path, const QString &folder) {
++	return !folder.isEmpty()
++		&& QDir::cleanPath(path).startsWith(
++			WithSlash(QDir::cleanPath(folder)),
++			kPathCase);
++}
++
+ } // namespace
+ 
+ DownloadChat::DownloadChat(PeerId peer)
+@@ -338,6 +366,67 @@ QString AutoDownloadFileName(
+ 		: filename;
+ }
+ 
++void DownloadWriteFailed(
++		not_null<DocumentData*> document,
++		FileLoader *loader,
++		bool started) {
++	const auto session = &document->session();
++	const auto path = loader ? loader->fileName() : QString();
++	const auto origin = loader ? loader->fileOrigin() : Data::FileOrigin();
++	const auto reason = TakeDownloadError(loader);
++	auto details = QDir::toNativeSeparators(path);
++	if (!reason.isEmpty()) {
++		details += (details.isEmpty() ? QString() : u"\n"_q) + reason;
++	}
++	const auto withDetails = [=](const QString &text) {
++		return details.isEmpty() ? text : (text + u"\n\n"_q + details);
++	};
++	const auto peer = (started || path.isEmpty() || !DownloadsPerChat())
++		? PeerId()
++		: Store::Get(session).peerByFolder(QFileInfo(path).absolutePath());
++	const auto global = !started
++		&& !peer
++		&& !Core::App().settings().downloadPath().isEmpty()
++		&& InsideFolder(path, BaseDownloadPath(session));
++	if (global) {
++		Core::App().settings().setDownloadPathBookmark(QByteArray());
++		Core::App().settings().setDownloadPath(QString());
++		Core::App().saveSettingsDelayed();
++	}
++	InvokeQueued(qApp, crl::guard(session, [=] {
++		if (started) {
++			const auto retry = [=] {
++				Ui::hideLayer();
++				document->save(origin, path);
++			};
++			Ui::show(Ui::MakeConfirmBox({
++				withDetails(tr::lng_download_finish_failed(tr::now)),
++				crl::guard(session, retry),
++			}));
++		} else if (peer) {
++			const auto reset = [=](Fn<void()> close) {
++				Store::Get(session).setFolder(peer, QString());
++				close();
++			};
++			Ui::show(Ui::MakeConfirmBox({
++				.text = withDetails(Lower(
++					u"Couldn't save the file to this chat's download folder."_q))
++					+ u"\n\n"_q
++					+ Lower(u"Reset the folder? This chat's files will go "
++						"to the main download folder."_q),
++				.confirmed = crl::guard(session, reset),
++				.confirmText = Lower(u"Reset"_q),
++			}));
++		} else if (global) {
++			Ui::show(Ui::MakeInformBox(
++				withDetails(tr::lng_download_path_failed(tr::now))));
++		} else {
++			Ui::show(Ui::MakeInformBox(
++				withDetails(Lower(u"Couldn't save the file."_q))));
++		}
++	}));
++}
++
+ void AddDownloadFolderAction(
+ 		not_null<Window::SessionController*> controller,
+ 		PeerData *peer,
+diff --git a/Telegram/SourceFiles/tele/tele_download_folders.h b/Telegram/SourceFiles/tele/tele_download_folders.h
+index 245246dbea94955986118f03f044b5582497464c..5cbcaba39ba87eafc097ffe99f6ac829839bd76e 100644
+--- a/Telegram/SourceFiles/tele/tele_download_folders.h
++++ b/Telegram/SourceFiles/tele/tele_download_folders.h
+@@ -1,6 +1,7 @@
+ #pragma once
+ 
+ class DocumentData;
++class FileLoader;
+ class PeerData;
+ 
+ namespace Data {
+@@ -46,6 +47,10 @@ private:
+ 	const Data::FileOrigin &origin,
+ 	const QString &filename,
+ 	bool fromCloud);
++void DownloadWriteFailed(
++	not_null<DocumentData*> document,
++	FileLoader *loader,
++	bool started);
+ void AddDownloadFolderAction(
+ 	not_null<Window::SessionController*> controller,
+ 	PeerData *peer,
+diff --git a/Telegram/SourceFiles/tele/tele_download_paths.cpp b/Telegram/SourceFiles/tele/tele_download_paths.cpp
+index 689ee34b7545973f54ba46d28f7b4ddea208ed15..797c871fdcd75e6ff46ab6d59811759106ef9148 100644
+--- a/Telegram/SourceFiles/tele/tele_download_paths.cpp
++++ b/Telegram/SourceFiles/tele/tele_download_paths.cpp
+@@ -8,11 +8,17 @@ namespace {
+ 	return result;
+ }
+ 
++[[nodiscard]] base::flat_map<const void*, QString> &Errors() {
++	static auto result = base::flat_map<const void*, QString>();
++	return result;
++}
++
+ } // namespace
+ 
+ void SetDownloadPath(const void *loader, const QString &path) {
+ 	if (path.isEmpty()) {
+ 		Paths().remove(loader);
++		Errors().remove(loader);
+ 	} else {
+ 		Paths()[loader] = QDir::cleanPath(path);
+ 	}
+@@ -31,4 +37,22 @@ bool DownloadPathTaken(const QString &path) {
+ 	return false;
+ }
+ 
++void SetDownloadError(const void *loader, const QString &error) {
++	if (error.isEmpty()) {
++		Errors().remove(loader);
++	} else {
++		Errors()[loader] = error;
++	}
++}
++
++QString TakeDownloadError(const void *loader) {
++	const auto i = Errors().find(loader);
++	if (i == end(Errors())) {
++		return QString();
++	}
++	auto result = std::move(i->second);
++	Errors().erase(i);
++	return result;
++}
++
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_download_paths.h b/Telegram/SourceFiles/tele/tele_download_paths.h
+index 2dab6b965daa5ff3adcdaa5b7c7ce7e7738b54df..0b493ede7a45bcc4fad85567fb9560bad98cc624 100644
+--- a/Telegram/SourceFiles/tele/tele_download_paths.h
++++ b/Telegram/SourceFiles/tele/tele_download_paths.h
+@@ -4,5 +4,7 @@ namespace Tele {
+ 
+ void SetDownloadPath(const void *loader, const QString &path);
+ [[nodiscard]] bool DownloadPathTaken(const QString &path);
++void SetDownloadError(const void *loader, const QString &error);
++[[nodiscard]] QString TakeDownloadError(const void *loader);
+ 
+ } // namespace Tele

@@ -585,6 +585,34 @@
         "source": "Open text files in tele",
         "translation": "Открывать текстовые файлы в tele"
       }
+    },
+    "kOptionBiggerRoundVideos": {
+      "name": {
+        "source": "Bigger video messages while playing",
+        "translation": "Увеличенные видеосообщения во время воспроизведения"
+      }
+    },
+    "kOptionRoundSeekAnywhere": {
+      "name": {
+        "source": "Seek anywhere on video messages",
+        "translation": "Перемотка в любой точке видеосообщения"
+      }
+    },
+    "kOptionObservedActivity": {
+      "desc": {
+        "source": "Remembered from the messages, typing, reads and reactions tele sees.",
+        "translation": "Запоминается из сообщений, набора текста, прочтений и реакций, которые видит tele."
+      },
+      "name": {
+        "source": "Last activity next to a hidden last seen",
+        "translation": "Время последней активности рядом со скрытым онлайном"
+      }
+    },
+    "kOptionTypingHiddenLastSeen": {
+      "name": {
+        "source": "Typing in the chat list with a hidden last seen",
+        "translation": "Набор текста в списке чатов при скрытом онлайне"
+      }
     }
   }
 }

@@ -1,0 +1,89 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 4 Oct 2026 11:15:27 +0300
+Subject: [PATCH] fix: load the call log in the right page sizes
+
+---
+ .../SourceFiles/calls/calls_box_controller.cpp     | 14 +++++++++++---
+ Telegram/SourceFiles/calls/calls_box_controller.h  |  3 +++
+ 2 files changed, 14 insertions(+), 3 deletions(-)
+
+diff --git a/Telegram/SourceFiles/calls/calls_box_controller.cpp b/Telegram/SourceFiles/calls/calls_box_controller.cpp
+index ab97937966dc356591dc6856a3a023284d3458ab..197bbec7ad2c4decc1e99b6905505ae0f313af5c 100644
+--- a/Telegram/SourceFiles/calls/calls_box_controller.cpp
++++ b/Telegram/SourceFiles/calls/calls_box_controller.cpp
+@@ -56,6 +56,8 @@ namespace {
+ 
+ constexpr auto kFirstPageCount = 20;
+ constexpr auto kPerPageCount = 100;
++constexpr auto kFirstRetryDelay = crl::time(1000);
++constexpr auto kMaxRetryDelay = crl::time(30000);
+ 
+ class GroupCallRow final : public PeerListRow {
+ public:
+@@ -506,7 +508,8 @@ void BoxController::Row::rightActionStopLastRipple() {
+ 
+ BoxController::BoxController(not_null<::Window::SessionController*> window)
+ : _window(window)
+-, _api(&_window->session().mtp()) {
++, _api(&_window->session().mtp())
++, _retryTimer([=] { loadMoreRows(); }) {
+ }
+ 
+ Main::Session &BoxController::session() const {
+@@ -545,7 +548,7 @@ void BoxController::prepare() {
+ }
+ 
+ void BoxController::loadMoreRows() {
+-	if (_loadRequestId || _allLoaded) {
++	if (_loadRequestId || _allLoaded || _retryTimer.isActive()) {
+ 		return;
+ 	}
+ 
+@@ -562,12 +565,13 @@ void BoxController::loadMoreRows() {
+ 		MTP_int(0), // max_date
+ 		MTP_int(_offsetId),
+ 		MTP_int(0), // add_offset
+-		MTP_int(_offsetId ? kFirstPageCount : kPerPageCount),
++		MTP_int(_offsetId ? kPerPageCount : kFirstPageCount),
+ 		MTP_int(0), // max_id
+ 		MTP_int(0), // min_id
+ 		MTP_long(0) // hash
+ 	)).done([this](const MTPmessages_Messages &result) {
+ 		_loadRequestId = 0;
++		_retryDelay = 0;
+ 
+ 		auto handleResult = [&](auto &data) {
+ 			session().data().processUsers(data.vusers());
+@@ -589,6 +593,10 @@ void BoxController::loadMoreRows() {
+ 		}
+ 	}).fail([this] {
+ 		_loadRequestId = 0;
++		_retryDelay = _retryDelay
++			? std::min(_retryDelay * 2, kMaxRetryDelay)
++			: kFirstRetryDelay;
++		_retryTimer.callOnce(_retryDelay);
+ 	}).send();
+ }
+ 
+diff --git a/Telegram/SourceFiles/calls/calls_box_controller.h b/Telegram/SourceFiles/calls/calls_box_controller.h
+index d9ef0ccccbebc7c00a017d29f79b0fc8b0aacd4e..487ea507326b6aefef09218459f768bba2ef0357 100644
+--- a/Telegram/SourceFiles/calls/calls_box_controller.h
++++ b/Telegram/SourceFiles/calls/calls_box_controller.h
+@@ -10,6 +10,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "boxes/peer_list_box.h"
+ #include "ui/layers/generic_box.h"
+ #include "mtproto/sender.h"
++#include "base/timer.h"
+ 
+ namespace Window {
+ class SessionController;
+@@ -74,6 +75,8 @@ private:
+ 	MsgId _offsetId = 0;
+ 	int _loadRequestId = 0; // Not a real mtpRequestId.
+ 	bool _allLoaded = false;
++	base::Timer _retryTimer;
++	crl::time _retryDelay = 0;
+ 
+ };
+ 

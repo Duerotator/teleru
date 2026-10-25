@@ -1,0 +1,274 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 4 Oct 2026 20:27:22 +0300
+Subject: [PATCH] feat: reply and mention badges in the notification centre
+
+---
+ Telegram/SourceFiles/tele/tele_notices.cpp    |  6 ++
+ Telegram/SourceFiles/tele/tele_notices.h      |  1 +
+ .../tele/tele_notices_mentions.cpp            | 30 ++++++++
+ .../SourceFiles/tele/tele_notices_mentions.h  |  3 +
+ .../SourceFiles/tele/tele_notices_section.cpp | 76 ++++++++++++++++++-
+ 5 files changed, 112 insertions(+), 4 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_notices.cpp b/Telegram/SourceFiles/tele/tele_notices.cpp
+index 1c0267f3a89bdc4af35507af15a53bca7bf5da08..5a96835a830c1a8f409fb3d4cceee018d7015925 100644
+--- a/Telegram/SourceFiles/tele/tele_notices.cpp
++++ b/Telegram/SourceFiles/tele/tele_notices.cpp
+@@ -190,6 +190,9 @@ template <typename Value, size_t Size>
+ 		result.insert(u"topic"_q, QString::number(notice.topic));
+ 		result.insert(u"source"_q, QString::number(notice.source));
+ 		result.insert(u"smsg"_q, QString::number(notice.sourceMsg));
++		if (notice.reply) {
++			result.insert(u"reply"_q, *notice.reply);
++		}
+ 	}
+ 	result.insert(u"unread"_q, notice.unread);
+ 	return result;
+@@ -230,6 +233,9 @@ template <typename Value, size_t Size>
+ 		.sourceMsg = fields.value(u"smsg"_q).toString().toLongLong(),
+ 		.unread = fields.value(u"unread"_q).toBool(),
+ 	};
++	if (result.kind == NoticeKind::Mention && fields.contains(u"reply"_q)) {
++		result.reply = fields.value(u"reply"_q).toBool();
++	}
+ 	for (const auto &value : fields.value(u"buttons"_q).toArray()) {
+ 		const auto button = value.toArray();
+ 		const auto url = button.at(1).toString();
+diff --git a/Telegram/SourceFiles/tele/tele_notices.h b/Telegram/SourceFiles/tele/tele_notices.h
+index 71d8747134406b86656992797f19a887e16af78d..1550e6297dc819148f9b8addc1096277d85b8967 100644
+--- a/Telegram/SourceFiles/tele/tele_notices.h
++++ b/Telegram/SourceFiles/tele/tele_notices.h
+@@ -60,6 +60,7 @@ struct Notice {
+ 	int64 topic = 0;
+ 	uint64 source = 0;
+ 	int64 sourceMsg = 0;
++	std::optional<bool> reply;
+ 	bool unread = true;
+ };
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_notices_mentions.cpp b/Telegram/SourceFiles/tele/tele_notices_mentions.cpp
+index d9d144505d13fe3d1b44fd04a8515e5d119fd617..c73a5c4c7a0ff0a688a9a55153f4be97df57d1e4 100644
+--- a/Telegram/SourceFiles/tele/tele_notices_mentions.cpp
++++ b/Telegram/SourceFiles/tele/tele_notices_mentions.cpp
+@@ -86,6 +86,21 @@ struct Target {
+ 	return false;
+ }
+ 
++[[nodiscard]] bool IsReply(not_null<HistoryItem*> item) {
++	const auto reply = item->Get<HistoryMessageReply>();
++	if (reply && reply->resolvedMessage) {
++		return RepliesToSelf(item);
++	} else if (TextMentionsSelf(item)) {
++		return false;
++	} else if (item->history()->peer->isRepliesChat()) {
++		return true;
++	}
++	const auto to = reply ? reply->messageId() : MsgId();
++	return to
++		&& item->mentionsMe()
++		&& !(item->history()->isForum() && to == item->topicRootId());
++}
++
+ [[nodiscard]] std::optional<Target> TargetOf(not_null<HistoryItem*> item) {
+ 	if (item->out()
+ 		|| item->isService()
+@@ -221,6 +236,7 @@ void Log(
+ 		.topic = target->topic.bare,
+ 		.source = external ? source->id.value : 0,
+ 		.sourceMsg = external ? item->id.bare : 0,
++		.reply = IsReply(item),
+ 	});
+ 	CheckRead(session, source->id);
+ }
+@@ -249,6 +265,20 @@ void Edited(
+ 
+ } // namespace
+ 
++bool MentionNoticeReply(
++		not_null<Main::Session*> session,
++		const Notice &notice) {
++	if (notice.reply) {
++		return *notice.reply;
++	}
++	const auto peer = PeerFromNotice(notice.source
++		? notice.source
++		: notice.peer);
++	const auto msg = MsgId(notice.source ? notice.sourceMsg : notice.msg);
++	const auto item = session->data().message(peer, msg);
++	return item && IsReply(item);
++}
++
+ void SetupNoticeMentions(not_null<Main::Session*> session) {
+ 	const auto state = session->lifetime().make_state<State>();
+ 	session->data().newItemAdded(
+diff --git a/Telegram/SourceFiles/tele/tele_notices_mentions.h b/Telegram/SourceFiles/tele/tele_notices_mentions.h
+index 27a48568221aa1d4aa571350d899526fb4631194..62c9fa8e820c3ac2ce35ce3dfc0a4c0f30f96e08 100644
+--- a/Telegram/SourceFiles/tele/tele_notices_mentions.h
++++ b/Telegram/SourceFiles/tele/tele_notices_mentions.h
+@@ -16,5 +16,8 @@ void SetupNoticeMentions(not_null<Main::Session*> session);
+ void ShowMentionNotice(
+ 	not_null<Window::SessionController*> controller,
+ 	const Notice &notice);
++[[nodiscard]] bool MentionNoticeReply(
++	not_null<Main::Session*> session,
++	const Notice &notice);
+ 
+ } // namespace Tele
+diff --git a/Telegram/SourceFiles/tele/tele_notices_section.cpp b/Telegram/SourceFiles/tele/tele_notices_section.cpp
+index f40f2dc9a12b707bcf4c021dbcb21bf7435d3147..f5f401b72552a79cfa40b874bc3a8bea5d13670e 100644
+--- a/Telegram/SourceFiles/tele/tele_notices_section.cpp
++++ b/Telegram/SourceFiles/tele/tele_notices_section.cpp
+@@ -23,6 +23,8 @@
+ #include "ui/wrap/vertical_layout.h"
+ #include "window/window_session_controller.h"
+ #include "styles/style_basic.h"
++#include "styles/style_dialogs.h"
++#include "styles/style_dialogs_layout.h"
+ #include "styles/style_info.h"
+ #include "styles/style_layers.h"
+ #include "styles/style_menu_icons.h"
+@@ -36,6 +38,9 @@ namespace {
+ constexpr auto kRefreshTimeAgo = 30 * crl::time(1000);
+ constexpr auto kPhotoMaxHeight = 240;
+ constexpr auto kIconSize = 36;
++constexpr auto kBadgeSize = 18;
++constexpr auto kBadgeStroke = 2;
++constexpr auto kBadgeShift = 1;
+ constexpr auto kTextLines = 6;
+ constexpr auto kButtonSkip = 6;
+ 
+@@ -90,7 +95,17 @@ enum class Filter : uchar {
+ 	Unexpected("Filter in Tele::Matches.");
+ }
+ 
+-[[nodiscard]] const style::icon &KindIcon(NoticeKind kind) {
++[[nodiscard]] const style::icon &MentionIcon(bool reply) {
++	return reply ? st::menuIconReply : st::dialogsUnreadMention.icon;
++}
++
++[[nodiscard]] const style::icon &MentionBadgeIcon(bool reply) {
++	return reply
++		? st::dialogsMiniReplyIcon.icon
++		: st::dialogsUnreadMention.icon;
++}
++
++[[nodiscard]] const style::icon &KindIcon(NoticeKind kind, bool reply) {
+ 	switch (kind) {
+ 	case NoticeKind::Limit: return st::menuIconTimer;
+ 	case NoticeKind::Server: return st::menuIconInfo;
+@@ -98,7 +113,7 @@ enum class Filter : uchar {
+ 	case NoticeKind::Update: return st::menuIconDownload;
+ 	case NoticeKind::Crash: return st::menuIconReport;
+ 	case NoticeKind::Online: return st::menuIconUserShow;
+-	case NoticeKind::Mention: return st::menuIconReply;
++	case NoticeKind::Mention: return MentionIcon(reply);
+ 	case NoticeKind::Copy: return st::menuIconCopy;
+ 	}
+ 	Unexpected("Kind in Tele::KindIcon.");
+@@ -239,6 +254,7 @@ protected:
+ private:
+ 	[[nodiscard]] int left() const;
+ 	[[nodiscard]] int right() const;
++	void paintBadgedUserpic(QPainter &p, int x, int y, int size);
+ 	void showMenu(Ui::PopupMenu *menu, QPoint globalPosition);
+ 	void fillMenu(not_null<Ui::PopupMenu*> menu);
+ 	void activate();
+@@ -246,6 +262,7 @@ private:
+ 	const not_null<Window::SessionController*> _controller;
+ 	const Notice _notice;
+ 	const bool _fresh = false;
++	bool _reply = false;
+ 	Ui::Text::String _title = { 1 };
+ 	QString _time;
+ 	int _timeWidth = 0;
+@@ -255,6 +272,8 @@ private:
+ 	std::unique_ptr<Clamped> _text;
+ 	PeerData *_from = nullptr;
+ 	Ui::PeerUserpicView _userpic;
++	QImage _userpicCache;
++	InMemoryKey _userpicKey;
+ 	QImage _photo;
+ 	QImage _photoCache;
+ 	QRect _photoRect;
+@@ -273,6 +292,8 @@ Entry::Entry(
+ , _notice(notice)
+ , _fresh(fresh) {
+ 	const auto session = &controller->session();
++	_reply = (_notice.kind == NoticeKind::Mention)
++		&& MentionNoticeReply(session, _notice);
+ 	_title.setText(st::semiboldTextStyle, _notice.title);
+ 	if (!_notice.value.text.isEmpty()) {
+ 		_value = std::make_unique<Clamped>(
+@@ -437,7 +458,9 @@ void Entry::paintEvent(QPaintEvent *e) {
+ 	const auto padding = st::boxRowPadding.left() / 2;
+ 	const auto size = style::ConvertScale(kIconSize);
+ 	const auto iconLeft = st::boxRowPadding.left();
+-	if (_from) {
++	if (_from && _notice.kind == NoticeKind::Mention) {
++		paintBadgedUserpic(p, iconLeft, padding, size);
++	} else if (_from) {
+ 		_from->paintUserpicLeft(
+ 			p,
+ 			_userpic,
+@@ -452,7 +475,7 @@ void Entry::paintEvent(QPaintEvent *e) {
+ 			p.setBrush(KindColor(_notice));
+ 			p.drawEllipse(iconLeft, padding, size, size);
+ 		}
+-		const auto &icon = KindIcon(_notice.kind);
++		const auto &icon = KindIcon(_notice.kind, _reply);
+ 		icon.paint(
+ 			p,
+ 			iconLeft + (size - icon.width()) / 2,
+@@ -497,6 +520,51 @@ void Entry::paintEvent(QPaintEvent *e) {
+ 	}
+ }
+ 
++void Entry::paintBadgedUserpic(QPainter &p, int x, int y, int size) {
++	const auto badge = style::ConvertScale(kBadgeSize);
++	const auto stroke = style::ConvertScale(kBadgeStroke);
++	const auto inner = size - badge + style::ConvertScale(kBadgeShift);
++	const auto ratio = style::DevicePixelRatio();
++	const auto key = _from->userpicUniqueKey(_userpic);
++	if (_userpicKey != key
++		|| _userpicCache.size() != QSize(size, size) * ratio) {
++		_userpicKey = key;
++		_userpicCache = QImage(
++			QSize(size, size) * ratio,
++			QImage::Format_ARGB32_Premultiplied);
++		_userpicCache.setDevicePixelRatio(ratio);
++		_userpicCache.fill(Qt::transparent);
++		auto q = QPainter(&_userpicCache);
++		_from->paintUserpic(q, _userpic, 0, 0, size);
++		auto hq = PainterHighQualityEnabler(q);
++		q.setCompositionMode(QPainter::CompositionMode_Clear);
++		q.setPen(Qt::NoPen);
++		q.setBrush(Qt::black);
++		q.drawEllipse(
++			inner - stroke,
++			inner - stroke,
++			badge + 2 * stroke,
++			badge + 2 * stroke);
++	}
++	const auto left = rtl() ? (width() - x - size) : x;
++	p.drawImage(left, y, _userpicCache);
++	const auto badgeLeft = left + inner;
++	const auto badgeTop = y + inner;
++	{
++		auto hq = PainterHighQualityEnabler(p);
++		p.setPen(Qt::NoPen);
++		p.setBrush(KindColor(_notice));
++		p.drawEllipse(badgeLeft, badgeTop, badge, badge);
++	}
++	const auto &icon = MentionBadgeIcon(_reply);
++	icon.paint(
++		p,
++		badgeLeft + (badge - icon.width()) / 2,
++		badgeTop + (badge - icon.height()) / 2,
++		width(),
++		st::settingsIconFg->c);
++}
++
+ void Entry::contextMenuEvent(QContextMenuEvent *e) {
+ 	_menu = base::make_unique_q<Ui::PopupMenu>(
+ 		this,

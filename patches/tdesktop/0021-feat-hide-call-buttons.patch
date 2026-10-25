@@ -13,10 +13,10 @@ Subject: [PATCH] feat: hide call buttons
  6 files changed, 36 insertions(+), 3 deletions(-)
 
 diff --git a/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp b/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
-index 62fad807f2d5a1207ca21cb82978b63a9b4ed495..20c1bb18566834cd61eba10c155c3080c8eb3c8d 100644
+index 2b246572396c7d95c89c80ad51573931d055cdaa..8370efaa6bf70c08b9547d763ac3f28f4fe2a18a 100644
 --- a/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
-@@ -65,6 +65,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -66,6 +66,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "support/support_helper.h"
  #include "apiwrap.h"
  #include "api/api_chat_participants.h"
@@ -24,7 +24,7 @@ index 62fad807f2d5a1207ca21cb82978b63a9b4ed495..20c1bb18566834cd61eba10c155c3080
  #include "styles/style_window.h"
  #include "styles/style_dialogs.h"
  #include "styles/style_chat.h"
-@@ -257,6 +258,11 @@ TopBarWidget::TopBarWidget(
+@@ -258,6 +259,11 @@ TopBarWidget::TopBarWidget(
  		updateConnectingState();
  	}, lifetime());
  
@@ -36,7 +36,7 @@ index 62fad807f2d5a1207ca21cb82978b63a9b4ed495..20c1bb18566834cd61eba10c155c3080
  	setCursor(style::cur_pointer);
  	_call->setAccessibleName(tr::lng_profile_action_short_call(tr::now));
  	_groupCall->setAccessibleName(tr::lng_group_call_title(tr::now));
-@@ -1402,7 +1408,8 @@ void TopBarWidget::updateControlsVisibility() {
+@@ -1426,7 +1432,8 @@ void TopBarWidget::updateControlsVisibility() {
  	}();
  	_call->setVisible(historyMode
  		&& callsEnabled
@@ -47,10 +47,10 @@ index 62fad807f2d5a1207ca21cb82978b63a9b4ed495..20c1bb18566834cd61eba10c155c3080
  		if (const auto peer = _activeChat.key.peer()) {
  			if (!peer->isUser() && peer->canManageGroupCall()) {
 diff --git a/Telegram/SourceFiles/info/info_wrap_widget.cpp b/Telegram/SourceFiles/info/info_wrap_widget.cpp
-index d89e206ccc3a5c7859bacf6f353ce746c0f5ae9b..c54b8e33419e9122257a213163fff50cfa607758 100644
+index 953e4b4fee46910d9e50b04926cc5639728c47b4..0a17f5a114d9d37fc40d9e759851b97b67620100 100644
 --- a/Telegram/SourceFiles/info/info_wrap_widget.cpp
 +++ b/Telegram/SourceFiles/info/info_wrap_widget.cpp
-@@ -51,6 +51,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -54,6 +54,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "lang/lang_keys.h"
  #include "lang/lang_numbers_animation.h"
  #include "menu/menu_send.h"
@@ -58,7 +58,7 @@ index d89e206ccc3a5c7859bacf6f353ce746c0f5ae9b..c54b8e33419e9122257a213163fff50c
  #include "styles/style_chat.h" // popupMenuExpandedSeparator
  #include "styles/style_info.h"
  #include "styles/style_layers.h"
-@@ -573,7 +574,10 @@ void WrapWidget::addProfileCallsButton() {
+@@ -600,7 +601,10 @@ void WrapWidget::addProfileCallsButton() {
  
  	const auto peer = key().peer();
  	const auto user = peer ? peer->asUser() : nullptr;
@@ -71,10 +71,10 @@ index d89e206ccc3a5c7859bacf6f353ce746c0f5ae9b..c54b8e33419e9122257a213163fff50c
  	}
  
 diff --git a/Telegram/SourceFiles/info/profile/info_profile_top_bar.cpp b/Telegram/SourceFiles/info/profile/info_profile_top_bar.cpp
-index 30ffec3c6baf9cbd2b6df8c4182c775ed89d95f7..d6cd71cb2dcb5319443d6d284070476e2fc3bbae 100644
+index 1355b902f60313fa2ab91b5eef3c7a02dc78b31c..ed8fb09070c40052ddf925120b1c97d04f500c59 100644
 --- a/Telegram/SourceFiles/info/profile/info_profile_top_bar.cpp
 +++ b/Telegram/SourceFiles/info/profile/info_profile_top_bar.cpp
-@@ -101,6 +101,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -103,6 +103,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "window/window_session_controller.h"
  #include "ui/toast/toast.h"
  #include "boxes/sticker_set_box.h"
@@ -82,7 +82,7 @@ index 30ffec3c6baf9cbd2b6df8c4182c775ed89d95f7..d6cd71cb2dcb5319443d6d284070476e
  #include "styles/style_chat.h"
  #include "styles/style_info.h"
  #include "styles/style_info_profile_top_bar.h"
-@@ -1101,7 +1102,8 @@ void TopBar::setupActions(not_null<Window::SessionController*> controller) {
+@@ -1127,7 +1128,8 @@ void TopBar::setupActions(not_null<Window::SessionController*> controller) {
  		&& user
  		&& !user->sharedMediaInfo()
  		&& !user->isInaccessible()
@@ -105,7 +105,7 @@ index 038494773a727251030814dfa4713ce30c90f754..056e97d9adf2b3f361b82a1b4ed57b8e
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index b023ce2d13d1699fa4bb409ae41b3bd47538e98f..19bcb8cfdd244247d11bf65fdc288e7565e5739b 100644
+index 2cacce9fd80aa5996866375a8d732e509ef83ccf..f109679ecd0219652b65ff7e7ac783fc4ee5a1c8 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -10,6 +10,7 @@ const char kOptionButtonPayloads[] = "tele-button-payloads";
@@ -130,7 +130,7 @@ index b023ce2d13d1699fa4bb409ae41b3bd47538e98f..19bcb8cfdd244247d11bf65fdc288e75
  base::options::toggle BubbleBadgesOption({
  	.id = kOptionBubbleBadges,
  	.name = "Badges next to names in messages",
-@@ -188,6 +196,14 @@ bool GroupQuickReplies() {
+@@ -187,6 +195,14 @@ bool GroupQuickReplies() {
  	return GroupQuickRepliesOption.value();
  }
  

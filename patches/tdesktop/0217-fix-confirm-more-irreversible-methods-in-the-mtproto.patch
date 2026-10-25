@@ -1,0 +1,142 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: nitreojs <hello@starkow.dev>
+Date: Sun, 4 Oct 2026 11:53:58 +0300
+Subject: [PATCH] fix: confirm more irreversible methods in the mtproto console
+
+---
+ .../tele/tele_mtp_console_requests.cpp        | 40 ++++++++++++++-----
+ Telegram/SourceFiles/tele/tele_tl_runtime.cpp | 12 ++++--
+ Telegram/SourceFiles/tele/tele_tl_runtime.h   |  2 +-
+ 3 files changed, 39 insertions(+), 15 deletions(-)
+
+diff --git a/Telegram/SourceFiles/tele/tele_mtp_console_requests.cpp b/Telegram/SourceFiles/tele/tele_mtp_console_requests.cpp
+index 74265f6b276aa84cfecf661b124fab629ee27f86..f49549e33d61e6c89589951a8d911d83e15ea2d4 100644
+--- a/Telegram/SourceFiles/tele/tele_mtp_console_requests.cpp
++++ b/Telegram/SourceFiles/tele/tele_mtp_console_requests.cpp
+@@ -46,7 +46,7 @@ struct Danger {
+ 	std::optional<Action> action;
+ };
+ 
+-const auto kDangerous = std::array<Danger, 23>{ {
++const auto kDangerous = std::array<Danger, 34>{ {
+ 	{ "account.deleteAccount" },
+ 	{ "account.resetAuthorization" },
+ 	{ "auth.resetAuthorizations" },
+@@ -59,6 +59,17 @@ const auto kDangerous = std::array<Danger, 23>{ {
+ 	{ "messages.deleteMessages" },
+ 	{ "channels.deleteMessages" },
+ 	{ "messages.editChatCreator" },
++	{ "channels.deleteParticipantHistory" },
++	{ "messages.deleteSavedHistory" },
++	{ "messages.deleteScheduledMessages" },
++	{ "photos.deletePhotos" },
++	{ "stories.deleteStories" },
++	{ "stickers.deleteStickerSet" },
++	{ "contacts.deleteContacts" },
++	{ "contacts.deleteByPhones" },
++	{ "channels.leaveChannel" },
++	{ "messages.deleteChatUser" },
++	{ "account.setAccountTTL" },
+ 	{ "payments.sendStarsForm", Action::BotPayments },
+ 	{ "payments.sendPaymentForm", Action::BuyGifts },
+ 	{ "payments.transferStarGift", Action::TransferGifts },
+@@ -72,6 +83,8 @@ const auto kDangerous = std::array<Danger, 23>{ {
+ 	{ "payments.fulfillStarsSubscription", Action::Subscriptions },
+ } };
+ 
++const auto kPatternDanger = Danger();
++
+ const auto kInvoiceActions = std::array<std::pair<const char*, Action>, 11>{ {
+ 	{ "inputInvoiceMessage", Action::PaidMedia },
+ 	{ "inputInvoiceSlug", Action::BotPayments },
+@@ -105,13 +118,23 @@ const auto kInvoiceActions = std::array<std::pair<const char*, Action>, 11>{ {
+ 	return result;
+ }
+ 
++[[nodiscard]] bool MatchesDangerPattern(std::string_view method) {
++	const auto dot = method.find('.');
++	const auto name = (dot == std::string_view::npos)
++		? method
++		: method.substr(dot + 1);
++	return (method.find(".delete") != std::string_view::npos)
++		|| (method.find("leave") != std::string_view::npos)
++		|| (method.ends_with("TTL") && !name.starts_with("get"));
++}
++
+ [[nodiscard]] const Danger *FindDanger(std::string_view method) {
+ 	for (const auto &danger : kDangerous) {
+ 		if (method == danger.method) {
+ 			return &danger;
+ 		}
+ 	}
+-	return nullptr;
++	return MatchesDangerPattern(method) ? &kPatternDanger : nullptr;
+ }
+ 
+ void CollectMethods(
+@@ -424,15 +447,12 @@ MtpConsoleRequests::MtpConsoleRequests(
+ }
+ 
+ QByteArray MtpConsoleRequests::SchemaJson() {
+-	static const auto result = [] {
+-		auto dangerous = std::vector<std::string>();
+-		for (const auto &danger : kDangerous) {
+-			dangerous.push_back(danger.method);
+-		}
+-		return QByteArray::fromStdString(ConsoleSchema().json(
++	static const auto result = QByteArray::fromStdString(
++		ConsoleSchema().json(
+ 			int(MTP::details::kCurrentLayer),
+-			dangerous));
+-	}();
++			[](std::string_view method) {
++				return FindDanger(method) != nullptr;
++			}));
+ 	return result;
+ }
+ 
+diff --git a/Telegram/SourceFiles/tele/tele_tl_runtime.cpp b/Telegram/SourceFiles/tele/tele_tl_runtime.cpp
+index 09d28cd1a7a7e595c59b156ac4bb862f02662550..236883e94a4d3e3c76e4621fdab5f011603024bb 100644
+--- a/Telegram/SourceFiles/tele/tele_tl_runtime.cpp
++++ b/Telegram/SourceFiles/tele/tele_tl_runtime.cpp
+@@ -1188,7 +1188,7 @@ std::vector<const Combinator*> Schema::constructorsOf(
+ 
+ std::string Schema::json(
+ 		int layer,
+-		const std::vector<std::string> &dangerous) const {
++		const std::function<bool(std::string_view)> &dangerous) const {
+ 	auto result = std::string("{\"layer\":") + std::to_string(layer);
+ 	const auto list = [&](const char *key, const auto &names) {
+ 		result += ",\"";
+@@ -1207,11 +1207,15 @@ std::string Schema::json(
+ 	list("methods", _methods);
+ 	list("constructors", _constructors);
+ 	result += ",\"dangerous\":[";
+-	for (auto i = std::size_t(); i != dangerous.size(); ++i) {
+-		if (i) {
++	auto first = true;
++	for (const auto &[name, index] : _methods) {
++		if (!dangerous(name)) {
++			continue;
++		} else if (!first) {
+ 			result += ',';
+ 		}
+-		MtpDump::AppendJsonString(result, dangerous[i]);
++		first = false;
++		MtpDump::AppendJsonString(result, name);
+ 	}
+ 	result += "]}";
+ 	return result;
+diff --git a/Telegram/SourceFiles/tele/tele_tl_runtime.h b/Telegram/SourceFiles/tele/tele_tl_runtime.h
+index 0dfe1c8111daad00288d4c381e7595b8f3f7893f..178070664676a8b6ee47f41f51fbaea0819d20c9 100644
+--- a/Telegram/SourceFiles/tele/tele_tl_runtime.h
++++ b/Telegram/SourceFiles/tele/tele_tl_runtime.h
+@@ -35,7 +35,7 @@ public:
+ 		std::string_view type) const;
+ 	[[nodiscard]] std::string json(
+ 		int layer,
+-		const std::vector<std::string> &dangerous) const;
++		const std::function<bool(std::string_view)> &dangerous) const;
+ 
+ private:
+ 	std::vector<Combinator> _list;

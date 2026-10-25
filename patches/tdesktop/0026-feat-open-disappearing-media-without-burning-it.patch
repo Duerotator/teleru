@@ -21,10 +21,10 @@ Subject: [PATCH] feat: open disappearing media without burning it
  create mode 100644 Telegram/SourceFiles/tele/tele_secret_media.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 760bd4b297f4bef120f4f031451c2d14b17b6054..93bf8d82e173e795abe44944d0cd09c385348e85 100644
+index e95e2c60fa2725671d05ec161a65f2e3f6b65dc8..83e7f2a6cc3a56a6ae2a191f93709233cb9ad8d4 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2239,6 +2239,8 @@ PRIVATE
+@@ -2509,6 +2509,8 @@ PRIVATE
      tele/tele_options.h
      tele/tele_peer_id.cpp
      tele/tele_peer_id.h
@@ -34,10 +34,10 @@ index 760bd4b297f4bef120f4f031451c2d14b17b6054..93bf8d82e173e795abe44944d0cd09c3
      tele/tele_shortcuts.h
      tele/tele_time.cpp
 diff --git a/Telegram/SourceFiles/apiwrap.cpp b/Telegram/SourceFiles/apiwrap.cpp
-index 25bdb0c6d5438bbd376f104c88e1a2aacd54202a..c3409e535fe0cca69821b658fab9e1615027dace 100644
+index 342e501177996be3c083ba7985d3720a53100b51..26346bcadba2a0efee31f71841e098a9ec81891b 100644
 --- a/Telegram/SourceFiles/apiwrap.cpp
 +++ b/Telegram/SourceFiles/apiwrap.cpp
-@@ -107,6 +107,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -108,6 +108,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "storage/download_manager_mtproto.h"
  #include "storage/file_upload.h"
  #include "storage/storage_account.h"
@@ -45,7 +45,7 @@ index 25bdb0c6d5438bbd376f104c88e1a2aacd54202a..c3409e535fe0cca69821b658fab9e161
  
  namespace {
  
-@@ -1442,7 +1443,9 @@ void ApiWrap::markContentsRead(
+@@ -1444,7 +1445,9 @@ void ApiWrap::markContentsRead(
  		QVector<MTPint>>();
  	markedIds.reserve(items.size());
  	for (const auto &item : items) {
@@ -56,7 +56,7 @@ index 25bdb0c6d5438bbd376f104c88e1a2aacd54202a..c3409e535fe0cca69821b658fab9e161
  			continue;
  		}
  		if (const auto channel = item->history()->peer->asChannel()) {
-@@ -1467,7 +1470,9 @@ void ApiWrap::markContentsRead(
+@@ -1469,7 +1472,9 @@ void ApiWrap::markContentsRead(
  }
  
  void ApiWrap::markContentsRead(not_null<HistoryItem*> item) {
@@ -68,10 +68,10 @@ index 25bdb0c6d5438bbd376f104c88e1a2aacd54202a..c3409e535fe0cca69821b658fab9e161
  	}
  	const auto ids = MTP_vector<MTPint>(1, MTP_int(item->id));
 diff --git a/Telegram/SourceFiles/history/history_inner_widget.cpp b/Telegram/SourceFiles/history/history_inner_widget.cpp
-index 66f5084c14756babd73601a6cff21e082bf97ec0..234068e9dc4dd7fe34f795f8ba968616fcce5e42 100644
+index 9d29ca503a64490ecdb8bfc92c48823fd67f2292..e308de10066bed313f7f2aec02a020fdb1633a02 100644
 --- a/Telegram/SourceFiles/history/history_inner_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_inner_widget.cpp
-@@ -131,6 +131,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -132,6 +132,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "tele/tele_deleted.h"
  #include "tele/tele_edit_history.h"
  #include "tele/tele_ignored.h"
@@ -79,7 +79,7 @@ index 66f5084c14756babd73601a6cff21e082bf97ec0..234068e9dc4dd7fe34f795f8ba968616
  #include "styles/style_chat.h"
  #include "styles/style_menu_icons.h"
  
-@@ -3035,6 +3036,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
+@@ -3052,6 +3053,7 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
  			_menu.get(),
  			controller,
  			albumPartItem ? albumPartItem : item);
@@ -88,7 +88,7 @@ index 66f5084c14756babd73601a6cff21e082bf97ec0..234068e9dc4dd7fe34f795f8ba968616
  			const auto text = item->factcheckText();
  			const auto phrase = text.empty()
 diff --git a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
-index 7d116f8f9082d316606c2dd5a524e16f4acf570d..4a3fca2e5f997b10adc87ec932dac7906298f3dd 100644
+index bf5d217d9474e34b40df39b217b6eb2509cdad62..8ba2fb4d2d6478dc3b92ade0a87792f718b22266 100644
 --- a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
 @@ -115,6 +115,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -99,7 +99,7 @@ index 7d116f8f9082d316606c2dd5a524e16f4acf570d..4a3fca2e5f997b10adc87ec932dac790
  #include "styles/style_chat.h"
  #include "styles/style_chat_helpers.h"
  #include "styles/style_layers.h"
-@@ -1397,6 +1398,7 @@ void AddTopMessageActions(
+@@ -1398,6 +1399,7 @@ void AddTopMessageActions(
  	AddViewRepliesAction(menu, request, list);
  	AddEditMessageAction(menu, request, list);
  	Tele::AddEditHistoryAction(menu, request.navigation, request.item);
@@ -108,7 +108,7 @@ index 7d116f8f9082d316606c2dd5a524e16f4acf570d..4a3fca2e5f997b10adc87ec932dac790
  	AddPinMessageAction(menu, request, list);
  	AddViewStatisticsAction(menu, request, list);
 diff --git a/Telegram/SourceFiles/history/view/media/history_view_document.cpp b/Telegram/SourceFiles/history/view/media/history_view_document.cpp
-index 35f69db86e0a7dae381095b4ee509bae10a8f185..b386697c480f924318808c10916a3f54931a50de 100644
+index f8d0e1c130b90eed7970fe7bc01537788e9d3bec..add37f41264c654c9b13b3ab954eedeb740e5f4f 100644
 --- a/Telegram/SourceFiles/history/view/media/history_view_document.cpp
 +++ b/Telegram/SourceFiles/history/view/media/history_view_document.cpp
 @@ -11,6 +11,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -130,7 +130,7 @@ index 35f69db86e0a7dae381095b4ee509bae10a8f185..b386697c480f924318808c10916a3f54
  
  				auto lifetime = std::make_shared<rpl::lifetime>();
 diff --git a/Telegram/SourceFiles/history/view/media/history_view_gif.cpp b/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
-index 198848a9d0c01293f170924a5ebc7172e47dde35..fc6b46fdb456f919cc9a8f681e1de8b59743d4b5 100644
+index 5dd14a758057df70041d022d3346a240932aff18..854307f9e0f29d8ebdce71ef0654cb6c0e9cec73 100644
 --- a/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
 +++ b/Telegram/SourceFiles/history/view/media/history_view_gif.cpp
 @@ -63,6 +63,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -152,10 +152,10 @@ index 198848a9d0c01293f170924a5ebc7172e47dde35..fc6b46fdb456f919cc9a8f681e1de8b5
  			TTLVoiceStops(fullId) | rpl::on_next([=]() mutable {
  				if (lifetime) {
 diff --git a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
-index 49c9edeef04011f7ab77f8369e068bd3b4fe72c1..0ead884776dcc79e68f403f4438013a3a4d6848c 100644
+index fc03ac3a4efc1d5bce7fbe4ef8af37f314bfdd9b..d284b011980e068a3b16d84974d237132f36632a 100644
 --- a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
 +++ b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
-@@ -118,6 +118,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -120,6 +120,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "styles/style_ttl_media.h"
  #include "platform/platform_text_recognition.h"
  #include "tele/tele_options.h"
@@ -163,7 +163,7 @@ index 49c9edeef04011f7ab77f8369e068bd3b4fe72c1..0ead884776dcc79e68f403f4438013a3
  
  #include <QGraphicsOpacityEffect>
  
-@@ -1384,7 +1385,7 @@ void OverlayWidget::markTimedMediaRead() {
+@@ -1408,7 +1409,7 @@ void OverlayWidget::markTimedMediaRead() {
  
  void OverlayWidget::checkSingleViewMediaBurn() {
  	const auto item = _message;
@@ -185,7 +185,7 @@ index 1ee22e0fe2fc86aae2f065a473b115e9405a6318..633b880e1b0f36727387e22dee5a7707
  	Ui::AddDivider(content);
  	Ui::AddSkip(content);
 diff --git a/Telegram/SourceFiles/tele/tele_options.cpp b/Telegram/SourceFiles/tele/tele_options.cpp
-index 73bd5d17a7551979eeb278d54eff115673023deb..bbc7d80237b4d962f3e3f972957b0f088b8dbb1e 100644
+index 2be477232e33c4493a12a04affeb3062d2a66e10..d48c8b3ce0149f934616988a7819814cb69a5aba 100644
 --- a/Telegram/SourceFiles/tele/tele_options.cpp
 +++ b/Telegram/SourceFiles/tele/tele_options.cpp
 @@ -24,6 +24,7 @@ const char kOptionMessageSeconds[] = "tele-message-seconds";
@@ -196,7 +196,7 @@ index 73bd5d17a7551979eeb278d54eff115673023deb..bbc7d80237b4d962f3e3f972957b0f08
  const char kOptionServerUrl[] = "tele-server-url";
  const char kOptionTitleTemplate[] = "tele-title";
  
-@@ -184,6 +185,15 @@ base::options::toggle DeletedIconOption({
+@@ -183,6 +184,15 @@ base::options::toggle DeletedIconOption({
  		"icon next to the time.",
  });
  
@@ -212,7 +212,7 @@ index 73bd5d17a7551979eeb278d54eff115673023deb..bbc7d80237b4d962f3e3f972957b0f08
  base::options::option<QString> ServerUrlOption({
  	.id = kOptionServerUrl,
  	.name = "tele server",
-@@ -363,6 +373,10 @@ rpl::producer<bool> DeletedTrashIconValue() {
+@@ -362,6 +372,10 @@ rpl::producer<bool> DeletedTrashIconValue() {
  	});
  }
  

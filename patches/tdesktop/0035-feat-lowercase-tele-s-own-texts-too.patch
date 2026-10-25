@@ -56,7 +56,7 @@ index 2afcdd5005ac3b9711d3db9f05152b11b41a97c2..0089def69b2e0a3e60b03285c96079ee
  	resize(sizeHint());
  }
 diff --git a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
-index 636b3bee74cc0a534b2af2e362cccd1b45774d61..1afdb992d318080278fec8956b201ba3ab08a38a 100644
+index 4a9f42226d836b2d7f902e665963b5c40def6c34..97855011687ff88af6410c0679a35d1694d90564 100644
 --- a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
 +++ b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
 @@ -76,6 +76,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -67,7 +67,7 @@ index 636b3bee74cc0a534b2af2e362cccd1b45774d61..1afdb992d318080278fec8956b201ba3
  #include "tele/tele_options.h"
  #include "tele/tele_peer_id.h"
  #include "ui/boxes/peer_qr_box.h"
-@@ -1832,7 +1833,7 @@ Section DetailsFiller::makeInfo() {
+@@ -1853,7 +1854,7 @@ Section DetailsFiller::makeInfo() {
  	if (!_topic && ShowPeerIdBelowAbout.value()) {
  		Tele::SetupPeerIdLabel(
  			addInfoOneLine(
@@ -76,7 +76,7 @@ index 636b3bee74cc0a534b2af2e362cccd1b45774d61..1afdb992d318080278fec8956b201ba3
  				Tele::PeerIdTextValue(_peer),
  				QString()).text,
  			_peer,
-@@ -1841,7 +1842,7 @@ Section DetailsFiller::makeInfo() {
+@@ -1862,7 +1863,7 @@ Section DetailsFiller::makeInfo() {
  	if (!_topic && Tele::ShowDc()) {
  		Tele::SetupPeerDcLabel(
  			addInfoOneLine(
@@ -107,10 +107,10 @@ index 49a477144e4a3a7494582e31b979554bcfa8a223..be9392d75f764e8acc96511e500a69e6
  }
  
 diff --git a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
-index 0764704bdfeee833ff8f69d571328e329a8a4d5b..ba87f1b54a3e8f9042c833f6cd62f93cbfa990e2 100644
+index d3dbcdf1cd26a5de0274ca0a781d460c2df0a288..6f7a13fa4281c75480eb63fa3245e38987f8df46 100644
 --- a/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
 +++ b/Telegram/SourceFiles/media/view/media_view_overlay_widget.cpp
-@@ -117,6 +117,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -119,6 +119,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "styles/style_menu_icons.h"
  #include "styles/style_ttl_media.h"
  #include "platform/platform_text_recognition.h"
@@ -118,7 +118,7 @@ index 0764704bdfeee833ff8f69d571328e329a8a4d5b..ba87f1b54a3e8f9042c833f6cd62f93c
  #include "tele/tele_options.h"
  #include "tele/tele_secret_media.h"
  #include "tele/tele_view_tl.h"
-@@ -4524,7 +4525,7 @@ void OverlayWidget::show(OpenRequest request) {
+@@ -4544,7 +4545,7 @@ void OverlayWidget::show(OpenRequest request) {
  	if (story && Tele::HideStories()) {
  		return;
  	} else if (story && story->call() && Tele::InvisibleStories()) {
@@ -127,7 +127,7 @@ index 0764704bdfeee833ff8f69d571328e329a8a4d5b..ba87f1b54a3e8f9042c833f6cd62f93c
  		return;
  	}
  	const auto document = story ? story->document() : request.document();
-@@ -4885,7 +4886,7 @@ void OverlayWidget::displayVideoStream(
+@@ -4905,7 +4906,7 @@ void OverlayWidget::displayVideoStream(
  		const std::shared_ptr<Data::GroupCall> &call,
  		anim::activation activation) {
  	if (_stories && Tele::InvisibleStories()) {
@@ -724,7 +724,7 @@ index ec8564599dec4ebedfc8512504b404f0473f8e1d..a50ec73cbc1059b1eb9d91b22f4c112b
  
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_ignored.cpp b/Telegram/SourceFiles/tele/tele_ignored.cpp
-index baecb81248fcd68bf53ffbe36ecfb56da477a9fa..10890d4482fcf8cacbd3467ad459ae8a2d56d0b0 100644
+index 1c65bb7d6b4cd92c188cfad71962088ab3fcacd5..5f4eabe36455090cb9fb87984f946ec35322ea62 100644
 --- a/Telegram/SourceFiles/tele/tele_ignored.cpp
 +++ b/Telegram/SourceFiles/tele/tele_ignored.cpp
 @@ -7,6 +7,7 @@
@@ -735,7 +735,7 @@ index baecb81248fcd68bf53ffbe36ecfb56da477a9fa..10890d4482fcf8cacbd3467ad459ae8a
  #include "tele/tele_options.h"
  #include "ui/widgets/menu/menu_add_action_callback.h"
  #include "ui/widgets/menu/menu_add_action_callback_factory.h"
-@@ -247,8 +248,8 @@ void AddIgnoreAction(
+@@ -251,8 +252,8 @@ void AddIgnoreAction(
  	const auto ignored = IsIgnored(user);
  	addAction(
  		(ignored
@@ -893,7 +893,7 @@ index 6789c2c3ec98af929c74aa5dff6730f29d79ebb2..4c6317f887bcdd01d4db58562f7601e7
  		return QString::fromLatin1(AppVersionStr);
  	} else if (name == u"time"_q) {
 diff --git a/Telegram/SourceFiles/tele/tele_updater.cpp b/Telegram/SourceFiles/tele/tele_updater.cpp
-index eb1899e52a7200b07e45d46568572de7742038e9..30c0d797f253dcd91d8c6c99ef49ed9316e8a843 100644
+index cfd5973173fa6874fc424992085ae0f9e50c1669..c984fb94636b25b33e788dd8fd009a7210c1c870 100644
 --- a/Telegram/SourceFiles/tele/tele_updater.cpp
 +++ b/Telegram/SourceFiles/tele/tele_updater.cpp
 @@ -8,6 +8,7 @@
@@ -904,7 +904,7 @@ index eb1899e52a7200b07e45d46568572de7742038e9..30c0d797f253dcd91d8c6c99ef49ed93
  #include "tele/tele_options.h"
  
  #include <QtCore/QCoreApplication>
-@@ -510,8 +511,8 @@ void Updater::verifyFeed(const QByteArray &envelope) {
+@@ -530,8 +531,8 @@ void Updater::verifyFeed(const QByteArray &envelope) {
  		finish({ .state = UpdateState::Latest });
  		return;
  	} else if (!CanWriteNextToInstall()) {

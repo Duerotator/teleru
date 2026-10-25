@@ -3,11 +3,15 @@
 
 import argparse
 import json
+import posixpath
 import re
+import subprocess
 
-from announce import git, patches, previous_patches, subject, upstream
+from announce import git, patches, previous_patches, subject, upstream, upstream_move
 
-ROW = re.compile(r'^\| \[(\d+)\]\((patches/[^)]+\.patch)\) \| (.*) \| (.*) \|$')
+SOURCES = ('docs/releases.md', 'README.md')
+ROW = re.compile(r'^\| \[(\d+)\]\((?:\.\./)?(patches/[^)]+\.patch)\) \| (.*) \| (.*) \|$')
+LINK = re.compile(r'\]\((?![a-z][a-z0-9+.-]*:)([^)\s]+)\)')
 
 PLATFORMS = (
     ('windows', 'win64.zip', 'unpack anywhere and run `tele.exe`.'),
@@ -16,14 +20,40 @@ PLATFORMS = (
 )
 
 
-def readme_rows(repo, rev):
+def rooted(text, source):
+    folder = posixpath.dirname(source)
+
+    def fix(match):
+        target = match.group(1)
+        if target.startswith('#'):
+            return f']({source}{target})'
+        return f']({posixpath.normpath(posixpath.join(folder, target))})'
+
+    return LINK.sub(fix, text)
+
+
+def release_lines(repo, rev):
+    for source in SOURCES:
+        try:
+            text = git(repo, 'show', f'{rev}:{source}')
+        except subprocess.CalledProcessError:
+            continue
+        return rooted(text, source).splitlines()
+    return []
+
+
+def parse_rows(lines):
     rows = {}
-    for line in git(repo, 'show', f'{rev}:README.md').splitlines():
+    for line in lines:
         match = ROW.match(line.strip())
         if match:
             number, path, what, where = match.groups()
             rows[path] = (int(number), what, where)
     return rows
+
+
+def release_rows(repo, rev):
+    return parse_rows(release_lines(repo, rev))
 
 
 def paths_by_subject(repo, rev):
@@ -36,8 +66,7 @@ def paths_by_subject(repo, rev):
 
 
 def absolute(text, url, rev):
-    text = re.sub(r'\]\((#[^)]+)\)', lambda m: f']({url}/blob/{rev}/README.md{m.group(1)})', text)
-    return re.sub(r'\]\((patches/[^)]+)\)', lambda m: f']({url}/blob/{rev}/{m.group(1)})', text)
+    return LINK.sub(lambda m: f']({url}/blob/{rev}/{m.group(1)})', text)
 
 
 def entry(rows, path, fallback, url, rev):
@@ -55,7 +84,7 @@ def changes(args):
     now = patches(args.repo, args.rev)
     before = previous_patches(args.repo, args.rev, args.previous) if args.previous else {}
     paths = paths_by_subject(args.repo, args.rev)
-    rows = readme_rows(args.repo, args.rev)
+    rows = release_rows(args.repo, args.rev)
     added = [name for name in now if name not in before]
     changed = [name for name in now if name in before and before[name] != now[name]]
     dropped = [name for name in before if name not in now]
@@ -103,11 +132,15 @@ def changelog(args):
             item = {'text': name, 'where': '', 'category': 'other'}
         item['url'] = f'{args.url}/blob/{args.rev}/{path}' if path else ''
         items.append(item)
+    tdesktop = f'https://github.com/telegramdesktop/tdesktop/releases/tag/{args.upstream}'
+    _, moved = upstream_move(args.repo, args.previous, args.upstream)
+    group = f'telegram desktop {args.upstream.lstrip("v")}'
+    items = [{'text': text, 'where': '', 'category': group, 'url': tdesktop} for text in moved] + items
     present = {item['category'] for item in items}
     return {
         'tag': args.tag,
         'title': f"tele {args.tag.rsplit('-tele.', 1)[-1]}",
-        'categories': [name for name in CATEGORIES if name in present],
+        'categories': [name for name in (group, *CATEGORIES) if name in present],
         'items': items,
         'url': f'{args.url}/releases/tag/{args.tag}',
     }
@@ -119,10 +152,18 @@ def notes(args):
 
     tdesktop = f'https://github.com/telegramdesktop/tdesktop/releases/tag/{args.upstream}'
     lines = [f'telegram desktop [{args.upstream}]({tdesktop}) with {len(now)} patches.']
-    if args.previous:
-        was = upstream(args.repo, args.previous)
-        if was != args.upstream:
-            lines += ['', f'moved from tdesktop {was} to {args.upstream}.']
+    was, moved = upstream_move(args.repo, args.previous, args.upstream)
+    if moved:
+        lines += [
+            '',
+            f'## telegram desktop {args.upstream.lstrip("v")}',
+            '',
+            f'new in [telegram desktop]({tdesktop}) since {was.lstrip("v")}:',
+            '',
+            *[f'- {item}' for item in moved],
+        ]
+    elif was:
+        lines += ['', f'moved from tdesktop {was} to {args.upstream}.']
     sections = (
         ('new', [entry(rows, paths.get(name, ''), name, args.url, rev) for name in added]),
         ('changed', [entry(rows, paths.get(name, ''), name, args.url, rev) for name in changed]),

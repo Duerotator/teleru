@@ -833,7 +833,13 @@
       "cut off": "обрезано",
       "directwrite": "directwrite",
       "google sans": "google sans",
-      "html": "HTML"
+      "html": "HTML",
+      "Video messages": "Видеосообщения",
+      "circle": "круг",
+      "enlarge": "увеличение",
+      "seek": "перемотка",
+      "rewind": "перемотать",
+      "activity": "активность"
     },
     "tele/tele_gift_studio.cpp": {
       "text": "Текст"
@@ -1030,7 +1036,8 @@
     "Change any of tele's settings, including ghost mode, link rewrites and the checkmark server.": "Изменение любых настроек tele, включая режим невидимки, подмену ссылок и сервер верификации.",
     "Control tele: the theme and colors, the window title and badge, the music player.": "Управление tele: тема и цвета, заголовок и значок окна, музыкальный плеер.",
     "Change any of tele's settings, including ghost mode, link rewrites and the checkmark server, and your ignore list, local names and per-chat ghost mode.": "Изменение любых настроек tele, включая режим невидимки, подмену ссылок, сервер верификации, список игнорируемых, локальные имена и режим невидимки для отдельных чатов.",
-    "Change, hide or add to anything tele shows.": "Изменение, скрытие или дополнение любого содержимого интерфейса tele."
+    "Change, hide or add to anything tele shows.": "Изменение, скрытие или дополнение любого содержимого интерфейса tele.",
+    "Video messages": "Видеосообщения"
   },
   "plurals": {
     "setting": [
