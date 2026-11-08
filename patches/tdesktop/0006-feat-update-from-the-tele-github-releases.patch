@@ -11,17 +11,17 @@ Subject: [PATCH] feat: update from the tele github releases
  .../SourceFiles/settings/settings_tele.cpp    |  59 +-
  Telegram/SourceFiles/tele/tele_options.cpp    |  23 +
  Telegram/SourceFiles/tele/tele_options.h      |   3 +
- Telegram/SourceFiles/tele/tele_updater.cpp    | 807 ++++++++++++++++++
+ Telegram/SourceFiles/tele/tele_updater.cpp    | 830 ++++++++++++++++++
  Telegram/SourceFiles/tele/tele_updater.h      |  36 +
- 9 files changed, 943 insertions(+), 7 deletions(-)
+ 9 files changed, 966 insertions(+), 7 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_updater.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_updater.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 1610d46ae49e71def0332a0af9a4606628c58e91..c1c8b2c2707838e5ddc677452905170f365d040e 100644
+index e19272122dd82b6ea4e3ca4c660b9806e3270d28..ecc15e6e74da83e67844e8800658c7cff8a55e51 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2489,6 +2489,8 @@ PRIVATE
+@@ -2635,6 +2635,8 @@ PRIVATE
      tele/tele_button_payload.h
      tele/tele_options.cpp
      tele/tele_options.h
@@ -31,10 +31,10 @@ index 1610d46ae49e71def0332a0af9a4606628c58e91..c1c8b2c2707838e5ddc677452905170f
  set_source_files_properties(${src_loc}/tele/tele_build.cpp
  PROPERTIES
 diff --git a/Telegram/SourceFiles/core/application.cpp b/Telegram/SourceFiles/core/application.cpp
-index 7172206f5c1e540e19c90798e9a9e5721276cc53..ff05cac63e53e34b33492c07c77e8e6520e17784 100644
+index 0279ccc6cb67d55ef36a25a8b25abc3b9ddffff6..853f06795728b657262a439f524ac77f213cd162 100644
 --- a/Telegram/SourceFiles/core/application.cpp
 +++ b/Telegram/SourceFiles/core/application.cpp
-@@ -104,6 +104,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -105,6 +105,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "ui/boxes/confirm_box.h"
  #include "core/cached_webview_availability.h"
  #include "test/test_agent.h"
@@ -42,7 +42,7 @@ index 7172206f5c1e540e19c90798e9a9e5721276cc53..ff05cac63e53e34b33492c07c77e8e65
  
  #include <QtCore/QStandardPaths>
  #include <QtCore/QMimeDatabase>
-@@ -355,6 +356,7 @@ void Application::run() {
+@@ -356,6 +357,7 @@ void Application::run() {
  	Media::Encode::ClearStaleTempFiles();
  	Storage::ClearStaleArchiveFiles();
  	Webview::ClearStaleTemporaryStorage();
@@ -51,7 +51,7 @@ index 7172206f5c1e540e19c90798e9a9e5721276cc53..ff05cac63e53e34b33492c07c77e8e65
  	if (MediaControlsManager::Supported()) {
  		_mediaControlsManager = std::make_unique<MediaControlsManager>();
 diff --git a/Telegram/SourceFiles/dialogs/dialogs_widget.cpp b/Telegram/SourceFiles/dialogs/dialogs_widget.cpp
-index 786c3859322b78d417535afdf1afdcc2cdace172..4e716d2abd26b89b0b9c328518a45f0ff8d3c176 100644
+index 452910343f82036be985ce6641e9617e78335aa8..70353e5a723f579e6639fe09b3c8fc96a8d2db21 100644
 --- a/Telegram/SourceFiles/dialogs/dialogs_widget.cpp
 +++ b/Telegram/SourceFiles/dialogs/dialogs_widget.cpp
 @@ -95,6 +95,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -62,7 +62,7 @@ index 786c3859322b78d417535afdf1afdcc2cdace172..4e716d2abd26b89b0b9c328518a45f0f
  #include "styles/style_dialogs.h"
  #include "styles/style_chat.h"
  #include "styles/style_chat_helpers.h"
-@@ -661,6 +662,11 @@ Widget::Widget(
+@@ -695,6 +696,11 @@ Widget::Widget(
  		) | rpl::on_next([=] {
  			checkUpdateStatus();
  		}, lifetime());
@@ -74,7 +74,7 @@ index 786c3859322b78d417535afdf1afdcc2cdace172..4e716d2abd26b89b0b9c328518a45f0f
  	}
  
  	_cancelSearch->setClickedCallback([=] {
-@@ -2627,14 +2633,14 @@ QPixmap Widget::grabForFolderSlideAnimation() {
+@@ -2704,14 +2710,14 @@ QPixmap Widget::grabForFolderSlideAnimation() {
  }
  
  void Widget::checkUpdateStatus() {
@@ -92,7 +92,7 @@ index 786c3859322b78d417535afdf1afdcc2cdace172..4e716d2abd26b89b0b9c328518a45f0f
  		if (_updateTelegram) {
  			return;
  		}
-@@ -2647,6 +2653,10 @@ void Widget::checkUpdateStatus() {
+@@ -2724,6 +2730,10 @@ void Widget::checkUpdateStatus() {
  			true);
  		_updateTelegram->show();
  		_updateTelegram->setClickedCallback([] {
@@ -268,10 +268,10 @@ index 48e433dccd1abcf6643ec48f1032afd604eef806..8701f56e74f11b4dc252508b38b54608
  } // namespace Tele
 diff --git a/Telegram/SourceFiles/tele/tele_updater.cpp b/Telegram/SourceFiles/tele/tele_updater.cpp
 new file mode 100644
-index 0000000000000000000000000000000000000000..cfd5973173fa6874fc424992085ae0f9e50c1669
+index 0000000000000000000000000000000000000000..8addc40a778e5cf0dbfbb2201f414a180f290a00
 --- /dev/null
 +++ b/Telegram/SourceFiles/tele/tele_updater.cpp
-@@ -0,0 +1,807 @@
+@@ -0,0 +1,830 @@
 +#include "tele/tele_updater.h"
 +
 +#include "base/platform/base_platform_file_utilities.h"
@@ -299,6 +299,8 @@ index 0000000000000000000000000000000000000000..cfd5973173fa6874fc424992085ae0f9
 +#include <QtNetwork/QNetworkRequest>
 +
 +#if defined Q_OS_MAC
++#define __ASSERT_MACROS_DEFINE_VERSIONS_WITHOUT_UNDERSCORES 0
++#include <CoreServices/CoreServices.h>
 +#include <cerrno>
 +#include <cstdio>
 +#include <cstring>
@@ -467,6 +469,19 @@ index 0000000000000000000000000000000000000000..cfd5973173fa6874fc424992085ae0f9
 +#ifdef Q_OS_MAC
 +[[nodiscard]] QString ErrnoText() {
 +	return QString::fromLocal8Bit(std::strerror(errno));
++}
++
++void RegisterBundle(const QString &path) {
++	const auto bytes = QFile::encodeName(path);
++	const auto url = CFURLCreateFromFileSystemRepresentation(
++		kCFAllocatorDefault,
++		reinterpret_cast<const UInt8*>(bytes.constData()),
++		bytes.size(),
++		true);
++	if (url) {
++		LSRegisterURL(url, true);
++		CFRelease(url);
++	}
 +}
 +
 +void RemoveQuarantine(const QString &root) {
@@ -968,27 +983,35 @@ index 0000000000000000000000000000000000000000..cfd5973173fa6874fc424992085ae0f9
 +	const auto newPath = path + u".new"_q;
 +	const auto oldPath = path + u".old"_q;
 +#if defined Q_OS_MAC
-+	const auto from = QFile::encodeName(newPath);
-+	const auto to = QFile::encodeName(path);
-+	const auto old = QFile::encodeName(oldPath);
++	const auto contents = u"/Contents"_q;
++	const auto asidePath = newPath + u"/Contents.old"_q;
++	const auto staged = QFile::encodeName(newPath + contents);
++	const auto current = QFile::encodeName(path + contents);
++	const auto aside = QFile::encodeName(asidePath);
 +	base::Platform::DeleteDirectory(oldPath);
-+	if (!renamex_np(from.constData(), to.constData(), RENAME_SWAP)) {
-+		::rename(from.constData(), old.constData());
-+	} else if (::rename(to.constData(), old.constData())) {
-+		const auto error = ErrnoText();
-+		base::Platform::DeleteDirectory(newPath);
-+		fail(u"can't move the running app aside: %1"_q.arg(error));
-+		return;
-+	} else if (::rename(from.constData(), to.constData())) {
-+		const auto error = ErrnoText();
-+		if (::rename(old.constData(), to.constData())) {
-+			fail(u"%1 is missing, rename %2 back to it"_q.arg(path, oldPath));
++	if (renamex_np(staged.constData(), current.constData(), RENAME_SWAP)) {
++		if (::rename(current.constData(), aside.constData())) {
++			const auto error = ErrnoText();
++			base::Platform::DeleteDirectory(newPath);
++			fail(u"can't move the running app aside: %1"_q.arg(error));
++			return;
++		} else if (::rename(staged.constData(), current.constData())) {
++			const auto error = ErrnoText();
++			if (::rename(aside.constData(), current.constData())) {
++				fail(u"%1 is missing, rename %2 back to it"_q.arg(
++					path + contents,
++					asidePath));
++				return;
++			}
++			base::Platform::DeleteDirectory(newPath);
++			fail(u"can't put the new app in place: %1"_q.arg(error));
 +			return;
 +		}
-+		base::Platform::DeleteDirectory(newPath);
-+		fail(u"can't put the new app in place: %1"_q.arg(error));
-+		return;
 +	}
++	::rename(
++		QFile::encodeName(newPath).constData(),
++		QFile::encodeName(oldPath).constData());
++	RegisterBundle(path);
 +#elif defined Q_OS_WIN
 +	QFile::remove(oldPath);
 +	if (!RenameWithRetries(path, oldPath)) {

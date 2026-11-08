@@ -52,6 +52,8 @@ def plan_russian_plurals(tdesktop, catalog=None):
     text = box.read_text(encoding='utf-8')
     original = "[[nodiscard]] QString Plural(int count, const QString &one) {\n\treturn (count == 1) ? one : (one + 's');\n}"
     if text.count(original) != 1:
+        if (source / 'tele/tele_translations.h').exists():
+            return {}
         raise ValueError('Upstream settings plural function changed; review Russian forms')
     nouns = re.findall(r'Plural\([^\n]*,\s*u"([^"\n]+)"_q\)', text)
     if not nouns or set(nouns) != {'setting'}:

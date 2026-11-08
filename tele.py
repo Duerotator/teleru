@@ -215,7 +215,10 @@ def resolve_known_conflicts(repo):
         path = repo / name
         if not path.is_file():
             return False
-        text = path.read_bytes().decode('utf-8')
+        try:
+            text = path.read_bytes().decode('utf-8')
+        except UnicodeDecodeError:
+            return False  # a binary file, like an icon both sides changed
         merge_block = merge_version_block if name in VERSION_FILES else merge_include_block
         failed = False
 
@@ -236,13 +239,24 @@ def resolve_known_conflicts(repo):
     return True
 
 
+def am_queue(repo, patches):
+    # windows caps a command line at 32767 characters, which a few hundred absolute patch paths reach;
+    # one mbox of the concatenated patches (bytes as stored, for --keep-cr) applies identically
+    with tempfile.TemporaryDirectory(prefix='tele-queue-') as scratch:
+        mbox = Path(scratch) / 'queue.mbox'
+        with mbox.open('wb') as output:
+            for patch in patches:
+                output.write(patch.read_bytes())
+        return run_git(repo, *AM_ARGS, str(mbox))
+
+
 def apply_pending(tdesktop, state):
     groups = patch_groups()
     while state['pending']:
         group = state['pending'][0]
         patches = groups[group]
         repo = repo_path(tdesktop, group)
-        result = run_git(repo, *AM_ARGS, *map(str, patches))
+        result = am_queue(repo, patches)
         while result.returncode != 0 and resolve_known_conflicts(repo):
             result = run_git(repo, 'am', '--continue')
         if result.returncode != 0:
@@ -257,9 +271,10 @@ def apply_pending(tdesktop, state):
 
 def prime_patch_blobs(tdesktop):
     # a 3-way fallback needs each patch's preimage blob; for files an earlier tele patch already
-    # touched, that blob only exists after replaying the queue on UPSTREAM, which a fresh clone lacks
-    patches = patch_groups().get(ROOT_GROUP)
-    if not patches:
+    # touched, that blob only exists after replaying the queue on UPSTREAM, which a fresh clone lacks.
+    # submodules are primed at the commit the tag pins, fetched first when a shallow clone lacks it
+    groups = patch_groups()
+    if not groups:
         return
     upstream = read_upstream()
     ref = f'refs/tags/{upstream}'
@@ -267,18 +282,29 @@ def prime_patch_blobs(tdesktop):
         shallow = git(tdesktop, 'rev-parse', '--is-shallow-repository') == 'true'
         git(tdesktop, 'fetch', '--quiet', '--no-tags', *(['--depth', '1'] if shallow else []),
             UPSTREAM_URL, f'+{ref}:{ref}')
-    if git(tdesktop, 'rev-parse', 'HEAD') == git(tdesktop, 'rev-parse', ref + '^{commit}'):
-        return
-    print(f'replaying the patches on {upstream} to get their base files', flush=True)
-    scratch = Path(tempfile.mkdtemp(prefix='tele-prime-'))
-    worktree = scratch / 'tdesktop'
-    git(tdesktop, 'worktree', 'add', '--quiet', '--detach', str(worktree), ref)
-    try:
-        if run_git(worktree, *AM_ARGS, *map(str, patches)).returncode != 0:
-            run_git(worktree, 'am', '--abort')
-    finally:
-        git(tdesktop, 'worktree', 'remove', '--force', str(worktree))
-        shutil.rmtree(scratch, ignore_errors=True)
+    tag_commit = git(tdesktop, 'rev-parse', ref + '^{commit}')
+    for group, patches in groups.items():
+        if group == ROOT_GROUP:
+            repo, base = tdesktop, tag_commit
+        else:
+            repo = tdesktop / group
+            base = git(tdesktop, 'rev-parse', f'{tag_commit}:{group}')
+            if run_git(repo, 'cat-file', '-e', base + '^{commit}').returncode != 0:
+                shallow = git(repo, 'rev-parse', '--is-shallow-repository') == 'true'
+                git(repo, 'fetch', '--quiet', '--no-tags', *(['--depth', '1'] if shallow else []),
+                    'origin', base)
+        if git(repo, 'rev-parse', 'HEAD') == base:
+            continue
+        print(f'replaying the {group} patches on {upstream} to get their base files', flush=True)
+        scratch = Path(tempfile.mkdtemp(prefix='tele-prime-'))
+        worktree = scratch / 'repo'
+        git(repo, 'worktree', 'add', '--quiet', '--detach', str(worktree), base)
+        try:
+            if am_queue(worktree, patches).returncode != 0:
+                run_git(worktree, 'am', '--abort')
+        finally:
+            git(repo, 'worktree', 'remove', '--force', str(worktree))
+            shutil.rmtree(scratch, ignore_errors=True)
 
 
 def start_applying(tdesktop, tag):

@@ -2,39 +2,44 @@
 
 каждый патч tele, сгруппированный по релизам, от новых к старым. В [features](features.md) представлены те же строки, но сгруппированные по вкладкам настроек. Из этих строк формируются списки изменений релиза и окно «что нового» в приложении, поэтому их формат строгий: см. [строка патча](development.md#the-patch-row).
 
-все 343 патча, от новых к старым.
+все 341 патч, от новых к старым.
+
+### [tele 24](https://github.com/nitreojs/tele/releases/tag/v7.4.0-tele.24)
+
+| # | что делает | где переключается |
+|---|---|---|
+| [330](../patches/tdesktop/0330-feat-translate-tele-into-russian-and-ukrainian.patch) | собственные настройки, меню, диалоговые окна и сообщения tele доступны на русском и украинском языках. по умолчанию они следуют языку telegram, либо выберите отдельный язык для tele кнопкой перевода в шапке настроек tele; всё, что ещё не переведено, остаётся на английском | всегда вкл. |
+| [331](../patches/tdesktop/0331-fix-saving-or-copying-a-shot-of-a-gif-no-longer-cras.patch) | сохранение или копирование снимка чата (шот) с воспроизводящимся GIF или видео больше не приводит к сбою tele, а углы скругляются так же, как в чате, а не гораздо сильнее | вместе с 104 |
+| [332](../patches/tdesktop/0332-fix-turning-off-money-hides-profile-balances.patch) | отключение раздела «деньги» также скрывает балансы кошелька во всех профилях, не оставляя пустого места | вместе с 287 |
+| [333](../patches/tdesktop/0333-feat-turn-off-bot-widgets.patch) | отключение виджетов ботов: после перезапуска они отображают статичное уведомление и сохраняют свои подписи, не выполняя скрипты и не отправляя сетевые запросы виджетов | tele → чаты, выкл., требуется перезапуск |
+| [1008](../patches/Telegram/lib_rpl/0001-fix-topic-tabs-no-longer-crash-after-you-move-them.patch) | вкладки тем и личных сообщений больше не вызывают сбой после перемещения их вверх, вниз или вбок с последующей прокруткой. причина была в библиотеке передачи событий, поэтому исправлены и любые другие подобные потери обновлений | всегда вкл. |
 
 ### [tele 23](https://github.com/nitreojs/tele/releases/tag/v7.3.3-tele.23)
 
 | # | что делает | где переключается |
 |---|---|---|
-| [324](../patches/tdesktop/0324-fix-deleted-chats-with-people-and-bots-stay-writable.patch) | сохранённые чаты с людьми и ботами остаются доступными для ввода: поле ввода, разблокировка и перезапуск бота работают как обычно, а первое новое сообщение превращает чат обратно в обычный. сохранённые группы и каналы остаются только для чтения | вместе с 282 |
-| [325](../patches/tdesktop/0325-feat-show-the-last-activity-next-to-a-hidden-last-se.patch) | для людей со скрытым онлайном в заголовке чата и профиле отображается время, когда tele в последний раз видел их пишущими, набирающими текст, читающими ваши сообщения или реагирующими: был(а) недавно (14:32). сохраняется между перезапусками | tele → профили и id, выкл. |
-| [326](../patches/tdesktop/0326-feat-update-buttons-open-tele-s-updates.patch) | кнопки обновления telegram (неподдерживаемые сообщения, rich-страницы, истории, вход) открывают обновления tele и проверяют новую версию вместо сайта загрузки telegram. сборки без встроенного автообновления открывают gettele.app, как и ссылка в старых неподдерживаемых сообщениях | всегда вкл. |
-| [327](../patches/tdesktop/0327-fix-quote-rich-messages-chooses-tele-s-or-telegram-s.patch) | при включённом цитировании rich-сообщений цитирование части rich-сообщения из его меню или свайпом для ответа помещает его в ваше сообщение как цитату-блокпост, как и раньше. отключите его, чтобы получить собственные rich-цитаты telegram, появившиеся в telegram desktop 7.3.2 | вместе с 198 |
-| [328](../patches/tdesktop/0328-fix-enter-sends-attached-media-with-an-empty-field-i.patch) | в темах, комментариях и избранном нажатие Enter отправляет прикреплённые над полем медиафайлы даже при пустом поле ввода вместо того, чтобы только отмечать чат прочитанным | вместе с 106 |
-| [329](../patches/tdesktop/0329-feat-show-typing-in-the-chat-list-with-a-hidden-last.patch) | в строках списка чатов отображается набор текста, запись и выбор стикера для людей со скрытым онлайном, что telegram показывает только в открытом чате. боты остаются как есть | tele → профили и id, выкл. |
-| [330](../patches/tdesktop/0330-fix-deleted-messages-only-lists-messages-deleted-one.patch) | сообщения, сохранённые из-за выхода или удаления всего чата, больше не считаются удалёнными сообщениями: пока чат сохранён, у них нет значка корзины или затухания, а страница удалённых сообщений чата и её счётчик показывают только поштучно удалённые сообщения. когда удалённый чат с человеком или ботом возвращается, его старые сообщения получают отметку, но не попадают на страницу | вместе с 282 |
-| [331](../patches/tdesktop/0331-feat-bigger-video-messages-while-playing.patch) | видеосообщения увеличиваются до 400 px во время воспроизведения или паузы, насколько позволяет ширина чата, и уменьшаются обратно при остановке | tele → сообщения, выкл. |
-| [332](../patches/tdesktop/0332-feat-seek-anywhere-on-video-messages.patch) | перетаскивание в любой точке видеосообщения, кроме центра, выполняет перемотку, а не только вдоль его края | tele → сообщения, выкл. |
-| [333](../patches/tdesktop/0333-fix-smooth-scrolling-no-longer-leaves-blank-areas.patch) | список чатов и чат больше не становятся пустыми или чёрными местами, пока другой плавно прокручивается: они продолжают отрисовку во время скольжения | вместе с 304 |
-| [334](../patches/tdesktop/0334-fix-file-pickers-on-macos-no-longer-crash-when-their.patch) | на macOS tele больше не вылетает, когда окно, из которого был открыт выбор файлов, закрывается при открытом диалоге | всегда вкл. |
-| [335](../patches/tdesktop/0335-fix-the-telegram-chat-shows-telegram-s-logo.patch) | служебный чат telegram показывает логотип Telegram, пока не загрузится его аватарка, а не значок tele | вместе с 88 |
-| [336](../patches/tdesktop/0336-fix-picking-files-on-macos-no-longer-freezes-tele.patch) | на macOS выбор файлов для отправки или открытия и выбор папок открывает модальный лист поверх окна, поэтому tele продолжает работать до его закрытия вместо зависания | всегда вкл. |
+| [320](../patches/tdesktop/0320-fix-deleted-chats-with-people-and-bots-stay-writable.patch) | сохранённые чаты с людьми и ботами остаются доступными для ввода: поле ввода, разблокировка и перезапуск бота работают как обычно, а первое новое сообщение превращает чат обратно в обычный. сохранённые группы и каналы остаются только для чтения | вместе с 282 |
+| [321](../patches/tdesktop/0321-feat-show-the-last-activity-next-to-a-hidden-last-se.patch) | для людей со скрытым онлайном в заголовке чата и профиле отображается время, когда tele в последний раз видел их пишущими, набирающими текст, читающими ваши сообщения или реагирующими: был(а) недавно (14:32). сохраняется между перезапусками | tele → профили и id, выкл. |
+| [322](../patches/tdesktop/0322-feat-update-buttons-open-tele-s-updates.patch) | кнопки обновления telegram (неподдерживаемые сообщения, rich-страницы, истории, вход) открывают обновления tele и проверяют новую версию вместо сайта загрузки telegram. сборки без встроенного автообновления открывают gettele.app, как и ссылка в старых неподдерживаемых сообщениях | всегда вкл. |
+| [323](../patches/tdesktop/0323-fix-quote-rich-messages-chooses-tele-s-or-telegram-s.patch) | при включённом цитировании rich-сообщений цитирование части rich-сообщения из его меню или свайпом для ответа помещает его в ваше сообщение как цитату-блокпост, как и раньше. отключите его, чтобы получить собственные rich-цитаты telegram, появившиеся в telegram desktop 7.3.2 | вместе с 198 |
+| [324](../patches/tdesktop/0324-feat-show-typing-in-the-chat-list-with-a-hidden-last.patch) | в строках списка чатов отображается набор текста, запись и выбор стикера для людей со скрытым онлайном, что telegram показывает только в открытом чате. боты остаются как есть | tele → профили и id, выкл. |
+| [325](../patches/tdesktop/0325-fix-deleted-messages-only-lists-messages-deleted-one.patch) | сообщения, сохранённые из-за выхода или удаления всего чата, больше не считаются удалёнными сообщениями: пока чат сохранён, у них нет значка корзины или затухания, а страница удалённых сообщений чата и её счётчик показывают только поштучно удалённые сообщения. когда удалённый чат с человеком или ботом возвращается, его старые сообщения получают отметку, но не попадают на страницу | вместе с 282 |
+| [326](../patches/tdesktop/0326-feat-bigger-video-messages-while-playing.patch) | видеосообщения увеличиваются до 400 px во время воспроизведения или паузы, насколько позволяет ширина чата, и уменьшаются обратно при остановке | tele → сообщения, выкл. |
+| [327](../patches/tdesktop/0327-feat-seek-anywhere-on-video-messages.patch) | перетаскивание в любой точке видеосообщения, кроме центра, выполняет перемотку, а не только вдоль его края | tele → сообщения, выкл. |
+| [328](../patches/tdesktop/0328-fix-file-pickers-on-macos-no-longer-crash-when-their.patch) | на macOS tele больше не вылетает, когда окно, из которого был открыт выбор файлов, закрывается при открытом диалоге | всегда вкл. |
+| [329](../patches/tdesktop/0329-fix-picking-files-on-macos-no-longer-freezes-tele.patch) | на macOS выбор файлов для отправки или открытия и выбор папок открывает модальный лист поверх окна, поэтому tele продолжает работать до его закрытия вместо зависания | всегда вкл. |
 
 ### [tele 22](https://github.com/nitreojs/tele/releases/tag/v7.3.1-tele.22)
 
 | # | что делает | где переключается |
 |---|---|---|
-| [315](../patches/tdesktop/0315-fix-updates-on-macos-keep-the-dock-icon.patch) | сохранение настроенной иконки tele в Dock при фоновом обновлении на macOS | вместе с 6 |
-| [316](../patches/tdesktop/0316-fix-listing-accounts-from-a-script-no-longer-crashes.patch) | предотвращение сбоя при получении списка активных аккаунтов через API скриптов | вместе с 301 |
-| [317](../patches/tdesktop/0317-fix-gifts-in-money-look-like-gift-cards-instead-of-a.patch) | корректное отображение подарков в кошельке Money в виде подарочных карт | всегда вкл. |
-| [318](../patches/tdesktop/0318-feat-close-the-media-viewer-with-mouse-back.patch) | кнопка «Назад» на мыши (Mouse 4) закрывает просмотрщик медиа: фото, видео, оконный просмотрщик и истории | tele → интерфейс, выкл. |
-| [319](../patches/tdesktop/0319-feat-show-skipped-messages-in-shots.patch) | улучшенный рендеринг пропущенных сообщений на снимках высокого разрешения | вместе с 86 |
-| [320](../patches/tdesktop/0320-feat-restrict-members-from-message-menus-and-find-th.patch) | ограничение прав участников прямо из меню сообщения и быстрый поиск всех сообщений пользователя в группе | tele → menus, on |
-| [321](../patches/tdesktop/0321-feat-let-scripts-give-their-menu-items-icons.patch) | поддержка кастомных иконок для пунктов меню, добавляемых пользовательскими скриптами | вместе с 301 |
-| [322](../patches/tdesktop/0322-fix-code-blocks-keep-the-indent-of-their-first-line.patch) | сохранение исходных отступов первой строки в моноширинных блоках программного кода | всегда вкл. |
-| [323](../patches/tdesktop/0323-feat-open-json-code-text-and-csv-files-in-tele.patch) | встроенный быстрый просмотрщик файлов JSON, исходного кода, TXT и CSV прямо внутри tele | tele → chats, on |
+| [313](../patches/tdesktop/0313-fix-listing-accounts-from-a-script-no-longer-crashes.patch) | предотвращение сбоя при получении списка активных аккаунтов через API скриптов | вместе с 301 |
+| [314](../patches/tdesktop/0314-fix-gifts-in-money-look-like-gift-cards-instead-of-a.patch) | корректное отображение подарков в кошельке Money в виде подарочных карт | всегда вкл. |
+| [315](../patches/tdesktop/0315-feat-close-the-media-viewer-with-mouse-back.patch) | кнопка «Назад» на мыши (Mouse 4) закрывает просмотрщик медиа: фото, видео, оконный просмотрщик и истории | tele → интерфейс, выкл. |
+| [316](../patches/tdesktop/0316-feat-show-skipped-messages-in-shots.patch) | улучшенный рендеринг пропущенных сообщений на снимках высокого разрешения | вместе с 86 |
+| [317](../patches/tdesktop/0317-feat-restrict-members-from-message-menus-and-find-th.patch) | ограничение прав участников прямо из меню сообщения и быстрый поиск всех сообщений пользователя в группе | tele → меню, вкл. |
+| [318](../patches/tdesktop/0318-feat-let-scripts-give-their-menu-items-icons.patch) | поддержка кастомных иконок для пунктов меню, добавляемых пользовательскими скриптами | вместе с 301 |
+| [319](../patches/tdesktop/0319-feat-open-json-code-text-and-csv-files-in-tele.patch) | встроенный быстрый просмотрщик файлов JSON, исходного кода, TXT и CSV прямо внутри tele | tele → чаты, вкл. |
 
 ### [tele 21](https://github.com/nitreojs/tele/releases/tag/v7.3.1-tele.21)
 
@@ -46,13 +51,11 @@
 | [305](../patches/tdesktop/0305-fix-quote-the-fee-of-a-wallet-key-update-again.patch) | точный предварительный расчет сетевой комиссии TON при обновлении ключей кошелька | всегда вкл. |
 | [306](../patches/tdesktop/0306-build-take-wallet-engine-from-gettele-money-for-priv.patch) | интеграция криптографического движка gettele money для приватных транзакций | вместе с 307 |
 | [307](../patches/tdesktop/0307-feat-import-wallets-from-private-keys.patch) | импорт TON-кошельков напрямую из приватных ключей и сид-фраз | tele → отладка, выкл. |
-| [308](../patches/tdesktop/0308-feat-copy-secret-words-without-waiting.patch) | моментальное копирование мнемонической фразы кошелька без искусственных задержек таймера | tele → debug, on |
+| [308](../patches/tdesktop/0308-feat-copy-secret-words-without-waiting.patch) | моментальное копирование мнемонической фразы кошелька без искусственных задержек таймера | tele → отладка, вкл. |
 | [309](../patches/tdesktop/0309-feat-hide-the-other-balances-above-the-money-card.patch) | скрытие второстепенных балансов над картой Money для приватности | tele → чаты, выкл. |
-| [310](../patches/tdesktop/0310-build-fetch-litehtml-for-html-bubbles.patch) | движок litehtml для легковесного отображения форматированных HTML-карточек | вместе с 311 |
-| [311](../patches/tdesktop/0311-feat-render-html-cards-with-litehtml-and-run-their-s.patch) | замер и запись плавности прокрутки (FPS и времени кадров) в системный log.txt | tele → отладка, выкл. |
-| [312](../patches/tdesktop/0312-fix-confirm-stickers-sent-from-sticker-set-boxes.patch) | просмотр и копирование параметра `start_param` в ссылках на ботов и веб-приложения | вместе с 129 |
-| [313](../patches/tdesktop/0313-feat-recover-deleted-channel-posts-from-forwards.patch) | скрытие плашки «изменено» для сообщений от ботов | вместе с 19 |
-| [314](../patches/tdesktop/0314-feat-filter-stickers-and-emoji-by-format.patch) | симуляция различных сетевых состояний (ожидание сети, обновление, переподключение) | tele → чаты, выкл. |
+| [310](../patches/tdesktop/0310-fix-confirm-stickers-sent-from-sticker-set-boxes.patch) | просмотр и копирование параметра `start_param` в ссылках на ботов и веб-приложения | вместе с 129 |
+| [311](../patches/tdesktop/0311-feat-recover-deleted-channel-posts-from-forwards.patch) | скрытие плашки «изменено» для сообщений от ботов | вместе с 19 |
+| [312](../patches/tdesktop/0312-feat-filter-stickers-and-emoji-by-format.patch) | симуляция различных сетевых состояний (ожидание сети, обновление, переподключение) | tele → чаты, выкл. |
 | [1007](../patches/Telegram/lib_ui/0007-feat-glide-at-the-screen-refresh-rate.patch) | синхронизация плавного скольжения с частотой обновления монитора в библиотеке UI | вместе с 274 |
 
 ### [tele 20](https://github.com/nitreojs/tele/releases/tag/v7.3.1-tele.20)
@@ -62,7 +65,7 @@
 | [284](../patches/tdesktop/0284-feat-update-the-secret-phrase-of-wallets-without-a-b.patch) | принудительная активация интерфейса встроенного кошелька Wallet до его сервера | tele → отладка, выкл. |
 | [285](../patches/tdesktop/0285-feat-copy-links-to-wallet-transactions.patch) | отображение разрыва цепочки («...») при создании снимка непоследовательных сообщений | всегда вкл. |
 | [286](../patches/tdesktop/0286-feat-send-while-an-old-wallet-stays-on-this-device.patch) | выбор пользовательского фонового градиента или монохромной заливки для снимков | tele → отладка, выкл. |
-| [287](../patches/tdesktop/0287-feat-turn-off-money.patch) | полное скрытие сообщений заблокированных пользователей в общих группах | tele → chats, off, требуется перезапуск |
+| [287](../patches/tdesktop/0287-feat-turn-off-money.patch) | полное скрытие сообщений заблокированных пользователей в общих группах | tele → чаты, выкл., требуется перезапуск |
 | [288](../patches/tdesktop/0288-feat-say-that-the-money-passcode-is-tele-s-passcode.patch) | защита от принудительного удаления сообщений собеседником через серверные отметки | всегда вкл. |
 | [289](../patches/tdesktop/0289-feat-dim-every-other-address-group-like-ios.patch) | отложенная отправка сообщений с автоматическим переходом в offline сразу после передачи | всегда вкл. |
 | [290](../patches/tdesktop/0290-fix-clicking-another-collage-item-switches-the-open-.patch) | переключатель формата ID: обычный числовой или формат Bot API с префиксом `-100` | всегда вкл. |
@@ -77,7 +80,7 @@
 | [299](../patches/tdesktop/0299-feat-compact-icon-only-folders.patch) | папки, отображаемые только значками, получают более компактные иконки и кнопки на боковой панели и во вкладках над списком чатов | tele → интерфейс, выкл. |
 | [300](../patches/tdesktop/0300-feat-remove-all-your-messages-from-a-chat.patch) | отправка документов и медиа в виде файлов без сжатия по умолчанию | tele → меню, выкл. |
 | [1005](../patches/Telegram/lib_ui/0005-fix-the-maximize-button-follows-the-real-window-stat.patch) | кнопка развертывания окна корректно отображается и работает после изменения размера или перемещения окна из развернутого или полноэкранного режима | всегда вкл. |
-| [301](../patches/tdesktop/0301-feat-scripting-prototype.patch) | повышенный битрейт записи голосовых сообщений (до 64 кбит/с Opus) для студийного качества | tele → scripts β, off |
+| [301](../patches/tdesktop/0301-feat-scripting-prototype.patch) | повышенный битрейт записи голосовых сообщений (до 64 кбит/с Opus) для студийного качества | tele → скрипты β, выкл. |
 | [1006](../patches/Telegram/lib_ui/0006-feat-let-scripts-swap-label-texts-and-find-full-widt.patch) | текст в окнах tele, измененный скриптом, восстанавливается в точности как был (с форматированием и эмодзи) после остановки скрипта, а строки скрипта в информационных таблицах остаются выше разделительной черты | вместе с 301 |
 
 ### [tele 19](https://github.com/nitreojs/tele/releases/tag/v7.3.0-tele.19)
@@ -86,13 +89,13 @@
 |---|---|---|
 | [275](../patches/tdesktop/0275-feat-badges-on-forwarded-and-reply-headers.patch) | временный подсмотр скрытого времени последнего захода собеседника (Peek Last Seen) | вместе с 12 |
 | [276](../patches/tdesktop/0276-feat-select-table-cells-as-a-range.patch) | запрет сохранения самоуничтожающихся медиафайлов во временном дисковом кеше системы | всегда вкл. |
-| [277](../patches/tdesktop/0277-feat-turn-on-the-wallet-before-telegram-does.patch) | прототип секретных чатов с локальным паролем, подтверждением ключей и сквозным шифрованием | tele → debug, off, требуется перезапуск |
+| [277](../patches/tdesktop/0277-feat-turn-on-the-wallet-before-telegram-does.patch) | прототип секретных чатов с локальным паролем, подтверждением ключей и сквозным шифрованием | tele → отладка, выкл., требуется перезапуск |
 | [278](../patches/tdesktop/0278-feat-hide-birthday-banners-and-effects.patch) | скрытие праздничных баннеров, конфетти в профиле, торта и кнопки подарка в поле ввода | tele → чаты, выкл. |
 | [279](../patches/tdesktop/0279-feat-mention-several-people-in-a-row.patch) | фильтрация результатов поиска по типу вложений (фото, видео, файлы, музыка, голосовые, кружочки, ссылки) | tele → отправка, выкл. |
 | [280](../patches/tdesktop/0280-feat-filter-chat-search-by-message-type.patch) | инспектор кнопок меню ботов с копированием payload в JSON | tele → чаты, выкл. |
 | [281](../patches/tdesktop/0281-feat-peek-at-a-hidden-last-seen.patch) | плавное изменение размеров окна программы без артефактов перерисовки | tele → профили и id, выкл. |
 | [282](../patches/tdesktop/0282-feat-keep-deleted-chats-and-topics.patch) | одновременная вставка нескольких объектов из буфера обмена | вместе с 19 |
-| [283](../patches/tdesktop/0283-feat-secret-chats-prototype.patch) | вставка скопированных изображений напрямую в виде стикеров | tele → debug, off, требуется перезапуск |
+| [283](../patches/tdesktop/0283-feat-secret-chats-prototype.patch) | вставка скопированных изображений напрямую в виде стикеров | tele → отладка, выкл., требуется перезапуск |
 
 ### [tele 18](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.18)
 
@@ -111,7 +114,7 @@
 | [259](../patches/tdesktop/0259-feat-record-voice-in-higher-quality.patch) | выбор позиции всплывающих тостов на экране (любой из четырех углов) | tele → отправка, выкл. |
 | [260](../patches/tdesktop/0260-feat-compress-photos-less.patch) | подавление фоновых сетевых пингов при входящих аудио- и видеозвонках | tele → отправка, выкл. |
 | [261](../patches/tdesktop/0261-feat-thinner-brush-in-the-photo-editor.patch) | предпросмотр и прослушивание голосовых и видеосообщений (кружочков) перед отправкой | tele → отправка, выкл. |
-| [262](../patches/tdesktop/0262-feat-bigger-faster-chat-export.patch) | подтверждение перед отправкой любых файлов, фото и видео | tele → резервные копии, off |
+| [262](../patches/tdesktop/0262-feat-bigger-faster-chat-export.patch) | подтверждение перед отправкой любых файлов, фото и видео | tele → резервное копирование, выкл. |
 | [263](../patches/tdesktop/0263-feat-smaller-minimum-window-size.patch) | минимальный размер окна программы уменьшен до 256x256 вместо 380x480 | tele → интерфейс, выкл. |
 | [264](../patches/tdesktop/0264-feat-show-when-media-was-uploaded-in-the-media-viewe.patch) | сверхтонкая кисть в встроенном фоторедакторе для аккуратных пометок | tele → профили и id, выкл. |
 | [265](../patches/tdesktop/0265-feat-copy-the-owner-id-of-sticker-sets.patch) | пипетка для выбора цвета кисти непосредственно с редактируемого изображения | tele → профили и id, выкл. |
@@ -121,7 +124,7 @@
 | [269](../patches/tdesktop/0269-feat-no-outline-on-large-emoji.patch) | мгновенная генерация QR-кода на сообщение, чат или медиафайл из контекстного меню | tele → сообщения, выкл. |
 | [270](../patches/tdesktop/0270-feat-add-tele-to-the-start-menu.patch) | выбор действия по двойному клику на строку чата в списке (открыть, пометить прочитанным, закрепить) | всегда вкл. |
 | [271](../patches/tdesktop/0271-feat-classic-text-padding-in-bubbles.patch) | автоматическое отключение звуков уведомлений во время голосовых и видеозвонков | вместе с 266 |
-| [272](../patches/tdesktop/0272-feat-fix-fonts-picked-in-chat-settings.patch) | последовательное упоминание нескольких человек через ПКМ или Tab в списке подсказок | tele → debug, off, требуется перезапуск |
+| [272](../patches/tdesktop/0272-feat-fix-fonts-picked-in-chat-settings.patch) | последовательное упоминание нескольких человек через ПКМ или Tab в списке подсказок | tele → отладка, выкл., требуется перезапуск |
 | [273](../patches/tdesktop/0273-fix-sharp-boost-icons-and-button-emoji-in-scaled-sho.patch) | тонкая настройка параметров аппаратного ускорения видео и графики | вместе с 104 |
 | [274](../patches/tdesktop/0274-feat-smooth-wheel-scrolling.patch) | приблизительная дата регистрации аккаунта на основе диапазона ID | tele → интерфейс, выкл. |
 | [1001](../patches/Telegram/lib_ui/0001-fix-unbreakable-characters-no-longer-scroll-text-fie.patch) | текстовое поле с длинной цепочкой неразрывных символов больше не скроллится вбок, скрывая остальной интерфейс | всегда вкл. |
@@ -189,7 +192,7 @@
 | [194](../patches/tdesktop/0194-feat-mtproto-console.patch) | консоль MTProto: вызов любых методов API в текущей сессии (текст, JSON или JSON5), автодополнение, подсказки схемы, валидация, дерево результатов и история. Необратимые методы требуют подтверждения, операции со звёздами запрашивают локальный пароль | tele → отладка, ctrl+alt+m |
 | [195](../patches/tdesktop/0195-feat-show-the-media-s-data-center-in-the-media-viewe.patch) | просмотрщик медиа показывает дата-центр (DC), на котором хранится открытое фото, видео или файл | вместе с 23 |
 | [196](../patches/tdesktop/0196-feat-gift-studio.patch) | студия подарков: сборка любого подарка из реальных деталей (коллекция, модель, фон, символ, номер) на живой обложке в разных макетах; экспорт в PNG, MP4, GIF или валидный TGS-стикер с текстом в кривых. Избранное, развертки, данные с @GiftChanges. TGS-стикеры не содержат личных данных | tele → профили и id, меню подарков |
-| [197](../patches/tdesktop/0197-feat-fake-gift-upgrades.patch) | встроенный инспектор сетевых пакетов MTProto и расширенное логирование сессий | tele → profiles and ids, on |
+| [197](../patches/tdesktop/0197-feat-fake-gift-upgrades.patch) | встроенный инспектор сетевых пакетов MTProto и расширенное логирование сессий | tele → профили и id, вкл. |
 | [198](../patches/tdesktop/0198-feat-quote-rich-messages.patch) | выделение части сообщения и выбор «цитировать и ответить»: открывается редактор с цитатой, а цитата без автора больше не исчезает при отправке | tele → сообщения, вкл. |
 | [199](../patches/tdesktop/0199-feat-select-service-messages.patch) | Студия Подарков: создание уникальных коллекционных подарков из оригинальных ассетов с экспортом | всегда вкл. |
 | [200](../patches/tdesktop/0200-fix-hide-the-upgraded-gift-s-number-and-model-until-.patch) | симуляция улучшения подарков (Fake Upgrades) с оригинальной рулеткой без списания Звёзд | всегда вкл. |
@@ -237,11 +240,11 @@
 | [130](../patches/tdesktop/0130-feat-turn-off-touchpad-gestures.patch) | скрытие блока рекомендаций похожих каналов при подписке и в профилях каналов | tele → чаты, выкл. |
 | [131](../patches/tdesktop/0131-feat-hide-similar-channels.patch) | раздельное скрытие счетчиков непрочитанных сообщений в папках, чатах, трее и панели задач | tele → чаты, выкл. |
 | [132](../patches/tdesktop/0132-feat-hide-unread-counters.patch) | скрытие счётчиков непрочитанных на вкладках папок, панели задач и в трее, исключение архива и аккаунтов из контекстного меню | tele → уведомления, выкл. |
-| [133](../patches/tdesktop/0133-feat-hide-and-show-the-pinned-bar-from-the-chat-menu.patch) | отключение случайных жестов смахивания тачпада при наборе текста | tele → chats, on |
+| [133](../patches/tdesktop/0133-feat-hide-and-show-the-pinned-bar-from-the-chat-menu.patch) | отключение случайных жестов смахивания тачпада при наборе текста | tele → чаты, вкл. |
 | [134](../patches/tdesktop/0134-feat-record-voice-without-fading.patch) | запись голосовых сообщений без затухания в начале с сохранением первых 0.4 секунды, которые срезает официальный Telegram Desktop | tele → отправка, выкл. |
 | [135](../patches/tdesktop/0135-fix-close-the-tele-chat-profile-card-after-a-resize.patch) | карточка профиля чата tele автоматически закрывается при изменении размера окна на macOS | всегда вкл. |
 | [136](../patches/tdesktop/0136-feat-turn-off-ai-features.patch) | запись голосовых сообщений без затухания и обрезки фоновых частот | tele → чаты, выкл. |
-| [137](../patches/tdesktop/0137-feat-choose-the-map-service-for-locations.patch) | отключение всех встроенных AI-функций и подсказок Telegram | tele → сообщения → открывать ссылки в приложениях |
+| [137](../patches/tdesktop/0137-feat-choose-the-map-service-for-locations.patch) | отключение всех встроенных AI-функций и подсказок Telegram | tele → сообщения → открытие ссылок в приложениях |
 | [138](../patches/tdesktop/0138-feat-copy-messages-as-markdown-or-html.patch) | копирование сообщений в формате Markdown или HTML из контекстного меню сообщения | tele → меню, выкл. |
 | [139](../patches/tdesktop/0139-feat-loop-videos-in-the-media-viewer.patch) | клавиша R зацикливает воспроизведение видео в просмотрщике медиа | всегда вкл. |
 | [140](../patches/tdesktop/0140-fix-count-typed-emoji-in-recent-emoji.patch) | копирование сообщений с сохранением разметки в формате Markdown или HTML | всегда вкл. |
@@ -260,11 +263,11 @@
 | [153](../patches/tdesktop/0153-feat-reduce-motion.patch) | режим уменьшения движения: отключение всех анимаций (кроме звонков), зацикливания стикеров, всплесков реакций и эффектов сообщений | tele → интерфейс, выкл. |
 | [154](../patches/tdesktop/0154-feat-notify-when-people-come-online.patch) | удобное разбиение настроек tele на тематические категории с быстрым переключением | tele → уведомления, выкл. |
 | [155](../patches/tdesktop/0155-feat-mute-folders-and-silence-chats-completely.patch) | отключение звука для всей папки на этом устройстве и полное заглушение чатов, включая упоминания и ответы | tele → уведомления, вкл. |
-| [156](../patches/tdesktop/0156-feat-send-an-audio-file-as-a-voice-message.patch) | уведомления о появлении выбранных пользователей в сети (online) | tele → sending, on |
+| [156](../patches/tdesktop/0156-feat-send-an-audio-file-as-a-voice-message.patch) | уведомления о появлении выбранных пользователей в сети (online) | tele → отправка, вкл. |
 | [157](../patches/tdesktop/0157-feat-download-folders-per-chat.patch) | режим стримера: скрытие личных данных, номеров, текста тостов и приложения от захвата экрана | tele → отправка, выкл. |
 | [158](../patches/tdesktop/0158-feat-resize-the-message-field.patch) | перетаскивание верхней границы поля ввода сообщения для настройки его минимальной высоты | tele → отправка, выкл. |
 | [159](../patches/tdesktop/0159-feat-streamer-mode.patch) | ручное изменение высоты поля ввода текста перетаскиванием разделителя | tele → приватность, выкл. |
-| [160](../patches/tdesktop/0160-feat-translate-your-message-before-sending.patch) | перевод текста сообщения на нужный язык прямо перед отправкой | tele → sending, on |
+| [160](../patches/tdesktop/0160-feat-translate-your-message-before-sending.patch) | перевод текста сообщения на нужный язык прямо перед отправкой | tele → отправка, вкл. |
 | [161](../patches/tdesktop/0161-feat-unsorted-folder.patch) | папка «Без папки» со всеми чатами, не распределенными по другим папкам (кроме архива). чаты с непрочитанными сообщениями остаются в ней | tele → интерфейс, выкл. |
 | [162](../patches/tdesktop/0162-fix-gif-frame-timing-and-same-name-downloads.patch) | кадры GIF отображаются с собственной длительностью, а скачиваемые файлы с одинаковыми именами больше не перезаписывают друг друга | всегда вкл. |
 | [163](../patches/tdesktop/0163-feat-keep-saved-gifs-and-stickers-past-the-limit.patch) | сохранение GIF и стикеров сверх лимита Telegram локально на этом устройстве | tele → чаты, выкл. |
@@ -308,7 +311,7 @@
 |---|---|---|
 | [81](../patches/tdesktop/0081-feat-move-chats-instantly-in-the-chat-list.patch) | чаты мгновенно перемещаются на новую позицию в списке без задержки при наведении курсора мыши | tele → интерфейс, выкл. |
 | [82](../patches/tdesktop/0082-feat-show-collectible-prices-at-the-purchase-date.patch) | отображение цены покупки и текущей рыночной стоимости подарка в TON | tele → профили и id, выкл. |
-| [83](../patches/tdesktop/0083-feat-set-your-own-app-and-tray-icons.patch) | установка собственных иконок приложения и трея из любого изображения; иконка в трее может следовать за иконкой приложения | tele → interface → app icon |
+| [83](../patches/tdesktop/0083-feat-set-your-own-app-and-tray-icons.patch) | установка собственных иконок приложения и трея из любого изображения; иконка в трее может следовать за иконкой приложения | tele → интерфейс → иконка приложения |
 | [84](../patches/tdesktop/0084-feat-choose-when-links-get-previews-and-set-your-own.patch) | выбор предпросмотра ссылок: для всех, кроме вставленных, или только добавленных вручную; добавление предпросмотра любой ссылки к любому сообщению | tele → сообщения |
 | [85](../patches/tdesktop/0085-feat-turn-username-into-a-t.me-link-in-the-link-box.patch) | поддержка установки произвольных иконок приложения из PNG и ICO | всегда вкл. |
 | [86](../patches/tdesktop/0086-feat-save-messages-as-a-picture.patch) | снимок сообщений: сохранение выбранных сообщений как изображения из контекстного меню с фоном чата или без него и датами | tele → меню, выкл. |
@@ -317,20 +320,20 @@
 | [89](../patches/tdesktop/0089-fix-name-the-item-Copy-Callback-Data-like-telegram-d.patch) | интерактивная консоль MTProto (`Ctrl+Alt+M`): вызов любых API методов Telegram с подсказками схемы | вместе с 28 |
 | [90](../patches/tdesktop/0090-feat-usernames-from-the-tele-server.patch) | автодополнение методов, подсветка синтаксиса и история запросов в консоли MTProto | tele → сервер, вкл. |
 | [91](../patches/tdesktop/0091-fix-open-custom-emoji-in-rich-and-emoji-only-message.patch) | экспорт ответов API Telegram в форматы JSON и JSON5 | всегда вкл. |
-| [92](../patches/tdesktop/0092-feat-send-gifs-as-videos-and-videos-as-gifs.patch) | сопоставление дополнительных коротких юзернеймов с публичного списка сервера | tele → sending, on |
+| [92](../patches/tdesktop/0092-feat-send-gifs-as-videos-and-videos-as-gifs.patch) | сопоставление дополнительных коротких юзернеймов с публичного списка сервера | tele → отправка, вкл. |
 | [93](../patches/tdesktop/0093-feat-keep-drafts-on-this-device.patch) | черновики хранятся локально на этом устройстве и не синхронизируются с облаком; кнопка очищает сохраненные ранее | tele → приватность, выкл. |
 | [94](../patches/tdesktop/0094-feat-send-scheduled-messages-on-time.patch) | компактное отображение ID и номера дата-центра в одну строку в профиле | tele → отправка, выкл. |
 | [95](../patches/tdesktop/0095-feat-show-id-and-dc-in-one-row.patch) | локальное сохранение черновиков сообщений на устройстве с защитой от сброса сервером | tele → профили и id, выкл. |
 | [96](../patches/tdesktop/0096-feat-redesign-the-title-template-editor.patch) | обновленный редактор шаблона заголовка: переменные в виде чипов, палитра модификаторов и готовые пресеты | вместе с 10 |
 | [97](../patches/tdesktop/0097-fix-ignore-reply-counters-on-scheduled-messages.patch) | отправка отложенных сообщений секунда в секунду встроенным таймером клиента | всегда вкл. |
 | [98](../patches/tdesktop/0098-feat-save-drafts-for-later.patch) | сохраненные черновики: несколько черновиков на чат с медиа и форматированием в виде отдельного раздела; отправка в любой чат и восстановление удаленных | tele → отправка → черновики |
-| [99](../patches/tdesktop/0099-feat-send-photos-in-hd-by-default.patch) | менеджер сохраненных черновиков: просмотр и восстановление заготовок сообщений для разных чатов | tele → sending, on |
+| [99](../patches/tdesktop/0099-feat-send-photos-in-hd-by-default.patch) | менеджер сохраненных черновиков: просмотр и восстановление заготовок сообщений для разных чатов | tele → отправка, вкл. |
 | [100](../patches/tdesktop/0100-feat-find-chats-by-their-aliases.patch) | поиск чатов и пользователей по вашим локальным псевдонимам | вместе с 70 |
 | [101](../patches/tdesktop/0101-fix-show-seen-and-reacted-counts-separately.patch) | отправка фотографий в исходном высоком качестве (HD) по умолчанию без сильного сжатия | всегда вкл. |
 | [102](../patches/tdesktop/0102-feat-send-an-inline-bot-query-as-text.patch) | снимки сообщений в разрешении до 4x, скрытие аватаров, времени и фона чата | всегда вкл. |
-| [103](../patches/tdesktop/0103-feat-choose-which-app-opens-each-service.patch) | выбор приложения для открытия внешних сервисов: официальное приложение, альтернативный клиент (например, Spotifast), браузер или любая программа | tele → сообщения → открывать ссылки в приложениях |
+| [103](../patches/tdesktop/0103-feat-choose-which-app-opens-each-service.patch) | выбор приложения для открытия внешних сервисов: официальное приложение, альтернативный клиент (например, Spotifast), браузер или любая программа | tele → сообщения → открытие ссылок в приложениях |
 | [104](../patches/tdesktop/0104-feat-scale-shots-up-to-4x-and-show-your-messages-as-.patch) | масштабирование снимков сообщений от 1x до 4x с чётким текстом, облачками, аватарками, медиа и эмодзи; показ своих сообщений как входящих | вместе с 86 |
-| [105](../patches/tdesktop/0105-feat-export-and-import-tele-settings.patch) | экспорт настроек tele в файл или текст и импорт на любом аккаунте, системе или версии с предпросмотром перед применением | tele → резервные копии |
+| [105](../patches/tdesktop/0105-feat-export-and-import-tele-settings.patch) | экспорт настроек tele в файл или текст и импорт на любом аккаунте, системе или версии с предпросмотром перед применением | tele → резервное копирование |
 
 ### [tele 9](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.9)
 
@@ -346,27 +349,27 @@
 | [64](../patches/tdesktop/0064-feat-show-ids-on-regular-gifts.patch) | отображение уникальных ID подарков с защитой от отслеживания | tele → профили и id, выкл. |
 | [65](../patches/tdesktop/0065-feat-send-inline-results-without-via.patch) | отправка результатов инлайн-ботов как собственных сообщений без подписи «через @bot» | tele → боты, выкл. |
 | [66](../patches/tdesktop/0066-feat-skip-the-rich-message-prompt-on-paste.patch) | отправка результатов inline-ботов без плашки «через @bot» | tele → отправка, выкл. |
-| [67](../patches/tdesktop/0067-feat-set-or-remove-chat-backgrounds-only-for-you.patch) | установка или удаление фона конкретного чата только локально для себя | tele → chats → chat backgrounds |
+| [67](../patches/tdesktop/0067-feat-set-or-remove-chat-backgrounds-only-for-you.patch) | установка или удаление фона конкретного чата только локально для себя | tele → чаты → фоны чатов |
 | [68](../patches/tdesktop/0068-feat-skip-or-quote-deleted-messages-when-replying.patch) | возможность цитировать или отвечать на удаленные сохраненные сообщения | tele → сообщения |
 | [69](../patches/tdesktop/0069-feat-add-test-server-accounts-with-a-plain-right-cli.patch) | мгновенная вставка форматированного текста без надоедливого всплывающего запроса | всегда вкл. |
-| [70](../patches/tdesktop/0070-feat-link-usernames-to-profiles-locally.patch) | локальная привязка юзернеймов к профилям пользователей | tele → chats → username aliases |
+| [70](../patches/tdesktop/0070-feat-link-usernames-to-profiles-locally.patch) | локальная привязка юзернеймов к профилям пользователей | tele → чаты → псевдонимы пользователей |
 | [71](../patches/tdesktop/0071-feat-hide-the-mentions-and-reactions-buttons.patch) | скрытие плавающих кнопок перехода к непрочитанным упоминаниям и реакциям внизу чата | tele → чаты, выкл. |
 | [72](../patches/tdesktop/0072-feat-pick-ignored-users-and-ghost-chats-like-privacy.patch) | списки исключений для режима невидимки и игнорирования по чатам | tele → приватность |
 | [73](../patches/tdesktop/0073-feat-show-what-s-new-in-a-local-tele-chat.patch) | локальный чат tele с историей новостей и изменений после обновлений | вместе с 38 |
 | [74](../patches/tdesktop/0074-feat-show-names-instead-of-phone-numbers-in-chat-hea.patch) | отображение имен пользователей вместо номеров телефонов в шапке чата | tele → профили и id, выкл. |
 | [75](../patches/tdesktop/0075-feat-open-the-emoji-panel-and-attach-menu-by-click-o.patch) | открытие панели эмодзи и меню прикрепления только по клику, без случайного открытия при наведении курсора | tele → чаты, выкл. |
-| [76](../patches/tdesktop/0076-feat-rewrite-pasted-links-with-your-own-rules.patch) | замена доменов и параметров вставляемых ссылок по собственным правилам (например, Twitter в vxtwitter) | tele → messages → link rewrites |
-| [77](../patches/tdesktop/0077-feat-name-people-only-for-you.patch) | редактор пользовательских правил замены ссылок с поддержкой регулярных выражений и пресетов | tele → profiles and ids → custom names |
+| [76](../patches/tdesktop/0076-feat-rewrite-pasted-links-with-your-own-rules.patch) | замена доменов и параметров вставляемых ссылок по собственным правилам (например, Twitter в vxtwitter) | tele → сообщения → перезапись ссылок |
+| [77](../patches/tdesktop/0077-feat-name-people-only-for-you.patch) | редактор пользовательских правил замены ссылок с поддержкой регулярных выражений и пресетов | tele → профили и id → пользовательские имена |
 | [78](../patches/tdesktop/0078-feat-add-launch-flags-to-turn-off-tele-s-own-network.patch) | флаги запуска для временной изоляции сетевых функций tele на один запуск, см. [флаги запуска](launch-flags.md) | всегда вкл. |
 | [79](../patches/tdesktop/0079-feat-preview-calcmula-results-while-typing.patch) | отображение результата вычислений Calcmula во всплывающей подсказке прямо в процессе ввода | tele → отправка, выкл. |
-| [80](../patches/tdesktop/0080-feat-clear-server-data-and-explain-custom-verificati.patch) | кнопка «Очистить кеш данных сервера» и справка по алгоритму хеширования верификаций | tele → сервер → clear cached data |
+| [80](../patches/tdesktop/0080-feat-clear-server-data-and-explain-custom-verificati.patch) | кнопка «Очистить кеш данных сервера» и справка по алгоритму хеширования верификаций | tele → сервер → очистить кэш данных |
 
 ### [tele 8](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.8)
 
 | # | что делает | где переключается |
 |---|---|---|
-| [37](../patches/tdesktop/0037-feat-turn-off-animated-userpics.patch) | возможность сделать анимированные аватары статичными: раздельно для списка чатов и внутри чатов/профилей | tele → interface, off, in chats and profiles: tele → chats, off |
-| [38](../patches/tdesktop/0038-feat-show-what-s-new-in-tele-after-an-update.patch) | показ интерактивного окна со списком изменений «Что нового» сразу после обновления | tele → updates, on |
+| [37](../patches/tdesktop/0037-feat-turn-off-animated-userpics.patch) | возможность сделать анимированные аватары статичными: раздельно для списка чатов и внутри чатов/профилей | tele → интерфейс, выкл., в чатах и профилях: tele → чаты, выкл. |
+| [38](../patches/tdesktop/0038-feat-show-what-s-new-in-tele-after-an-update.patch) | показ интерактивного окна со списком изменений «Что нового» сразу после обновления | tele → обновления, вкл. |
 | [39](../patches/tdesktop/0039-feat-call-the-app-tele-everywhere.patch) | использование имени tele во всех системных уведомлениях, диалогах и окнах | всегда вкл. |
 | [40](../patches/tdesktop/0040-feat-customize-the-window-title-and-format-template-.patch) | заголовок окна ОС (панель задач, Alt+Tab, рамка окна) также поддерживает шаблоны или синхронизацию с панелью. переменные принимают модификаторы вроде `{weekday | tele → интерфейс |
 | [41](../patches/tdesktop/0041-feat-group-and-search-tele-settings.patch) | настройки tele сгруппированы по страницам с краткими описаниями и собственным поиском, интегрированным в общий поиск настроек | всегда вкл. |
@@ -378,7 +381,7 @@
 | [47](../patches/tdesktop/0047-feat-open-collectible-gifts-in-see.tg.patch) | открытие коллекционных подарков во внешнем верификаторе see.tg | tele → профили и id, выкл. |
 | [48](../patches/tdesktop/0048-feat-move-late-sent-messages-to-the-bottom.patch) | сообщение, отправка которого заняла длительное время, перемещается в конец чата после успешной доставки | tele → отправка, выкл. |
 | [49](../patches/tdesktop/0049-feat-queue-messages-behind-an-uploading-media.patch) | автоматическое перемещение задержавшихся при отправке сообщений в самый низ ленты чата | tele → отправка, выкл. |
-| [50](../patches/tdesktop/0050-feat-open-links-in-their-desktop-apps.patch) | отправка текстовых сообщений вслед за выгружаемым медиа без сбоев порядка сообщений | tele → сообщения → открывать ссылки в приложениях |
+| [50](../patches/tdesktop/0050-feat-open-links-in-their-desktop-apps.patch) | отправка текстовых сообщений вслед за выгружаемым медиа без сбоев порядка сообщений | tele → сообщения → открытие ссылок в приложениях |
 | [51](../patches/tdesktop/0051-feat-clean-tracking-parameters-from-links.patch) | автоматическое удаление UTM-меток и трекинговых параметров из входящих и отправляемых ссылок | tele → сообщения, выкл. |
 | [52](../patches/tdesktop/0052-feat-reveal-spoilers-automatically.patch) | автоматическое отображение текста и медиа под спойлерами без необходимости кликать по ним | tele → сообщения, выкл. |
 | [53](../patches/tdesktop/0053-feat-move-tele-tools-to-the-bottom-of-the-message-me.patch) | перенос пунктов инструментов tele в нижнюю часть контекстного меню сообщений | всегда вкл. |
@@ -395,28 +398,28 @@
 | [19](../patches/tdesktop/0019-feat-keep-deleted-messages.patch) | сохранение удаленных собеседником сообщений в чате с отметкой значком корзины или полупрозрачностью | tele → сообщения, выкл. |
 | [20](../patches/tdesktop/0020-fix-fade-every-unsupported-experimental-option.patch) | автоматическое затемнение экспериментальных опций, не поддерживаемых текущей версией ОС | всегда вкл. |
 | [21](../patches/tdesktop/0021-feat-hide-call-buttons.patch) | скрытие кнопок аудио- и видеозвонков в личных чатах и профилях | tele → чаты |
-| [22](../patches/tdesktop/0022-feat-lowercase-every-interface-text.patch) | переводит весь интерфейс в нижний регистр. сообщения и имена остаются без изменений | tele → interface, off, требуется перезапуск |
+| [22](../patches/tdesktop/0022-feat-lowercase-every-interface-text.patch) | переводит весь интерфейс в нижний регистр. сообщения и имена остаются без изменений | tele → интерфейс, выкл., требуется перезапуск |
 | [23](../patches/tdesktop/0023-feat-show-the-data-center-in-profiles.patch) | отображение номера дата-центра (DC) аккаунта и аватара в профиле | tele → профили и id, выкл. |
 | [24](../patches/tdesktop/0024-feat-hide-sponsored-messages.patch) | блокировка рекламы: отсутствие рекламных сообщений в каналах и ботах, видеорекламы и спонсированных результатов поиска | tele → чаты, выкл. |
 | [25](../patches/tdesktop/0025-feat-open-links-without-confirmation.patch) | открытие внешних ссылок сразу в браузере без окна запроса подтверждения | tele → сообщения, выкл. |
 | [26](../patches/tdesktop/0026-feat-open-disappearing-media-without-burning-it.patch) | открытие самоуничтожающихся фото и видео без запуска таймера сгорания | tele → сообщения, выкл. |
 | [27](../patches/tdesktop/0027-feat-allow-screenshots-of-disappearing-media.patch) | снятие запрета на создание снимков экрана при просмотре самоуничтожающегося медиа | tele → приватность, выкл. |
-| [28](../patches/tdesktop/0028-feat-copy-the-callback-data-of-bot-buttons.patch) | отображение числового ID сообщения в контекстном меню с копированием по нажатию | всегда вкл. |
-| [29](../patches/tdesktop/0029-feat-show-the-message-id-in-the-message-menu.patch) | переход к самому первому сообщению чата через меню чата | tele → меню, выкл. |
+| [28](../patches/tdesktop/0028-feat-copy-the-callback-data-of-bot-buttons.patch) | копирование callback-данных, inline-запроса, URL веб-приложения и прочего по правому клику на кнопку бота | всегда вкл. |
+| [29](../patches/tdesktop/0029-feat-show-the-message-id-in-the-message-menu.patch) | меню сообщения завершается строкой с ID сообщения, кликните для копирования | tele → меню, выкл. |
 | [33](../patches/tdesktop/0033-feat-view-messages-and-telegram-objects-as-tl.patch) | просмотр в формате TL в контекстных меню сообщений, чатов, профилей, участников, стикеров, подарков, историй и папок через schema.jppgr.am | tele → меню, выкл. |
 | [30](../patches/tdesktop/0030-feat-hide-the-all-chats-folder.patch) | скрывает папку «Все чаты», если настроены другие папки; список сразу открывается на первой папке | tele → интерфейс, выкл. |
-| [31](../patches/tdesktop/0031-feat-jump-to-the-first-message-of-a-chat.patch) | просмотр сообщений и структур Telegram в сыром виде TL-схем на schema.jppgr.am | tele → меню, выкл. |
+| [31](../patches/tdesktop/0031-feat-jump-to-the-first-message-of-a-chat.patch) | переход к самому первому сообщению в меню чата | tele → меню, выкл. |
 | [32](../patches/tdesktop/0032-feat-add-ghost-mode.patch) | режим призрака: отключение отчетов о прочтении, статуса набора текста, онлайна и просмотра историй с раздельной настройкой для каждого чата; скрытая отправка через отложенные сообщения | tele → приватность, выкл. |
 | [34](../patches/tdesktop/0034-feat-hide-the-mtproxy-sponsor-channel.patch) | скрытие закрепленного спонсорского канала при подключении через MTProxy | tele → чаты, выкл. |
 | [35](../patches/tdesktop/0035-feat-lowercase-tele-s-own-texts-too.patch) | нижний регистр применяется также к собственным текстам tele и окну отчета о сбоях | вместе с 22 |
-| [36](../patches/tdesktop/0036-feat-send-crash-reports-to-the-tele-server.patch) | при падении tele следующий запуск предлагает отправить отчет о сбое на сервер tele вместо Telegram только с вашего согласия | tele → сервер, вкл. with the server |
+| [36](../patches/tdesktop/0036-feat-send-crash-reports-to-the-tele-server.patch) | при падении tele следующий запуск предлагает отправить отчет о сбое на сервер tele вместо Telegram только с вашего согласия | tele → сервер, вкл. вместе с сервером |
 
 ### [tele 5](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.5)
 
 | # | что делает | где переключается |
 |---|---|---|
-| [13](../patches/tdesktop/0013-feat-show-gift-ids.patch) | режим невидимки (Ghost Mode): чтение без отметок, скрытие статуса «печатает», online и историй | tele → профили и id, выкл. |
-| [14](../patches/tdesktop/0014-feat-show-the-peer-id-as-its-own-profile-row.patch) | отображение числового ID чата/пользователя отдельной строкой в профиле с копированием по клику | tele → profiles and ids, off (see 46) |
+| [13](../patches/tdesktop/0013-feat-show-gift-ids.patch) | копируемый ID подарка в верхней части карточки коллекционного подарка, где статус нахождения в блокчейне TON отображается только тогда, когда он действительно там | tele → профили и id, выкл. |
+| [14](../patches/tdesktop/0014-feat-show-the-peer-id-as-its-own-profile-row.patch) | отображение числового ID чата/пользователя отдельной строкой в профиле с копированием по клику | tele → профили и id, выкл. (см. 45) |
 | [15](../patches/tdesktop/0015-feat-copy-links-to-tele-settings.patch) | правый клик по любой настройке tele копирует прямую ссылку для быстрого перехода | всегда вкл. |
 | [16](../patches/tdesktop/0016-feat-ignore-users-by-hiding-or-fading-their-messages.patch) | локальное игнорирование пользователей в группах: скрытие или затемнение их сообщений | tele → приватность |
 
@@ -425,10 +428,10 @@
 | # | что делает | где переключается |
 |---|---|---|
 | [8](../patches/tdesktop/0008-feat-send-quick-replies-in-groups-and-channels.patch) | быстрые ответы Telegram Business в группах и каналах (отправляются как обычные сообщения) | tele → чаты, выкл. |
-| [9](../patches/tdesktop/0009-feat-apply-verification-and-marks-from-the-tele-serv.patch) | раздельные запросы подтверждения перед отправкой стикеров, GIF и голосовых сообщений | tele → сервер, вкл. |
-| [10](../patches/tdesktop/0010-feat-make-the-title-bar-label-a-live-template.patch) | тихая отправка всех сообщений по умолчанию с возможностью исключений для выбранных чатов | tele → интерфейс |
+| [9](../patches/tdesktop/0009-feat-apply-verification-and-marks-from-the-tele-serv.patch) | галочки, кастомная верификация, метки scam, fake и support с [сервера tele](server.md), отображаемые точно так же, как собственные метки telegram. анимированные значки верификации, обновление списков участников сразу при поступлении данных и мгновенное получение по кнопке обновления | tele → сервер, вкл. |
+| [10](../patches/tdesktop/0010-feat-make-the-title-bar-label-a-live-template.patch) | надпись в заголовке окна в виде динамического шаблона с живыми переменными, см. [шаблон заголовка](title-template.md) | tele → интерфейс |
 | [11](../patches/tdesktop/0011-feat-remove-the-account-limit.patch) | снятие лимита учетных записей (поддержка до 1536 активных аккаунтов) | всегда вкл. |
-| [12](../patches/tdesktop/0012-feat-show-checkmarks-and-custom-verification-everywh.patch) | отображение галочек и кастомной верификации в списке аккаунтов, меню, настройках и сообщениях | всегда вкл., in messages: tele → chats, off |
+| [12](../patches/tdesktop/0012-feat-show-checkmarks-and-custom-verification-everywh.patch) | отображение галочек и кастомной верификации в списке аккаунтов, меню, настройках и сообщениях | всегда вкл., в сообщениях: tele → чаты, выкл. |
 
 ### [tele 3](https://github.com/nitreojs/tele/releases/tag/v7.2.9-tele.3)
 
@@ -439,5 +442,5 @@
 | [3](../patches/tdesktop/0003-feat-add-an-option-to-hide-stories-everywhere.patch) | скрытие историй повсюду: убирает панель историй, рамки вокруг аватарок и разделы историй в профилях | tele → приватность, выкл., требуется перезапуск |
 | [4](../patches/tdesktop/0004-feat-add-an-option-to-watch-stories-invisibly.patch) | просмотр историй без отображения в списке зрителей (реакции и ответы по-прежнему раскрывают вас) | tele → приватность, выкл. |
 | [5](../patches/tdesktop/0005-feat-show-bot-button-payloads-in-tooltips.patch) | показ callback-данных и URL inline-кнопок ботов во всплывающих подсказках | tele → боты, выкл. |
-| [6](../patches/tdesktop/0006-feat-update-from-the-tele-github-releases.patch) | автоматическая фоновая проверка и загрузка криптографически подписанных обновлений tele | tele → updates, on |
+| [6](../patches/tdesktop/0006-feat-update-from-the-tele-github-releases.patch) | автоматическая фоновая проверка и загрузка криптографически подписанных обновлений tele | tele → обновления, вкл. |
 | [7](../patches/tdesktop/0007-feat-rename-the-app-to-tele.patch) | приложение носит имя tele: исполняемый файл `tele.exe`, отдельная иконка на панели задач, изолированные каталоги данных | всегда вкл. |

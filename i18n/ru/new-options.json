@@ -1,177 +1,5 @@
 {
   "options": {
-    "kOptionGhostSchedulePending": {
-      "desc": {
-        "source": "Right-click one to send it now or cancel it.",
-        "translation": "Нажмите на сообщение правой кнопкой мыши, чтобы отправить его сейчас или отменить отправку."
-      },
-      "name": {
-        "source": "Show waiting messages in the chat",
-        "translation": "Показывать ожидающие отправки сообщения в чате"
-      }
-    },
-    "kOptionHideBotEdited": {
-      "desc": {
-        "source": "Bots edit their messages to update them.",
-        "translation": "Боты редактируют сообщения, чтобы обновлять их содержимое."
-      },
-      "name": {
-        "source": "No edited mark on bot messages",
-        "translation": "Не отмечать изменённые сообщения ботов"
-      }
-    },
-    "kOptionInvisibleNames": {
-      "name": {
-        "source": "Show usernames for invisible names",
-        "translation": "Показывать имена пользователей вместо невидимых имён"
-      }
-    },
-    "kOptionInvisibleNamesFallback": {
-      "name": {
-        "source": "Without a username",
-        "translation": "Если нет имени пользователя"
-      }
-    },
-    "kOptionInvisibleNamesPhrase": {
-      "name": {
-        "source": "Phrase",
-        "translation": "Текст замены"
-      }
-    },
-    "kOptionLiveMarkdown": {
-      "desc": {
-        "source": "**Bold**, __italic__, ~~strike~~, ||spoiler||, `code` and ``` blocks keep their markers but look formatted. Lines starting with > are sent as quotes, with >! as expandable quotes.",
-        "translation": "Маркеры **жирного**, __курсива__, ~~зачёркивания~~, ||спойлера||, `кода` и блоков ``` остаются видимыми, но текст выглядит оформленным. Строки с > отправляются как цитаты, а с >! — как сворачиваемые цитаты."
-      },
-      "name": {
-        "source": "Render markdown as you type",
-        "translation": "Отображать Markdown при вводе"
-      }
-    },
-    "kOptionLocalPasswordBotPayments": {
-      "name": {
-        "source": "Bot payments",
-        "translation": "Платежи ботам"
-      }
-    },
-    "kOptionLocalPasswordPaidMessages": {
-      "name": {
-        "source": "Paid messages and suggested posts",
-        "translation": "Платные сообщения и предложенные публикации"
-      }
-    },
-    "kOptionMultiQuote": {
-      "desc": {
-        "source": "Quoting again while replying with a quote adds a blockquote to your message instead of changing the reply.",
-        "translation": "Повторное цитирование при ответе с цитатой добавляет цитату в сообщение, не меняя адресата ответа."
-      },
-      "name": {
-        "source": "Multiple quotes",
-        "translation": "Несколько цитат"
-      }
-    },
-    "kOptionMuteIgnored": {
-      "name": {
-        "source": "Mute ignored messages",
-        "translation": "Отключать уведомления об игнорируемых сообщениях"
-      }
-    },
-    "kOptionNoticesCopies": {
-      "desc": {
-        "source": "Keeps the copied value; click it to copy it again.",
-        "translation": "Сохраняет скопированное значение; нажмите на него, чтобы скопировать повторно."
-      },
-      "name": {
-        "source": "Log copy toasts",
-        "translation": "Сохранять уведомления о копировании"
-      }
-    },
-    "kOptionNoticesLogLimits": {
-      "name": {
-        "source": "Log rate limits",
-        "translation": "Сохранять ограничения частоты запросов"
-      }
-    },
-    "kOptionNoticesMentions": {
-      "desc": {
-        "source": "From groups, including muted ones.",
-        "translation": "Из групп, включая группы с отключёнными уведомлениями."
-      },
-      "name": {
-        "source": "Log mentions and replies",
-        "translation": "Сохранять упоминания и ответы"
-      }
-    },
-    "kOptionReactionsOrder": {
-      "desc": {
-        "source": "These come first in reaction menus, the rest keep the chat's order.",
-        "translation": "Эти реакции показываются первыми; остальные сохраняют порядок, заданный в чате."
-      },
-      "name": {
-        "source": "Reaction order",
-        "translation": "Порядок реакций"
-      }
-    },
-    "kOptionReactionsStripCount": {
-      "desc": {
-        "source": "How many reactions sit above the message menu and which come first.",
-        "translation": "Количество реакций над меню сообщения и порядок их отображения."
-      },
-      "name": {
-        "source": "Reactions in the menu",
-        "translation": "Реакции в меню"
-      }
-    },
-    "kOptionShowHiddenChars": {
-      "desc": {
-        "source": "Only when a whole bio, address, intro, profile name or message is made of them.",
-        "translation": "Только если всё описание, адрес, приветствие, имя профиля или сообщение состоит из таких символов."
-      },
-      "name": {
-        "source": "Show hidden characters",
-        "translation": "Показывать скрытые символы"
-      }
-    },
-    "kOptionSilentVideoAs": {
-      "desc": {
-        "source": "Each one can still be switched before sending.",
-        "translation": "Формат каждого видео можно изменить перед отправкой."
-      },
-      "name": {
-        "source": "Send videos without sound as",
-        "translation": "Отправлять видео без звука как"
-      }
-    },
-    "kOptionStartParam": {
-      "desc": {
-        "source": "On the start button of a bot opened by a link.",
-        "translation": "На кнопке запуска бота, открытого по ссылке."
-      },
-      "name": {
-        "source": "Show the start parameter",
-        "translation": "Показывать параметр запуска"
-      }
-    },
-    "kOptionTrustedAppLinks": {
-      "desc": {
-        "source": "Links to a mini app you've opened before skip the terms box.",
-        "translation": "Ссылки на уже открывавшиеся мини-приложения пропускают окно принятия условий."
-      },
-      "name": {
-        "source": "Don't ask again for trusted mini apps",
-        "translation": "Не спрашивать повторно для знакомых мини-приложений"
-      }
-    },
-    "kOptionWebAppsNoFullscreen": {
-      "desc": {
-        "source": "Mini apps always open in a window and can't go fullscreen.",
-        "translation": "Мини-приложения открываются в окне и не могут перейти в полноэкранный режим."
-      },
-      "name": {
-        "source": "Never open web apps in fullscreen",
-        "translation": "Не открывать веб-приложения на весь экран"
-      }
-    },
     "kOptionBigExport": {
       "desc": {
         "source": "10000 messages per HTML file instead of 1000, files downloaded in 1 MB parts.",
@@ -182,6 +10,12 @@
         "translation": "Увеличенный и ускоренный экспорт чатов"
       }
     },
+    "kOptionBiggerRoundVideos": {
+      "name": {
+        "source": "Bigger video messages while playing",
+        "translation": "Увеличенные видеосообщения во время воспроизведения"
+      }
+    },
     "kOptionBubblePadding": {
       "desc": {
         "source": "13 px on the sides and 7 on top, like older Telegram Desktop.",
@@ -190,6 +24,26 @@
       "name": {
         "source": "Classic text padding",
         "translation": "Классические отступы текста"
+      }
+    },
+    "kOptionChainMentions": {
+      "desc": {
+        "source": "Right-click or Tab in the mention list adds the person and opens the list for the next one.",
+        "translation": "ПКМ или Tab в списке упоминаний добавляет пользователя и открывает список для следующего."
+      },
+      "name": {
+        "source": "Mention several people in a row",
+        "translation": "Последовательное упоминание пользователей"
+      }
+    },
+    "kOptionCompactFolders": {
+      "desc": {
+        "source": "Applies when folders show icons only.",
+        "translation": "Применяется, когда для папок включены только значки."
+      },
+      "name": {
+        "source": "Compact icon folders",
+        "translation": "Компактные папки-значки"
       }
     },
     "kOptionCopyFilePath": {
@@ -222,6 +76,16 @@
         "translation": "Исправлять шрифты, выбранные в настройках чатов"
       }
     },
+    "kOptionForceWallet": {
+      "desc": {
+        "source": "The server may still refuse it for your account.",
+        "translation": "Сервер всё ещё может отклонить его для вашего аккаунта."
+      },
+      "name": {
+        "source": "Wallet before telegram turns it on",
+        "translation": "Кошелёк до включения сервером Telegram"
+      }
+    },
     "kOptionForwardOneByOne": {
       "desc": {
         "source": "Albums stay together; many at once can hit rate limits.",
@@ -232,122 +96,14 @@
         "translation": "Пересылать сообщения по одному"
       }
     },
-    "kOptionHideBubbleTails": {
-      "name": {
-        "source": "Hide bubble tails",
-        "translation": "Скрывать хвостики у облачков сообщений"
-      }
-    },
-    "kOptionMediaUploadDate": {
+    "kOptionGhostSchedulePending": {
       "desc": {
-        "source": "In the media viewer, when it differs from the message date.",
-        "translation": "В окне просмотра медиа, если дата загрузки отличается от даты отправки сообщения."
+        "source": "Right-click one to send it now or cancel it.",
+        "translation": "Нажмите на сообщение правой кнопкой мыши, чтобы отправить его сейчас или отменить отправку."
       },
       "name": {
-        "source": "Show when photos and files were uploaded",
-        "translation": "Показывать дату загрузки медиа"
-      }
-    },
-    "kOptionNoEmojiOutline": {
-      "name": {
-        "source": "No outline on large emoji",
-        "translation": "Без обводки у крупных эмодзи"
-      }
-    },
-    "kOptionOnlineInBigGroups": {
-      "name": {
-        "source": "Show online members in big groups",
-        "translation": "Показывать участников в сети в больших группах"
-      }
-    },
-    "kOptionPhotoQuality": {
-      "desc": {
-        "source": "JPEG quality 94 instead of 87, for slightly bigger files.",
-        "translation": "Качество JPEG 94 вместо 87 ценой немного большего размера файлов."
-      },
-      "name": {
-        "source": "Compress photos less",
-        "translation": "Сжимать фотографии меньше"
-      }
-    },
-    "kOptionQuickRepliesByName": {
-      "desc": {
-        "source": "A message that is exactly /name sends that quick reply.",
-        "translation": "Сообщение вида /name автоматически отправляет соответствующий быстрый ответ."
-      },
-      "name": {
-        "source": "Send quick replies by name",
-        "translation": "Отправлять быстрые ответы по названию"
-      }
-    },
-    "kOptionSelectMany": {
-      "desc": {
-        "source": "Up to 10000; deleting and forwarding go out in parts of 100.",
-        "translation": "До 10 000 сообщений; удаление и пересылка выполняются частями по 100 штук."
-      },
-      "name": {
-        "source": "Select more than 100 messages",
-        "translation": "Выбирать более 100 сообщений"
-      }
-    },
-    "kOptionSmallWindow": {
-      "desc": {
-        "source": "256x256 px instead of 380x480.",
-        "translation": "256×256 пикселей вместо 380×480."
-      },
-      "name": {
-        "source": "Smaller minimum window size",
-        "translation": "Меньший минимальный размер окна"
-      }
-    },
-    "kOptionSmoothScroll": {
-      "desc": {
-        "source": "Eases each mouse wheel step, like profiles already do.",
-        "translation": "Сглаживает каждый шаг колёсика мыши аналогично прокрутке в профилях."
-      },
-      "name": {
-        "source": "Smooth wheel scrolling",
-        "translation": "Плавная прокрутка колёсиком мыши"
-      }
-    },
-    "kOptionStickerSetOwner": {
-      "desc": {
-        "source": "From the menu of a sticker or emoji set.",
-        "translation": "В контекстном меню набора стикеров или эмодзи."
-      },
-      "name": {
-        "source": "Copy the owner ID of sticker sets",
-        "translation": "Копировать ID владельца наборов стикеров"
-      }
-    },
-    "kOptionThinBrush": {
-      "desc": {
-        "source": "The smallest brush is 1 px instead of 3.4 px.",
-        "translation": "Минимальная толщина кисти составляет 1 пиксель вместо 3,4."
-      },
-      "name": {
-        "source": "Thinner brush in the photo editor",
-        "translation": "Более тонкая кисть в фоторедакторе"
-      }
-    },
-    "kOptionVoiceQuality": {
-      "desc": {
-        "source": "128 kbps instead of 32, so voice messages are 4 times bigger.",
-        "translation": "Битрейт 128 кбит/с вместо 32, при этом размер голосовых сообщений увеличивается в 4 раза."
-      },
-      "name": {
-        "source": "Record voice in higher quality",
-        "translation": "Записывать голосовые сообщения в повышенном качестве"
-      }
-    },
-    "kOptionForceWallet": {
-      "desc": {
-        "source": "The server may still refuse it for your account.",
-        "translation": "Сервер всё ещё может отклонить его для вашего аккаунта."
-      },
-      "name": {
-        "source": "Wallet before telegram turns it on",
-        "translation": "Кошелёк до включения сервером Telegram"
+        "source": "Show waiting messages in the chat",
+        "translation": "Показывать ожидающие отправки сообщения в чате"
       }
     },
     "kOptionHideBirthdays": {
@@ -360,128 +116,20 @@
         "translation": "Скрывать поздравления с днём рождения"
       }
     },
-    "kOptionChainMentions": {
+    "kOptionHideBotEdited": {
       "desc": {
-        "source": "Right-click or Tab in the mention list adds the person and opens the list for the next one.",
-        "translation": "ПКМ или Tab в списке упоминаний добавляет пользователя и открывает список для следующего."
+        "source": "Bots edit their messages to update them.",
+        "translation": "Боты редактируют сообщения, чтобы обновлять их содержимое."
       },
       "name": {
-        "source": "Mention several people in a row",
-        "translation": "Последовательное упоминание пользователей"
+        "source": "No edited mark on bot messages",
+        "translation": "Не отмечать изменённые сообщения ботов"
       }
     },
-    "kOptionSearchTypes": {
-      "desc": {
-        "source": "With an empty query it lists every message of that type.",
-        "translation": "При пустом запросе отображает все сообщения выбранного типа."
-      },
+    "kOptionHideBubbleTails": {
       "name": {
-        "source": "Message type filter in chat search",
-        "translation": "Фильтр по типу сообщений в поиске по чату"
-      }
-    },
-    "kOptionPeekLastSeen": {
-      "desc": {
-        "source": "Briefly shows them your last seen to read theirs, then undoes it.",
-        "translation": "Ненадолго открывает ваш статус для них, чтобы узнать их время захода, а затем возвращает настройки."
-      },
-      "name": {
-        "source": "Peek at hidden last seen",
-        "translation": "Подсмотреть скрытое время захода"
-      }
-    },
-    "kOptionKeepDeletedChats": {
-      "desc": {
-        "source": "They stay in the list until you delete them again.",
-        "translation": "Остаются в списке, пока вы не удалите их повторно вручную."
-      },
-      "name": {
-        "source": "Deleted chats and topics",
-        "translation": "Удалённые чаты и темы"
-      }
-    },
-    "kOptionSecretChats": {
-      "desc": {
-        "source": "Needs the passcode lock at startup, turning it off deletes the chats.",
-        "translation": "Требуется код-пароль при запуске; при отключении пароля чаты удаляются."
-      },
-      "name": {
-        "source": "Secret chats β",
-        "translation": "Секретные чаты β"
-      }
-    },
-    "kOptionCompactFolders": {
-      "desc": {
-        "source": "Applies when folders show icons only.",
-        "translation": "Применяется, когда для папок включены только значки."
-      },
-      "name": {
-        "source": "Compact icon folders",
-        "translation": "Компактные папки-значки"
-      }
-    },
-    "kOptionNoMoney": {
-      "name": {
-        "source": "Turn off Money",
-        "translation": "Отключить раздел «Кошелёк»"
-      }
-    },
-    "kOptionNoticesScripts": {
-      "desc": {
-        "source": "Toasts and notifications from scripts, their faults and grant requests.",
-        "translation": "Всплывающие уведомления скриптов, их ошибки и запросы разрешений."
-      },
-      "name": {
-        "source": "Log script notices",
-        "translation": "Журналировать уведомления скриптов"
-      }
-    },
-    "kOptionProfilePhotoBg": {
-      "name": {
-        "source": "Blurred photo as profile background",
-        "translation": "Размытое фото в качестве фона профиля"
-      }
-    },
-    "kOptionRemoveMyMessages": {
-      "desc": {
-        "source": "Adds it to chat menus; deletes for everyone, newest first.",
-        "translation": "Добавляет пункт в меню чата; удаляет для всех начиная с новых."
-      },
-      "name": {
-        "source": "Remove my messages",
-        "translation": "Удалить все мои сообщения"
-      }
-    },
-    "kOptionWalletKeepOld": {
-      "desc": {
-        "source": "Only when this device holds your current wallet's key.",
-        "translation": "Только если на этом устройстве сохранён ключ от вашего текущего кошелька."
-      },
-      "name": {
-        "source": "Use your wallet while an old one stays on this device",
-        "translation": "Использовать кошелёк, сохраняя старый на этом устройстве"
-      }
-    },
-    "kOptionWalletRotate": {
-      "desc": {
-        "source": "The old words stop working and the network takes a small fee.",
-        "translation": "Старые слова перестают действовать, а сеть взимает небольшую комиссию."
-      },
-      "name": {
-        "source": "Update the secret phrase without a backup",
-        "translation": "Сменить секретную фразу без резервной копии"
-      }
-    },
-    "kOptionWalletPrivateKeys": {
-      "name": {
-        "source": "Import wallets from private keys",
-        "translation": "Импорт кошельков по закрытому ключу"
-      }
-    },
-    "kOptionWalletCopyWords": {
-      "name": {
-        "source": "Copy secret words without waiting",
-        "translation": "Копировать секретные слова без ожидания"
+        "source": "Hide bubble tails",
+        "translation": "Скрывать хвостики у облачков сообщений"
       }
     },
     "kOptionHtmlBubbles": {
@@ -494,24 +142,70 @@
         "translation": "HTML-сообщения β"
       }
     },
-    "kOptionScrollStats": {
-      "desc": {
-        "source": "Writes one line per smooth wheel glide to log.txt.",
-        "translation": "Записывает данные о каждом плавном скролле колёсиком в log.txt."
-      },
+    "kOptionInvisibleNames": {
       "name": {
-        "source": "Log scroll frame rate",
-        "translation": "Журнал частоты кадров прокрутки"
+        "source": "Show usernames for invisible names",
+        "translation": "Показывать имена пользователей вместо невидимых имён"
       }
     },
-    "kOptionScrollZoom": {
+    "kOptionInvisibleNamesFallback": {
+      "name": {
+        "source": "Without a username",
+        "translation": "Если нет имени пользователя"
+      }
+    },
+    "kOptionInvisibleNamesPhrase": {
+      "name": {
+        "source": "Phrase",
+        "translation": "Текст замены"
+      }
+    },
+    "kOptionKeepDeletedChats": {
       "desc": {
-        "source": "Hold Ctrl or Cmd while scrolling to switch photos.",
-        "translation": "Удерживайте Ctrl или Cmd при прокрутке для переключения фотографий."
+        "source": "They stay in the list until you delete them again.",
+        "translation": "Остаются в списке, пока вы не удалите их повторно вручную."
       },
       "name": {
-        "source": "Scroll to zoom in the media viewer",
-        "translation": "Масштабирование прокруткой в просмотрщике"
+        "source": "Deleted chats and topics",
+        "translation": "Удалённые чаты и темы"
+      }
+    },
+    "kOptionLanguage": {
+      "name": {
+        "source": "Language",
+        "translation": "Язык"
+      }
+    },
+    "kOptionLiveMarkdown": {
+      "desc": {
+        "source": "**Bold**, __italic__, ~~strike~~, ||spoiler||, `code` and ``` blocks keep their markers but look formatted. Lines starting with > are sent as quotes, with >! as expandable quotes.",
+        "translation": "Маркеры **жирного**, __курсива__, ~~зачёркивания~~, ||спойлера||, `кода` и блоков ``` остаются видимыми, но текст выглядит оформленным. Строки с > отправляются как цитаты, а с >! — как сворачиваемые цитаты."
+      },
+      "name": {
+        "source": "Render markdown as you type",
+        "translation": "Отображать Markdown при вводе"
+      }
+    },
+    "kOptionLocalPasswordBotPayments": {
+      "name": {
+        "source": "Bot payments",
+        "translation": "Платежи ботам"
+      }
+    },
+    "kOptionLocalPasswordPaidMessages": {
+      "name": {
+        "source": "Paid messages and suggested posts",
+        "translation": "Платные сообщения и предложенные публикации"
+      }
+    },
+    "kOptionMediaUploadDate": {
+      "desc": {
+        "source": "In the media viewer, when it differs from the message date.",
+        "translation": "В окне просмотра медиа, если дата загрузки отличается от даты отправки сообщения."
+      },
+      "name": {
+        "source": "Show when photos and files were uploaded",
+        "translation": "Показывать дату загрузки медиа"
       }
     },
     "kOptionMoneyCardDesigns": {
@@ -534,68 +228,74 @@
         "translation": "Скрыть другие балансы"
       }
     },
-    "kOptionStickerFormats": {
+    "kOptionMultiQuote": {
       "desc": {
-        "source": "In your sets and the panel's search.",
-        "translation": "В ваших наборах и в поиске панели."
+        "source": "Quoting again while replying with a quote adds a blockquote to your message instead of changing the reply.",
+        "translation": "Повторное цитирование при ответе с цитатой добавляет цитату в сообщение, не меняя адресата ответа."
       },
       "name": {
-        "source": "Filter stickers and emoji by format",
-        "translation": "Фильтрация стикеров и эмодзи по формату"
+        "source": "Multiple quotes",
+        "translation": "Несколько цитат"
       }
     },
-    "kOptionRecoverForwarded": {
+    "kOptionMuteIgnored": {
+      "name": {
+        "source": "Mute ignored messages",
+        "translation": "Отключать уведомления об игнорируемых сообщениях"
+      }
+    },
+    "kOptionNoEmojiOutline": {
+      "name": {
+        "source": "No outline on large emoji",
+        "translation": "Без обводки у крупных эмодзи"
+      }
+    },
+    "kOptionNoMoney": {
+      "name": {
+        "source": "Turn off Money",
+        "translation": "Отключить раздел «Кошелёк»"
+      }
+    },
+    "kOptionNoWidgets": {
+      "name": {
+        "source": "Turn off widgets",
+        "translation": "Отключить виджеты ботов"
+      }
+    },
+    "kOptionNoticesCopies": {
       "desc": {
-        "source": "When you open one from a forward.",
-        "translation": "При переходе к посту из пересланного сообщения."
+        "source": "Keeps the copied value; click it to copy it again.",
+        "translation": "Сохраняет скопированное значение; нажмите на него, чтобы скопировать повторно."
       },
       "name": {
-        "source": "Recover deleted channel posts from forwards",
-        "translation": "Восстановление удалённых постов из пересылок"
+        "source": "Log copy toasts",
+        "translation": "Сохранять уведомления о копировании"
       }
     },
-    "kOptionProfilePhotoBgWhole": {
+    "kOptionNoticesLogLimits": {
       "name": {
-        "source": "Fill the whole profile",
-        "translation": "Заполнять весь профиль"
+        "source": "Log rate limits",
+        "translation": "Сохранять ограничения частоты запросов"
       }
     },
-    "kOptionViewerMouseBack": {
-      "name": {
-        "source": "Close the media viewer with mouse back",
-        "translation": "Закрывать просмотр медиа кнопкой «Назад» на мыши"
-      }
-    },
-    "kOptionRestrictMenu": {
+    "kOptionNoticesMentions": {
       "desc": {
-        "source": "For group admins, without deleting the message.",
-        "translation": "Для администраторов групп, без удаления сообщения."
+        "source": "From groups, including muted ones.",
+        "translation": "Из групп, включая группы с отключёнными уведомлениями."
       },
       "name": {
-        "source": "Restrict in message and userpic menus",
-        "translation": "Ограничение доступа в меню сообщений и аватарок"
+        "source": "Log mentions and replies",
+        "translation": "Сохранять упоминания и ответы"
       }
     },
-    "kOptionQuickView": {
+    "kOptionNoticesScripts": {
       "desc": {
-        "source": "JSON, code, text and CSV files open formatted, like .md files.",
-        "translation": "Файлы JSON, кода, текста и CSV открываются отформатированными, как файлы .md."
+        "source": "Toasts and notifications from scripts, their faults and grant requests.",
+        "translation": "Всплывающие уведомления скриптов, их ошибки и запросы разрешений."
       },
       "name": {
-        "source": "Open text files in tele",
-        "translation": "Открывать текстовые файлы в tele"
-      }
-    },
-    "kOptionBiggerRoundVideos": {
-      "name": {
-        "source": "Bigger video messages while playing",
-        "translation": "Увеличенные видеосообщения во время воспроизведения"
-      }
-    },
-    "kOptionRoundSeekAnywhere": {
-      "name": {
-        "source": "Seek anywhere on video messages",
-        "translation": "Перемотка в любой точке видеосообщения"
+        "source": "Log script notices",
+        "translation": "Журналировать уведомления скриптов"
       }
     },
     "kOptionObservedActivity": {
@@ -608,10 +308,322 @@
         "translation": "Время последней активности рядом со скрытым онлайном"
       }
     },
+    "kOptionOnlineInBigGroups": {
+      "name": {
+        "source": "Show online members in big groups",
+        "translation": "Показывать участников в сети в больших группах"
+      }
+    },
+    "kOptionPeekLastSeen": {
+      "desc": {
+        "source": "Briefly shows them your last seen to read theirs, then undoes it.",
+        "translation": "Ненадолго открывает ваш статус для них, чтобы узнать их время захода, а затем возвращает настройки."
+      },
+      "name": {
+        "source": "Peek at hidden last seen",
+        "translation": "Подсмотреть скрытое время захода"
+      }
+    },
+    "kOptionPhotoQuality": {
+      "desc": {
+        "source": "JPEG quality 94 instead of 87, for slightly bigger files.",
+        "translation": "Качество JPEG 94 вместо 87 ценой немного большего размера файлов."
+      },
+      "name": {
+        "source": "Compress photos less",
+        "translation": "Сжимать фотографии меньше"
+      }
+    },
+    "kOptionProfilePhotoBg": {
+      "name": {
+        "source": "Blurred photo as profile background",
+        "translation": "Размытое фото в качестве фона профиля"
+      }
+    },
+    "kOptionProfilePhotoBgWhole": {
+      "name": {
+        "source": "Fill the whole profile",
+        "translation": "Заполнять весь профиль"
+      }
+    },
+    "kOptionQuickRepliesByName": {
+      "desc": {
+        "source": "A message that is exactly /name sends that quick reply.",
+        "translation": "Сообщение вида /name автоматически отправляет соответствующий быстрый ответ."
+      },
+      "name": {
+        "source": "Send quick replies by name",
+        "translation": "Отправлять быстрые ответы по названию"
+      }
+    },
+    "kOptionQuickView": {
+      "desc": {
+        "source": "JSON, code, text and CSV files open formatted, like .md files.",
+        "translation": "Файлы JSON, кода, текста и CSV открываются отформатированными, как файлы .md."
+      },
+      "name": {
+        "source": "Open text files in tele",
+        "translation": "Открывать текстовые файлы в tele"
+      }
+    },
+    "kOptionReactionsOrder": {
+      "desc": {
+        "source": "These come first in reaction menus, the rest keep the chat's order.",
+        "translation": "Эти реакции показываются первыми; остальные сохраняют порядок, заданный в чате."
+      },
+      "name": {
+        "source": "Reaction order",
+        "translation": "Порядок реакций"
+      }
+    },
+    "kOptionReactionsStripCount": {
+      "desc": {
+        "source": "How many reactions sit above the message menu and which come first.",
+        "translation": "Количество реакций над меню сообщения и порядок их отображения."
+      },
+      "name": {
+        "source": "Reactions in the menu",
+        "translation": "Реакции в меню"
+      }
+    },
+    "kOptionRecoverForwarded": {
+      "desc": {
+        "source": "When you open one from a forward.",
+        "translation": "При переходе к посту из пересланного сообщения."
+      },
+      "name": {
+        "source": "Recover deleted channel posts from forwards",
+        "translation": "Восстановление удалённых постов из пересылок"
+      }
+    },
+    "kOptionRemoveMyMessages": {
+      "desc": {
+        "source": "Adds it to chat menus; deletes for everyone, newest first.",
+        "translation": "Добавляет пункт в меню чата; удаляет для всех начиная с новых."
+      },
+      "name": {
+        "source": "Remove my messages",
+        "translation": "Удалить все мои сообщения"
+      }
+    },
+    "kOptionRestrictMenu": {
+      "desc": {
+        "source": "For group admins, without deleting the message.",
+        "translation": "Для администраторов групп, без удаления сообщения."
+      },
+      "name": {
+        "source": "Restrict in message and userpic menus",
+        "translation": "Ограничение доступа в меню сообщений и аватарок"
+      }
+    },
+    "kOptionRoundSeekAnywhere": {
+      "name": {
+        "source": "Seek anywhere on video messages",
+        "translation": "Перемотка в любой точке видеосообщения"
+      }
+    },
+    "kOptionScrollStats": {
+      "desc": {
+        "source": "Writes one line per smooth wheel glide to log.txt.",
+        "translation": "Записывает данные о каждом плавном скролле колёсиком в log.txt."
+      },
+      "name": {
+        "source": "Log scroll frame rate",
+        "translation": "Журнал частоты кадров прокрутки"
+      }
+    },
+    "kOptionScrollZoom": {
+      "desc": {
+        "source": "Hold Ctrl or Cmd while scrolling to switch photos.",
+        "translation": "Удерживайте Ctrl или Cmd при прокрутке для переключения фотографий."
+      },
+      "name": {
+        "source": "Scroll to zoom in the media viewer",
+        "translation": "Масштабирование прокруткой в просмотрщике"
+      }
+    },
+    "kOptionSearchTypes": {
+      "desc": {
+        "source": "With an empty query it lists every message of that type.",
+        "translation": "При пустом запросе отображает все сообщения выбранного типа."
+      },
+      "name": {
+        "source": "Message type filter in chat search",
+        "translation": "Фильтр по типу сообщений в поиске по чату"
+      }
+    },
+    "kOptionSecretChats": {
+      "desc": {
+        "source": "Needs the passcode lock at startup, turning it off deletes the chats.",
+        "translation": "Требуется код-пароль при запуске; при отключении пароля чаты удаляются."
+      },
+      "name": {
+        "source": "Secret chats β",
+        "translation": "Секретные чаты β"
+      }
+    },
+    "kOptionSelectMany": {
+      "desc": {
+        "source": "Up to 10000; deleting and forwarding go out in parts of 100.",
+        "translation": "До 10 000 сообщений; удаление и пересылка выполняются частями по 100 штук."
+      },
+      "name": {
+        "source": "Select more than 100 messages",
+        "translation": "Выбирать более 100 сообщений"
+      }
+    },
+    "kOptionShowHiddenChars": {
+      "desc": {
+        "source": "Only when a whole bio, address, intro, profile name or message is made of them.",
+        "translation": "Только если всё описание, адрес, приветствие, имя профиля или сообщение состоит из таких символов."
+      },
+      "name": {
+        "source": "Show hidden characters",
+        "translation": "Показывать скрытые символы"
+      }
+    },
+    "kOptionSilentVideoAs": {
+      "desc": {
+        "source": "Each one can still be switched before sending.",
+        "translation": "Формат каждого видео можно изменить перед отправкой."
+      },
+      "name": {
+        "source": "Send videos without sound as",
+        "translation": "Отправлять видео без звука как"
+      }
+    },
+    "kOptionSmallWindow": {
+      "desc": {
+        "source": "256x256 px instead of 380x480.",
+        "translation": "256×256 пикселей вместо 380×480."
+      },
+      "name": {
+        "source": "Smaller minimum window size",
+        "translation": "Меньший минимальный размер окна"
+      }
+    },
+    "kOptionSmoothScroll": {
+      "desc": {
+        "source": "Eases each mouse wheel step, like profiles already do.",
+        "translation": "Сглаживает каждый шаг колёсика мыши аналогично прокрутке в профилях."
+      },
+      "name": {
+        "source": "Smooth wheel scrolling",
+        "translation": "Плавная прокрутка колёсиком мыши"
+      }
+    },
+    "kOptionStartParam": {
+      "desc": {
+        "source": "On the start button of a bot opened by a link.",
+        "translation": "На кнопке запуска бота, открытого по ссылке."
+      },
+      "name": {
+        "source": "Show the start parameter",
+        "translation": "Показывать параметр запуска"
+      }
+    },
+    "kOptionStickerFormats": {
+      "desc": {
+        "source": "In your sets and the panel's search.",
+        "translation": "В ваших наборах и в поиске панели."
+      },
+      "name": {
+        "source": "Filter stickers and emoji by format",
+        "translation": "Фильтрация стикеров и эмодзи по формату"
+      }
+    },
+    "kOptionStickerSetOwner": {
+      "desc": {
+        "source": "From the menu of a sticker or emoji set.",
+        "translation": "В контекстном меню набора стикеров или эмодзи."
+      },
+      "name": {
+        "source": "Copy the owner ID of sticker sets",
+        "translation": "Копировать ID владельца наборов стикеров"
+      }
+    },
+    "kOptionThinBrush": {
+      "desc": {
+        "source": "The smallest brush is 1 px instead of 3.4 px.",
+        "translation": "Минимальная толщина кисти составляет 1 пиксель вместо 3,4."
+      },
+      "name": {
+        "source": "Thinner brush in the photo editor",
+        "translation": "Более тонкая кисть в фоторедакторе"
+      }
+    },
+    "kOptionTrustedAppLinks": {
+      "desc": {
+        "source": "Links to a mini app you've opened before skip the terms box.",
+        "translation": "Ссылки на уже открывавшиеся мини-приложения пропускают окно принятия условий."
+      },
+      "name": {
+        "source": "Don't ask again for trusted mini apps",
+        "translation": "Не спрашивать повторно для знакомых мини-приложений"
+      }
+    },
     "kOptionTypingHiddenLastSeen": {
       "name": {
         "source": "Typing in the chat list with a hidden last seen",
         "translation": "Набор текста в списке чатов при скрытом онлайне"
+      }
+    },
+    "kOptionViewerMouseBack": {
+      "name": {
+        "source": "Close the media viewer with mouse back",
+        "translation": "Закрывать просмотр медиа кнопкой «Назад» на мыши"
+      }
+    },
+    "kOptionVoiceQuality": {
+      "desc": {
+        "source": "128 kbps instead of 32, so voice messages are 4 times bigger.",
+        "translation": "Битрейт 128 кбит/с вместо 32, при этом размер голосовых сообщений увеличивается в 4 раза."
+      },
+      "name": {
+        "source": "Record voice in higher quality",
+        "translation": "Записывать голосовые сообщения в повышенном качестве"
+      }
+    },
+    "kOptionWalletCopyWords": {
+      "name": {
+        "source": "Copy secret words without waiting",
+        "translation": "Копировать секретные слова без ожидания"
+      }
+    },
+    "kOptionWalletKeepOld": {
+      "desc": {
+        "source": "Only when this device holds your current wallet's key.",
+        "translation": "Только если на этом устройстве сохранён ключ от вашего текущего кошелька."
+      },
+      "name": {
+        "source": "Use your wallet while an old one stays on this device",
+        "translation": "Использовать кошелёк, сохраняя старый на этом устройстве"
+      }
+    },
+    "kOptionWalletPrivateKeys": {
+      "name": {
+        "source": "Import wallets from private keys",
+        "translation": "Импорт кошельков по закрытому ключу"
+      }
+    },
+    "kOptionWalletRotate": {
+      "desc": {
+        "source": "The old words stop working and the network takes a small fee.",
+        "translation": "Старые слова перестают действовать, а сеть взимает небольшую комиссию."
+      },
+      "name": {
+        "source": "Update the secret phrase without a backup",
+        "translation": "Сменить секретную фразу без резервной копии"
+      }
+    },
+    "kOptionWebAppsNoFullscreen": {
+      "desc": {
+        "source": "Mini apps always open in a window and can't go fullscreen.",
+        "translation": "Мини-приложения открываются в окне и не могут перейти в полноэкранный режим."
+      },
+      "name": {
+        "source": "Never open web apps in fullscreen",
+        "translation": "Не открывать веб-приложения на весь экран"
       }
     }
   }

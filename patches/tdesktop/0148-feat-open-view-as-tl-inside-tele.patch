@@ -15,10 +15,10 @@ Subject: [PATCH] feat: open view as tl inside tele
  create mode 100644 Telegram/SourceFiles/tele/tele_view_tl_window.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 66f68e63a9da61be5176f86772c27e5834ff8379..782bc3a149298d92cbc21194692d6ecc2c150805 100644
+index b8aedbb49511b8d89e806047c988ce866bffa841..5c792464be810e499c4b9ad38e50e51a4d057574 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2686,6 +2686,8 @@ PRIVATE
+@@ -2832,6 +2832,8 @@ PRIVATE
      tele/tele_viewer_loop.h
      tele/tele_view_tl.cpp
      tele/tele_view_tl.h
@@ -28,7 +28,7 @@ index 66f68e63a9da61be5176f86772c27e5834ff8379..782bc3a149298d92cbc21194692d6ecc
      tele/tele_voice_fade.h
      tele/tele_who_read.cpp
 diff --git a/Telegram/SourceFiles/tele/tele_mtp_inspector.cpp b/Telegram/SourceFiles/tele/tele_mtp_inspector.cpp
-index 089f4dad0ee1d6c57e8a8f460f8e7dbd486a0fb9..612214c1e4b8ebecb48cab4bae2e86120e3bb255 100644
+index 19127202249ab56da3ff4e6c574ccf1ea6759b06..d73d10d2869e8325362461fd3a2999b0465c36ee 100644
 --- a/Telegram/SourceFiles/tele/tele_mtp_inspector.cpp
 +++ b/Telegram/SourceFiles/tele/tele_mtp_inspector.cpp
 @@ -114,6 +114,7 @@ private:
