@@ -426,6 +426,16 @@
     "tele settings (*.tele-settings.json);;": "Настройки Теле (*.tele-settings.json);;",
     "tg.storage: %1 key, %2": "tg.storage: %1 ключ, %2",
     "tg.storage: %1 keys, %2": "tg.storage: %1 ключей, %2",
-    "unknown modifier %1": "неизвестный модификатор %1"
+    "unknown modifier %1": "неизвестный модификатор %1",
+    "Volumes": "Громкость",
+    "Playback": "Воспроизведение",
+    "Composer": "Поле ввода",
+    "2 spaces": "2 пробела",
+    "4 spaces": "4 пробела",
+    "Tab": "Табуляция",
+    "Stop bots": "Остановить ботов",
+    "More actions": "Другие действия",
+    "Stop %1 bot?": "Остановить %1 бота?",
+    "Stop %1 bots?": "Остановить %1 ботов?"
   }
 }

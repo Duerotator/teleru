@@ -625,6 +625,64 @@
         "source": "Never open web apps in fullscreen",
         "translation": "Не открывать веб-приложения на весь экран"
       }
+    },
+    "kOptionNoTextSendingAnimation": {
+      "name": {
+        "source": "Turn off text sending animation",
+        "translation": "Отключить анимацию отправки текста"
+      }
+    },
+    "kOptionWrapSelectedText": {
+      "name": {
+        "source": "Wrap selected text",
+        "translation": "Обрамлять выделенный текст"
+      }
+    },
+    "kOptionAutoCloseBrackets": {
+      "name": {
+        "source": "Auto-close brackets and code blocks",
+        "translation": "Закрывать скобки и блоки кода"
+      }
+    },
+    "kOptionKeepIndentation": {
+      "name": {
+        "source": "Keep indentation",
+        "translation": "Сохранять отступы"
+      }
+    },
+    "kOptionIndentSelectedLines": {
+      "name": {
+        "source": "Indent selected lines with Tab",
+        "translation": "Отступы в выделенных строках по Tab"
+      }
+    },
+    "kOptionComposerIndentation": {
+      "name": {
+        "source": "Indentation",
+        "translation": "Отступ"
+      }
+    },
+    "kOptionPadPhotos": {
+      "name": {
+        "source": "Pad images to send as photos",
+        "translation": "Добавлять поля для отправки фото"
+      },
+      "desc": {
+        "source": "Adds black margins without stretching or cropping.",
+        "translation": "Добавляет чёрные поля без растягивания и обрезки."
+      }
+    },
+    "kOptionVoiceVolume": {
+      "name": {
+        "source": "Voice messages",
+        "translation": "Голосовые сообщения"
+      }
+    },
+    "kOptionRoundVolume": {
+      "name": {
+        "source": "Round videos",
+        "translation": "Видеосообщения"
+      }
     }
   }
 }

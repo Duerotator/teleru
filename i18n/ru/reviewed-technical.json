@@ -393,7 +393,8 @@
       "walt": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
       "wheel": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
       "widget": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
-      "words": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+      "words": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
+      "tele-volumes": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
     },
     "tele/scripting/tele_script_box.cpp": {
       "change notification settings": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",

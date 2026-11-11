@@ -1041,7 +1041,22 @@
     "typescript": "typescript",
     "version %1": "версия %1",
     "widget": "виджет",
-    "widgets": "виджеты"
+    "widgets": "виджеты",
+    "volume": "громкость",
+    "voice": "голосовые",
+    "quotes": "кавычки",
+    "parentheses": "скобки",
+    "backticks": "обратные кавычки",
+    "spaces": "пробелы",
+    "wide": "широкие",
+    "aspect": "пропорции",
+    "padding": "поля",
+    "Composer": "Поле ввода",
+    "Playback": "Воспроизведение",
+    "Volumes": "Громкость",
+    "2 spaces": "2 пробела",
+    "4 spaces": "4 пробела",
+    "Tab": "Табуляция"
   },
   "plurals": {
     "setting": [
