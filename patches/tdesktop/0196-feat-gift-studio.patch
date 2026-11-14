@@ -61,10 +61,10 @@ Subject: [PATCH] feat: gift studio
  create mode 100644 Telegram/SourceFiles/tele/tele_tgs_rules.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index c55c0b37e5b7ff832465d184327afa7f276a4a91..03459bb6dc6819cd2ec890963e0256ba6aa95bb5 100644
+index c68347781e3705cee6abb29685b3000daac33c46..2c185035b6ea8bf8b80732bd0722b226da188aa5 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2731,6 +2731,26 @@ PRIVATE
+@@ -2754,6 +2754,26 @@ PRIVATE
      tele/tele_gif_video.h
      tele/tele_gift_quantity.cpp
      tele/tele_gift_quantity.h
@@ -91,7 +91,7 @@ index c55c0b37e5b7ff832465d184327afa7f276a4a91..03459bb6dc6819cd2ec890963e0256ba
      tele/tele_gift_list.cpp
      tele/tele_gift_list.h
      tele/tele_gift_search.cpp
-@@ -2867,6 +2887,8 @@ PRIVATE
+@@ -2890,6 +2910,8 @@ PRIVATE
      tele/tele_sticker_captions.h
      tele/tele_sticker_truth.cpp
      tele/tele_sticker_truth.h
@@ -10964,7 +10964,7 @@ index 0000000000000000000000000000000000000000..8741bffc038ab5bdad6a8c6544ba3cb0
 +
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/window/window_main_menu.cpp b/Telegram/SourceFiles/window/window_main_menu.cpp
-index ae8b890744963ce959bdc4edb02711fe7d5b5cd9..1bad092e0e07e2ae0228a66b8f9b61ed00967e53 100644
+index 20489fb9fcc4e76b00f28df5dae4c4aecd00076a..5eaa4f85b370bc573348db6733ca5d7852602c21 100644
 --- a/Telegram/SourceFiles/window/window_main_menu.cpp
 +++ b/Telegram/SourceFiles/window/window_main_menu.cpp
 @@ -75,6 +75,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

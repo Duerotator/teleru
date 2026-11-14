@@ -20,10 +20,10 @@ Subject: [PATCH] feat: hide messages by keyword or regex
  create mode 100644 Telegram/SourceFiles/tele/tele_hidden_words.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 733d943f93b681c5a8dd829153280ec667020df3..16a4b1ee9f7ebf4d44649442985a59b7de59de79 100644
+index d30d7f65bd6913b2fd97914787086fc8cd2e90e5..5165f2d582d94f8d9eba98e52874f63d73735ced 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2729,6 +2729,8 @@ PRIVATE
+@@ -2752,6 +2752,8 @@ PRIVATE
      tele/tele_gifts.h
      tele/tele_ghost.cpp
      tele/tele_ghost.h
@@ -33,10 +33,10 @@ index 733d943f93b681c5a8dd829153280ec667020df3..16a4b1ee9f7ebf4d44649442985a59b7
      tele/tele_ignored.h
      tele/tele_inline_text.cpp
 diff --git a/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp b/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
-index 49d7370c31b863648b0a4ca2ab35567060182c35..b9f2669771818728c337614d1ae8025295e474f7 100644
+index e576b5841c44a4a3e89eb0b2e5f3234b93ec636f..e4bd4eb1a0c80a2306a65333286d54adb2557a5c 100644
 --- a/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
 +++ b/Telegram/SourceFiles/dialogs/dialogs_inner_widget.cpp
-@@ -98,6 +98,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -99,6 +99,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "tele/tele_chats_selection.h"
  #include "tele/tele_communities.h"
  #include "tele/tele_corner_buttons.h"
@@ -44,7 +44,7 @@ index 49d7370c31b863648b0a4ca2ab35567060182c35..b9f2669771818728c337614d1ae80252
  #include "tele/tele_list_previews.h"
  #include "tele/tele_local_pins.h"
  #include "tele/tele_options.h"
-@@ -358,6 +359,11 @@ InnerWidget::InnerWidget(
+@@ -359,6 +360,11 @@ InnerWidget::InnerWidget(
  		update();
  	}, lifetime());
  
@@ -57,7 +57,7 @@ index 49d7370c31b863648b0a4ca2ab35567060182c35..b9f2669771818728c337614d1ae80252
  	) | rpl::on_next([=] {
  		_topicJumpCache = nullptr;
 diff --git a/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp b/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp
-index 9297ab44ca68bdccb507945d0e204ff04ff88eab..f121b15f1b54950a09fb546f1b29b2c2f6c5046f 100644
+index 274fb1ca893f98988ea2bce7328af04a22afc9bd..efdca317df495032e1ea10adb9527ddd57c6b265 100644
 --- a/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp
 +++ b/Telegram/SourceFiles/dialogs/ui/dialogs_layout.cpp
 @@ -38,6 +38,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -68,7 +68,7 @@ index 9297ab44ca68bdccb507945d0e204ff04ff88eab..f121b15f1b54950a09fb546f1b29b2c2
  #include "tele/tele_list_previews.h"
  #include "tele/tele_local_pins.h"
  #include "ui/empty_userpic.h"
-@@ -1263,7 +1264,7 @@ void RowPainter::Paint(
+@@ -1256,7 +1257,7 @@ void RowPainter::Paint(
  			: thread
  			? &thread->lastItemDialogsView()
  			: nullptr;
@@ -819,10 +819,10 @@ index fd4cad014e5a8fbc18849651a4b0c40915cb6b24..f90d2e23b45c1493b691068a033452f8
  		} else if (spec.kind == Kind::Backgrounds) {
  			value = NormalizeChatBackgrounds(value, HasFile({}));
 diff --git a/Telegram/SourceFiles/window/window_peer_menu.cpp b/Telegram/SourceFiles/window/window_peer_menu.cpp
-index d2e7f331bf51c8bb1265f0f69494a8a7d2177f1d..4f83705d4619eeac2f82728f2d7f14b82335058f 100644
+index cb72942ed5f19d0f23443a1cc4e36e33a100ef03..dbbbbd6a91593765cbd9a3ad599acbe501bd1712 100644
 --- a/Telegram/SourceFiles/window/window_peer_menu.cpp
 +++ b/Telegram/SourceFiles/window/window_peer_menu.cpp
-@@ -133,6 +133,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -134,6 +134,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "tele/tele_deleted_section.h"
  #include "tele/tele_download_folders.h"
  #include "tele/tele_ghost.h"
@@ -830,7 +830,7 @@ index d2e7f331bf51c8bb1265f0f69494a8a7d2177f1d..4f83705d4619eeac2f82728f2d7f14b8
  #include "tele/tele_ignored.h"
  #include "tele/tele_jump_to_first.h"
  #include "tele/tele_local_names.h"
-@@ -1968,6 +1969,7 @@ void Filler::fillHistoryActions() {
+@@ -1969,6 +1970,7 @@ void Filler::fillHistoryActions() {
  	Tele::AddPinnedBarAction(_controller, _thread, _addAction);
  	Tele::AddUsernameAliasAction(_controller, _peer, _addAction);
  	Tele::AddLocalNameAction(_controller, _peer, _addAction);

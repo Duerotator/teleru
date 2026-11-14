@@ -23,10 +23,10 @@ Subject: [PATCH] feat: pad extreme image shapes for photo sending
  create mode 100644 Telegram/SourceFiles/tele/tele_photo_padding.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index a9a4e84c96ef783e8e64add49a49f97bd5554867..5106861fd9f1bb8abf1d4fee25dab057f2be868e 100644
+index 608b5a41c2439b17a5f2d449795c24df2b9dab1a..3b73816f3a0afa1d96bdc99288345a9801eddf8a 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -3018,6 +3018,8 @@ PRIVATE
+@@ -3041,6 +3041,8 @@ PRIVATE
      tele/tele_name_badges.h
      tele/tele_options.cpp
      tele/tele_options.h

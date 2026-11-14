@@ -17,10 +17,10 @@ Subject: [PATCH] feat: show the message id in the message menu
  create mode 100644 Telegram/SourceFiles/tele/tele_message_menu.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 46423a57f472dbd760384dea5367da5d771cbc02..a76963a2a795e97e3219c6f5e5f96496c73392b2 100644
+index 15533f34662a1f7253920f7bf2b761bdd3dd7d7a..e182a2782628d43409805fd7dca5f8fe3a2946f6 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2651,6 +2651,8 @@ PRIVATE
+@@ -2674,6 +2674,8 @@ PRIVATE
      tele/tele_ignored.h
      tele/tele_lowercase.cpp
      tele/tele_lowercase.h
@@ -30,10 +30,10 @@ index 46423a57f472dbd760384dea5367da5d771cbc02..a76963a2a795e97e3219c6f5e5f96496
      tele/tele_options.h
      tele/tele_peer_id.cpp
 diff --git a/Telegram/SourceFiles/history/history_inner_widget.cpp b/Telegram/SourceFiles/history/history_inner_widget.cpp
-index 086119718843295ccd574de2f424b4c3a8e9c715..943904bea51c43f541605a54dd375e5ea81d0df2 100644
+index 1f2f1f68c870d20de6ef661bfee7a85dc6ef4958..6e0e980eeec3eb8ef78bb37b3473b9324c95fc62 100644
 --- a/Telegram/SourceFiles/history/history_inner_widget.cpp
 +++ b/Telegram/SourceFiles/history/history_inner_widget.cpp
-@@ -138,6 +138,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -139,6 +139,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "tele/tele_edit_history.h"
  #include "tele/tele_ignored.h"
  #include "tele/tele_secret_media.h"
@@ -41,7 +41,7 @@ index 086119718843295ccd574de2f424b4c3a8e9c715..943904bea51c43f541605a54dd375e5e
  #include "styles/style_chat.h"
  #include "styles/style_menu_icons.h"
  
-@@ -4008,6 +4009,10 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
+@@ -3967,6 +3968,10 @@ void HistoryInner::showContextMenu(QContextMenuEvent *e, bool showFromTouch) {
  				poll);
  		}
  	}
@@ -53,7 +53,7 @@ index 086119718843295ccd574de2f424b4c3a8e9c715..943904bea51c43f541605a54dd375e5e
  	if (_menu->empty()) {
  		_menu = nullptr;
 diff --git a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
-index daa94b0c4351a179dad6bf3b52b73b5e366c2a9a..a504715ee5a31216ef98358037d4a4751f892675 100644
+index 3bc0d39b00386bb7ed6f0fbce37713eaa3db3bfa..f20c629154ff6183cddaf36e505aeee2c3d80b14 100644
 --- a/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_context_menu.cpp
 @@ -119,6 +119,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -64,7 +64,7 @@ index daa94b0c4351a179dad6bf3b52b73b5e366c2a9a..a504715ee5a31216ef98358037d4a475
  #include "styles/style_chat.h"
  #include "styles/style_chat_helpers.h"
  #include "styles/style_layers.h"
-@@ -2004,6 +2005,10 @@ base::unique_qptr<Ui::PopupMenu> FillContextMenu(
+@@ -2002,6 +2003,10 @@ base::unique_qptr<Ui::PopupMenu> FillContextMenu(
  			InsertPollVoteRestrictionsLabel(result.get(), item, poll);
  		}
  	}

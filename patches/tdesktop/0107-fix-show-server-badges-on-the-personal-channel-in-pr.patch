@@ -13,10 +13,10 @@ Subject: [PATCH] fix: show server badges on the personal channel in profiles
  create mode 100644 Telegram/SourceFiles/tele/tele_name_badges.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 35d527c3e9acbfd98bc123836fb46575e4442d7a..51a1964f7b54ed3153076afc2fd5118ccb930fc1 100644
+index 41f6de90235e37eac08d9570f6cfd00b6d0ae548..940cb8535182fbad2e753267530f9aba243bce56 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2739,6 +2739,8 @@ PRIVATE
+@@ -2762,6 +2762,8 @@ PRIVATE
      tele/tele_launch_flags.h
      tele/tele_links.cpp
      tele/tele_links.h
@@ -26,7 +26,7 @@ index 35d527c3e9acbfd98bc123836fb46575e4442d7a..51a1964f7b54ed3153076afc2fd5118c
      tele/tele_options.h
      tele/tele_peer_id.cpp
 diff --git a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
-index fe2f6da39e08a5974324e98234164dfa1ec9a971..6c6c374e9f8a937865762ea8821e31e3671af42d 100644
+index ec23ae36c058a0b8be0de149fe42346ff4c36970..a7cb4aca169dbbd24e91c676e641192be6167eba 100644
 --- a/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
 +++ b/Telegram/SourceFiles/info/profile/info_profile_actions.cpp
 @@ -79,6 +79,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

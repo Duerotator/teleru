@@ -5,6 +5,7 @@ Subject: [PATCH] feat: show the last activity next to a hidden last seen
 
 ---
  Telegram/CMakeLists.txt                       |   2 +
+ Telegram/SourceFiles/api/api_who_reacted.cpp  |  12 +
  .../data/data_message_reactions.cpp           |   5 +
  Telegram/SourceFiles/data/data_user.cpp       |   2 +
  .../view/history_view_top_bar_widget.cpp      |   6 +-
@@ -16,15 +17,15 @@ Subject: [PATCH] feat: show the last activity next to a hidden last seen
  Telegram/SourceFiles/tele/tele_options.cpp    |  22 ++
  Telegram/SourceFiles/tele/tele_options.h      |   3 +
  .../SourceFiles/tele/tele_settings_io.cpp     |   1 +
- 12 files changed, 376 insertions(+), 2 deletions(-)
+ 13 files changed, 388 insertions(+), 2 deletions(-)
  create mode 100644 Telegram/SourceFiles/tele/tele_observed_activity.cpp
  create mode 100644 Telegram/SourceFiles/tele/tele_observed_activity.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 39e95a1fd24085cd7238259dc05ca03259a95344..11f38dccdcc3208f669b5cbc5746cdede6a16813 100644
+index 23524875b9425f3e9ef21c498db0d5ceaeb03829..287f22956e03c162b43ae0a02d2e5ab9b64e9b46 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2988,6 +2988,8 @@ PRIVATE
+@@ -3011,6 +3011,8 @@ PRIVATE
      tele/tele_notices_mentions.h
      tele/tele_notices_section.cpp
      tele/tele_notices_section.h
@@ -33,6 +34,36 @@ index 39e95a1fd24085cd7238259dc05ca03259a95344..11f38dccdcc3208f669b5cbc5746cded
      tele/tele_online_notify.cpp
      tele/tele_online_notify.h
      tele/tele_onlines.cpp
+diff --git a/Telegram/SourceFiles/api/api_who_reacted.cpp b/Telegram/SourceFiles/api/api_who_reacted.cpp
+index 45c6a87bd62119aacf9639fcf6e035a7c570a1b0..763be684e106445c47b6c760d7f3bdcb565f48ee 100644
+--- a/Telegram/SourceFiles/api/api_who_reacted.cpp
++++ b/Telegram/SourceFiles/api/api_who_reacted.cpp
+@@ -29,6 +29,8 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+ #include "ui/controls/who_reacted_context_action.h"
+ #include "apiwrap.h"
+ #include "tele/tele_who_reacted.h"
++#include "tele/tele_observed_activity.h"
++#include "tele/tele_options.h"
+ #include "styles/style_chat_helpers.h"
+ 
+ namespace Api {
+@@ -670,6 +672,16 @@ rpl::producer<Ui::WhoReadContent> WhoReacted(
+ 			state->current.state = peers.state;
+ 			state->current.fullReadCount = int(peers.read.size());
+ 			state->current.fullReactionsCount = peers.fullReactionsCount;
++			if (Tele::ObservedActivity()) {
++				const auto &owner = item->history()->owner();
++				for (const auto &read : peers.read) {
++					if (const auto peer = owner.peerLoaded(read.peer)) {
++						if (const auto user = peer->asUser()) {
++							Tele::NoteActivity(user, read.date);
++						}
++					}
++				}
++			}
+ 			if (whoReadIds) {
+ 				const auto reacted = peers.list.size() - ranges::count(
+ 					peers.list,
 diff --git a/Telegram/SourceFiles/data/data_message_reactions.cpp b/Telegram/SourceFiles/data/data_message_reactions.cpp
 index 5f1328451c1e443f351a01d08aefb905966ed7fb..190bb73e5f5dd4c5ccf43981895559db6e6ea812 100644
 --- a/Telegram/SourceFiles/data/data_message_reactions.cpp
@@ -77,10 +108,10 @@ index 1e03f41358dd465af257c2fc6bc2f283ae65487a..505f82f71d10503ebff99f33d548978b
  	if (till < when + 1
  		&& updateLastseen(
 diff --git a/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp b/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
-index 7b74a7285116032adb7871aeae1783d5e9b48f19..f0d1029c5d1edcebe8af763ca31339b1300726a8 100644
+index 397383a975454308257c8cb91405ffe00369621c..289e12ec5901a19711ed41ad3ceeac3841c90b86 100644
 --- a/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
 +++ b/Telegram/SourceFiles/history/view/history_view_top_bar_widget.cpp
-@@ -69,6 +69,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
+@@ -70,6 +70,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
  #include "tele/scripting/tele_script_buttons.h"
  #include "tele/tele_calls.h"
  #include "tele/tele_invisible.h"
@@ -88,7 +119,7 @@ index 7b74a7285116032adb7871aeae1783d5e9b48f19..f0d1029c5d1edcebe8af763ca31339b1
  #include "tele/tele_onlines.h"
  #include "tele/tele_peek.h"
  #include "tele/tele_phones.h"
-@@ -1974,7 +1975,10 @@ void TopBarWidget::updateOnlineDisplay() {
+@@ -1975,7 +1976,10 @@ void TopBarWidget::updateOnlineDisplay() {
  		} else {
  			text = Tele::WithPeekedStatus(
  				user,

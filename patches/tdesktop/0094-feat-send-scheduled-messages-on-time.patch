@@ -18,10 +18,10 @@ Subject: [PATCH] feat: send scheduled messages on time
  create mode 100644 Telegram/SourceFiles/tele/tele_punctual_scheduled.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index f43a09645385051c2a9669717887355ac1b49765..b19dcad86c0976d901c97291cd4e0d2b8b9e6c1d 100644
+index a3dd30e45c8fea0eb2ea8a7aac2f7a0b4b079eb4..a767728f25bb5134d7f7b2465a33fc5e4d6d4de9 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2729,6 +2729,8 @@ PRIVATE
+@@ -2752,6 +2752,8 @@ PRIVATE
      tele/tele_peer_id.h
      tele/tele_phones.cpp
      tele/tele_phones.h

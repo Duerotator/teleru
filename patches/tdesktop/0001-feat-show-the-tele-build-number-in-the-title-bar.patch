@@ -13,11 +13,11 @@ Subject: [PATCH] feat: show the tele build number in the title bar
  create mode 100644 Telegram/SourceFiles/tele/tele_build.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 21171235a2f5b2c06cb73be605a56c1dadb73628..5ed7b77298ecac958326b315019f00617065ad8b 100644
+index 1601b508121fd2710d2ac0613ea378a7cee2aa9b..1857325ca442dd9b88dbcd2ecc6af904e397e15d 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2624,6 +2624,17 @@ else()
-     )
+@@ -2647,6 +2647,17 @@ if (TDESKTOP_L10N_CAPTURE)
+     include(${TDESKTOP_L10N_CAPTURE}/capture.cmake)
  endif()
  
 +set(TELE_BUILD 0 CACHE STRING "tele release number, 0 for local builds")
@@ -70,7 +70,7 @@ index 0000000000000000000000000000000000000000..2e2bceb142dfe499e63f170dc41128d2
 +
 +} // namespace Tele
 diff --git a/Telegram/SourceFiles/window/main_window.cpp b/Telegram/SourceFiles/window/main_window.cpp
-index 5af2ccfaf0de93d472bb9e7c933a61a52546ce01..3f153a2004cda2188af3b93c9c4120adcba4d1db 100644
+index 62f8c797ca550ab5524439f7bfc6ae7ebb9f2956..a5df2cac24b82a17ffcdacc51b3833c90a494c97 100644
 --- a/Telegram/SourceFiles/window/main_window.cpp
 +++ b/Telegram/SourceFiles/window/main_window.cpp
 @@ -48,6 +48,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -92,7 +92,7 @@ index 5af2ccfaf0de93d472bb9e7c933a61a52546ce01..3f153a2004cda2188af3b93c9c4120ad
  
  	updateTitle();
  	updateWindowIcon();
-@@ -711,7 +710,7 @@ void MainWindow::setupCanaryTitleLabel() {
+@@ -720,7 +719,7 @@ void MainWindow::setupCanaryTitleLabel() {
  	const auto label = Ui::CreateTitleSubWidget(
  		title,
  		st::titleSubWidgetStyle,
@@ -101,7 +101,7 @@ index 5af2ccfaf0de93d472bb9e7c933a61a52546ce01..3f153a2004cda2188af3b93c9c4120ad
  		layout->value(
  		) | rpl::map([](const Ui::Platform::TitleLayout &layout) {
  			return layout.onLeft() ? style::al_right : style::al_left;
-@@ -726,11 +725,9 @@ void MainWindow::setupCanaryTitleLabel() {
+@@ -735,11 +734,9 @@ void MainWindow::setupCanaryTitleLabel() {
  }
  
  QString MainWindow::nativeTitleSuffix() const {

@@ -21,10 +21,10 @@ Subject: [PATCH] feat: browse every tele version's changes
  create mode 100644 Telegram/SourceFiles/tele/tele_changelog_history.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index 4024799fcdfea4c3b8382680f66e8b93e482c9ae..5127867174ec29d59f1e49ef69db903364f9a421 100644
+index a7f9191dba5934ce6ae0d76ac06cc29502c9bbb7..fda61ec4bcbeb26bceb222ff98ab1da0773b4596 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2667,6 +2667,8 @@ PRIVATE
+@@ -2690,6 +2690,8 @@ PRIVATE
      tele/tele_changelog.h
      tele/tele_changelog_chat.cpp
      tele/tele_changelog_chat.h
@@ -34,10 +34,10 @@ index 4024799fcdfea4c3b8382680f66e8b93e482c9ae..5127867174ec29d59f1e49ef69db9033
      tele/tele_changelog_section.h
      tele/tele_chat_backgrounds.cpp
 diff --git a/Telegram/Resources/qrc/telegram/telegram.qrc b/Telegram/Resources/qrc/telegram/telegram.qrc
-index 35b7ac2e2c757686d22728eac48e6283b89fd597..13214863698eb14f8fa75bded93544ecbbf68ff0 100644
+index 3fd7b07bc026c2422d4bc6559c7a0d27aba6df6c..061df6d771e8d091d344432900ca821c15c0844d 100644
 --- a/Telegram/Resources/qrc/telegram/telegram.qrc
 +++ b/Telegram/Resources/qrc/telegram/telegram.qrc
-@@ -99,6 +99,7 @@
+@@ -101,6 +101,7 @@
    <qresource prefix="/tele">
      <file alias="api.tl">../../../SourceFiles/mtproto/scheme/api.tl</file>
      <file alias="mtproto.tl">../../../SourceFiles/mtproto/scheme/mtproto.tl</file>
@@ -4026,7 +4026,7 @@ index 547cc1465b6a6bb4d3d4628793cfcff5ef151b83..e87b41cec589821284be5410549a865a
  		return;
  	}
 diff --git a/Telegram/SourceFiles/window/window_main_menu.cpp b/Telegram/SourceFiles/window/window_main_menu.cpp
-index 1bad092e0e07e2ae0228a66b8f9b61ed00967e53..dca01ba5125c20abee643094c241d91241c4b2c2 100644
+index 5eaa4f85b370bc573348db6733ca5d7852602c21..2debc33e37161dd89c869b2152fe140265c18316 100644
 --- a/Telegram/SourceFiles/window/window_main_menu.cpp
 +++ b/Telegram/SourceFiles/window/window_main_menu.cpp
 @@ -73,6 +73,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL

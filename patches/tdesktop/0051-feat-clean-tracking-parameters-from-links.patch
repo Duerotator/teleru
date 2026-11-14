@@ -20,10 +20,10 @@ Subject: [PATCH] feat: clean tracking parameters from links
  create mode 100644 Telegram/SourceFiles/tele/tele_links.h
 
 diff --git a/Telegram/CMakeLists.txt b/Telegram/CMakeLists.txt
-index ebea6bfea96021567e9da6c167fb8f3ea5f2919b..e1930076d922eab709ef4af2be256314be2f3bdd 100644
+index 9c310c463dc25c2f71f9a338454951209aa834fd..e98337fd2ac264f7f1625aea4e129519fbda17ad 100644
 --- a/Telegram/CMakeLists.txt
 +++ b/Telegram/CMakeLists.txt
-@@ -2669,6 +2669,8 @@ PRIVATE
+@@ -2692,6 +2692,8 @@ PRIVATE
      tele/tele_message_menu.h
      tele/tele_jump_to_first.cpp
      tele/tele_jump_to_first.h
@@ -71,7 +71,7 @@ index 460a81edc5c2dce50c47750fe5d991f5f4532b3a..509995fe5a8bf515ca5801f87d01ff98
  		session,
  		action,
 diff --git a/Telegram/SourceFiles/apiwrap.cpp b/Telegram/SourceFiles/apiwrap.cpp
-index bac24da82c8b247420bcff4a1e505e979fab0406..6a1568b6ba5b83ee2f389aa9bb54290647ec4c5e 100644
+index 4b57d5851525ac58c859ee647a224ba65f6fe053..756786dc21c1a7d5f7ebd702b241f6829221529a 100644
 --- a/Telegram/SourceFiles/apiwrap.cpp
 +++ b/Telegram/SourceFiles/apiwrap.cpp
 @@ -111,6 +111,7 @@ https://github.com/telegramdesktop/tdesktop/blob/master/LEGAL
@@ -82,13 +82,13 @@ index bac24da82c8b247420bcff4a1e505e979fab0406..6a1568b6ba5b83ee2f389aa9bb542906
  #include "tgw/tgw_storage.h"
  
  namespace {
-@@ -4817,6 +4818,7 @@ void ApiWrap::sendMessage(
+@@ -4840,6 +4841,7 @@ void ApiWrap::sendMessage(
  		history,
  		_session->user()).flags;
  	TextUtilities::PrepareForSending(left, prepareFlags);
 +	Tele::PrepareSentLinks(left);
  
- 	HistoryItem *lastMessage = nullptr;
+ 	auto lastMessage = (HistoryItem*)nullptr;
  
 diff --git a/Telegram/SourceFiles/core/click_handler_types.cpp b/Telegram/SourceFiles/core/click_handler_types.cpp
 index e3afff4949c820979ea3bb3abe5cfc7cc156d0ca..8f1d0908af1863774dbfc7c850a76a1559fd2268 100644
