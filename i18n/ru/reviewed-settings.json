@@ -839,7 +839,8 @@
       "enlarge": "увеличение",
       "seek": "перемотка",
       "rewind": "перемотать",
-      "activity": "активность"
+      "activity": "активность",
+      "Preview": "Предпросмотр"
     },
     "tele/tele_gift_studio.cpp": {
       "text": "Текст"

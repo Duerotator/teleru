@@ -208,6 +208,16 @@
     "These aren't the newest 12 words of this wallet.": "Это не самые последние 12 слов этого кошелька.",
     "Couldn't search the wallet's history.": "Не удалось проверить историю кошелька.",
     "Your wallet address and these 12 words restore the wallet.": "Ваш адрес кошелька и эти 12 слов восстанавливают кошелёк.",
-    "Only this key restores the wallet. Keep it secret.": "Только этот ключ восстанавливает кошелёк. Храните его в секрете."
+    "Only this key restores the wallet. Keep it secret.": "Только этот ключ восстанавливает кошелёк. Храните его в секрете.",
+    "%1 gift can't be deleted": "%1 подарок нельзя удалить",
+    "%1 gifts can't be deleted": "%1 подарков нельзя удалить",
+    "Confirm permanent deletion of %1 gift. This can't be undone and pays no Stars.": "Подтвердите безвозвратное удаление %1 подарка. Это действие нельзя отменить, и звёзды за него не начисляются.",
+    "Confirm permanent deletion of %1 gifts. This can't be undone and pays no Stars.": "Подтвердите безвозвратное удаление %1 подарков. Это действие нельзя отменить, и звёзды за него не начисляются.",
+    "Delete %1 gift permanently? You won't receive any Stars.": "Удалить %1 подарок навсегда? Вы не получите звёзд.",
+    "Delete %1 gifts permanently? You won't receive any Stars.": "Удалить %1 подарков навсегда? Вы не получите звёзд.",
+    "Deleting gifts": "Удаление подарков",
+    "This gift can no longer be deleted.": "Этот подарок больше нельзя удалить.",
+    "%1 gift deleted": "%1 подарок удалён",
+    "%1 gifts deleted": "%1 подарков удалено"
   }
 }

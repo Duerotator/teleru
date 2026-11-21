@@ -1,5 +1,11 @@
 {
   "options": {
+    "kOptionAutoCloseBrackets": {
+      "name": {
+        "source": "Auto-close brackets and code blocks",
+        "translation": "Закрывать скобки и блоки кода"
+      }
+    },
     "kOptionBigExport": {
       "desc": {
         "source": "10000 messages per HTML file instead of 1000, files downloaded in 1 MB parts.",
@@ -36,6 +42,16 @@
         "translation": "Последовательное упоминание пользователей"
       }
     },
+    "kOptionClassicUpdateButton": {
+      "desc": {
+        "source": "Use the full gradient background in dark themes.",
+        "translation": "Использовать сплошной градиентный фон в тёмных темах."
+      },
+      "name": {
+        "source": "Classic update button",
+        "translation": "Классическая кнопка обновления"
+      }
+    },
     "kOptionCompactFolders": {
       "desc": {
         "source": "Applies when folders show icons only.",
@@ -44,6 +60,12 @@
       "name": {
         "source": "Compact icon folders",
         "translation": "Компактные папки-значки"
+      }
+    },
+    "kOptionComposerIndentation": {
+      "name": {
+        "source": "Indentation",
+        "translation": "Отступ"
       }
     },
     "kOptionCopyFilePath": {
@@ -142,6 +164,12 @@
         "translation": "HTML-сообщения β"
       }
     },
+    "kOptionIndentSelectedLines": {
+      "name": {
+        "source": "Indent selected lines with Tab",
+        "translation": "Отступы в выделенных строках по Tab"
+      }
+    },
     "kOptionInvisibleNames": {
       "name": {
         "source": "Show usernames for invisible names",
@@ -168,6 +196,12 @@
       "name": {
         "source": "Deleted chats and topics",
         "translation": "Удалённые чаты и темы"
+      }
+    },
+    "kOptionKeepIndentation": {
+      "name": {
+        "source": "Keep indentation",
+        "translation": "Сохранять отступы"
       }
     },
     "kOptionLanguage": {
@@ -256,6 +290,12 @@
         "translation": "Отключить раздел «Кошелёк»"
       }
     },
+    "kOptionNoTextSendingAnimation": {
+      "name": {
+        "source": "Turn off text sending animation",
+        "translation": "Отключить анимацию отправки текста"
+      }
+    },
     "kOptionNoWidgets": {
       "name": {
         "source": "Turn off widgets",
@@ -312,6 +352,16 @@
       "name": {
         "source": "Show online members in big groups",
         "translation": "Показывать участников в сети в больших группах"
+      }
+    },
+    "kOptionPadPhotos": {
+      "name": {
+        "source": "Pad images to send as photos",
+        "translation": "Добавлять поля для отправки фото"
+      },
+      "desc": {
+        "source": "Adds black margins without stretching or cropping.",
+        "translation": "Добавляет чёрные поля без растягивания и обрезки."
       }
     },
     "kOptionPeekLastSeen": {
@@ -396,6 +446,12 @@
         "translation": "Восстановление удалённых постов из пересылок"
       }
     },
+    "kOptionRemoveInvisibleCopyLinks": {
+      "name": {
+        "source": "Remove invisible links when copying",
+        "translation": "Удалять невидимые ссылки при копировании"
+      }
+    },
     "kOptionRemoveMyMessages": {
       "desc": {
         "source": "Adds it to chat menus; deletes for everyone, newest first.",
@@ -420,6 +476,12 @@
       "name": {
         "source": "Seek anywhere on video messages",
         "translation": "Перемотка в любой точке видеосообщения"
+      }
+    },
+    "kOptionRoundVolume": {
+      "name": {
+        "source": "Round videos",
+        "translation": "Видеосообщения"
       }
     },
     "kOptionScrollStats": {
@@ -584,6 +646,12 @@
         "translation": "Записывать голосовые сообщения в повышенном качестве"
       }
     },
+    "kOptionVoiceVolume": {
+      "name": {
+        "source": "Voice messages",
+        "translation": "Голосовые сообщения"
+      }
+    },
     "kOptionWalletCopyWords": {
       "name": {
         "source": "Copy secret words without waiting",
@@ -626,62 +694,10 @@
         "translation": "Не открывать веб-приложения на весь экран"
       }
     },
-    "kOptionNoTextSendingAnimation": {
-      "name": {
-        "source": "Turn off text sending animation",
-        "translation": "Отключить анимацию отправки текста"
-      }
-    },
     "kOptionWrapSelectedText": {
       "name": {
         "source": "Wrap selected text",
         "translation": "Обрамлять выделенный текст"
-      }
-    },
-    "kOptionAutoCloseBrackets": {
-      "name": {
-        "source": "Auto-close brackets and code blocks",
-        "translation": "Закрывать скобки и блоки кода"
-      }
-    },
-    "kOptionKeepIndentation": {
-      "name": {
-        "source": "Keep indentation",
-        "translation": "Сохранять отступы"
-      }
-    },
-    "kOptionIndentSelectedLines": {
-      "name": {
-        "source": "Indent selected lines with Tab",
-        "translation": "Отступы в выделенных строках по Tab"
-      }
-    },
-    "kOptionComposerIndentation": {
-      "name": {
-        "source": "Indentation",
-        "translation": "Отступ"
-      }
-    },
-    "kOptionPadPhotos": {
-      "name": {
-        "source": "Pad images to send as photos",
-        "translation": "Добавлять поля для отправки фото"
-      },
-      "desc": {
-        "source": "Adds black margins without stretching or cropping.",
-        "translation": "Добавляет чёрные поля без растягивания и обрезки."
-      }
-    },
-    "kOptionVoiceVolume": {
-      "name": {
-        "source": "Voice messages",
-        "translation": "Голосовые сообщения"
-      }
-    },
-    "kOptionRoundVolume": {
-      "name": {
-        "source": "Round videos",
-        "translation": "Видеосообщения"
       }
     }
   }
