@@ -840,7 +840,14 @@
       "seek": "перемотка",
       "rewind": "перемотать",
       "activity": "активность",
-      "Preview": "Предпросмотр"
+      "Preview": "Предпросмотр",
+      "grams": "граммы",
+      "received": "полученные",
+      "thumbnails": "миниатюры",
+      "date": "дата",
+      "rich": "форматирование",
+      "screenshots": "скриншоты",
+      "on-chain": "ончейн"
     },
     "tele/tele_gift_studio.cpp": {
       "text": "Текст"

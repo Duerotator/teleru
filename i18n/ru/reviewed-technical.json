@@ -342,7 +342,8 @@
       "https://gettele.app": "Reviewed official project URL in unsupported message text entity; must retain original link"
     },
     "main/main_app_config.cpp": {
-      "wallet_available": "Telegram server app configuration key"
+      "wallet_available": "Telegram server app configuration key",
+      "onchain_stargift_offers_enabled": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
     },
     "platform/linux/specific_linux.cpp": {
       "dev.starkow.tele._%1": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
@@ -1825,6 +1826,9 @@
       "served key is now the new key": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
       "served key is still the old one": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling",
       "served key moved elsewhere": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
+    },
+    "tele/tele_money_incoming.cpp": {
+      "/tele_money_incoming": "Reviewed protocol/storage key, path, MIME/codec identifier or API/date format; must retain its original spelling"
     }
   }
 }

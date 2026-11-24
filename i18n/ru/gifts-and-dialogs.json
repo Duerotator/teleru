@@ -218,6 +218,10 @@
     "Deleting gifts": "Удаление подарков",
     "This gift can no longer be deleted.": "Этот подарок больше нельзя удалить.",
     "%1 gift deleted": "%1 подарок удалён",
-    "%1 gifts deleted": "%1 подарков удалено"
+    "%1 gifts deleted": "%1 подарков удалено",
+    "Incoming transfer": "Входящий перевод",
+    "unpacked widget helper doesn't match the feed": "распакованный помощник виджетов не соответствует ленте",
+    "can't write the widget helper next to tele": "не удалось записать помощник виджетов рядом с tele",
+    "can't put the new widget helper in place": "не удалось установить новый помощник виджетов"
   }
 }

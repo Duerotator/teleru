@@ -148,10 +148,30 @@
         "translation": "Не отмечать изменённые сообщения ботов"
       }
     },
+    "kOptionHideBotPreviews": {
+      "desc": {
+        "source": "The screenshots and videos bots show on their profile.",
+        "translation": "Скриншоты и видео, которые боты показывают в своём профиле."
+      },
+      "name": {
+        "source": "Hide bot previews",
+        "translation": "Скрывать превью ботов"
+      }
+    },
     "kOptionHideBubbleTails": {
       "name": {
         "source": "Hide bubble tails",
         "translation": "Скрывать хвостики у облачков сообщений"
+      }
+    },
+    "kOptionHideGiftOffers": {
+      "desc": {
+        "source": "Offers to buy your gifts, with their notifications.",
+        "translation": "Предложения покупки ваших подарков и уведомления о них."
+      },
+      "name": {
+        "source": "Hide gift offers",
+        "translation": "Скрывать предложения за подарки"
       }
     },
     "kOptionHtmlBubbles": {
@@ -162,6 +182,26 @@
       "name": {
         "source": "HTML bubbles β",
         "translation": "HTML-сообщения β"
+      }
+    },
+    "kOptionIncomingTransfersBadge": {
+      "desc": {
+        "source": "A +N pill next to Money in the main menu until you open it.",
+        "translation": "Метка +N рядом с Money в главном меню, пока вы его не откроете."
+      },
+      "name": {
+        "source": "New transfers badge",
+        "translation": "Метка новых переводов"
+      }
+    },
+    "kOptionIncomingTransfersNotify": {
+      "desc": {
+        "source": "Listed on tele's Notifications page.",
+        "translation": "Отображаются на странице уведомлений tele."
+      },
+      "name": {
+        "source": "Incoming transfers in notifications",
+        "translation": "Входящие переводы в уведомлениях"
       }
     },
     "kOptionIndentSelectedLines": {
@@ -384,6 +424,16 @@
         "translation": "Сжимать фотографии меньше"
       }
     },
+    "kOptionPlainSearchCalendar": {
+      "desc": {
+        "source": "Without photo and video thumbnails on its days.",
+        "translation": "Без миниатюр фото и видео на днях месяца."
+      },
+      "name": {
+        "source": "Plain search calendar",
+        "translation": "Простой календарь поиска"
+      }
+    },
     "kOptionProfilePhotoBg": {
       "name": {
         "source": "Blurred photo as profile background",
@@ -394,6 +444,16 @@
       "name": {
         "source": "Fill the whole profile",
         "translation": "Заполнять весь профиль"
+      }
+    },
+    "kOptionPromoteReplyQuotes": {
+      "desc": {
+        "source": "Moves an exact leading quote from a rich message into the reply header.",
+        "translation": "Переносит точную начальную цитату из отформатированного сообщения в заголовок ответа."
+      },
+      "name": {
+        "source": "Show matching blockquotes as reply quotes",
+        "translation": "Показывать совпадающие цитаты в заголовке ответа"
       }
     },
     "kOptionQuickRepliesByName": {
